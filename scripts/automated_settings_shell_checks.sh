@@ -55,6 +55,36 @@ wait_for_log_occurrence_count() {
   return 1
 }
 
+read_selected_action() {
+  defaults read "$BUNDLE_ID" selectedAction 2>/dev/null || echo ""
+}
+
+wait_for_selected_action() {
+  local expected="$1"
+  local timeout_seconds="${2:-6}"
+  local deadline=$((SECONDS + timeout_seconds))
+  local current=""
+
+  while (( SECONDS <= deadline )); do
+    current="$(read_selected_action)"
+    if [[ "$current" == "$expected" ]]; then
+      echo "$current"
+      return 0
+    fi
+    sleep 0.25
+  done
+
+  echo "$current"
+  return 1
+}
+
+click_action_mode_radio() {
+  local label="$1"
+  /usr/bin/swift "$SCRIPT_DIR/ax_press_control.swift" "$APP_NAME" AXRadioButton "$label" >/dev/null
+}
+
+defaults delete "$BUNDLE_ID" selectedAction >/dev/null 2>&1 || true
+
 echo "[settings-shell] direct --settings launch"
 start_macsimize_for_settings_shell "$LOG_FILE" --settings
 sleep 1.0
@@ -73,6 +103,26 @@ if ! log_contains "Settings window fronting pass completed" "$LOG_FILE"; then
   print_log_tail "$LOG_FILE" 80
   exit 1
 fi
+if [[ "$(wait_for_selected_action maximize 4 || true)" != "maximize" ]]; then
+  echo "FAIL: expected fresh settings launch to persist Maximize as the default action"
+  print_log_tail "$LOG_FILE" 80
+  exit 1
+fi
+
+echo "[settings-shell] action mode radio buttons should update the selected action"
+click_action_mode_radio "Full Screen"
+if [[ "$(wait_for_selected_action fullScreen 4 || true)" != "fullScreen" ]]; then
+  echo "FAIL: expected clicking Full Screen to persist fullScreen"
+  print_log_tail "$LOG_FILE" 80
+  exit 1
+fi
+click_action_mode_radio "Maximize"
+if [[ "$(wait_for_selected_action maximize 4 || true)" != "maximize" ]]; then
+  echo "FAIL: expected clicking Maximize to persist maximize"
+  print_log_tail "$LOG_FILE" 80
+  exit 1
+fi
+assert_macsimize_alive "$LOG_FILE" "after action-mode radio button toggles"
 
 echo "[settings-shell] repeated relaunch should still show settings"
 base_opened="$(count_log_occurrences "Opening settings window" "$LOG_FILE")"

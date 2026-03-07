@@ -47,7 +47,7 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(reloaded.selectedAction, .fullScreen)
     }
 
-    func testLegacySystemDefaultMigratesToFullScreen() {
+    func testLegacySystemDefaultMigratesToMaximize() {
         let defaults = UserDefaults(suiteName: #function)!
         defaults.removePersistentDomain(forName: #function)
         defer { defaults.removePersistentDomain(forName: #function) }
@@ -55,8 +55,8 @@ final class SettingsStoreTests: XCTestCase {
 
         let store = SettingsStore(userDefaults: defaults)
 
-        XCTAssertEqual(store.selectedAction, .fullScreen)
-        XCTAssertEqual(defaults.string(forKey: "selectedAction"), WindowActionMode.fullScreen.rawValue)
+        XCTAssertEqual(store.selectedAction, .maximize)
+        XCTAssertEqual(defaults.string(forKey: "selectedAction"), WindowActionMode.maximize.rawValue)
     }
 
     func testLegacyFillAndZoomValuesMigrateToMaximize() {

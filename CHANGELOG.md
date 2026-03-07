@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [v0.2.5]
+
+- Rewrote the Settings action selector to use a native radio-group control so Maximize and Full Screen persist and reflect the active choice reliably.
+- Changed legacy `systemDefault` migration so upgraded installs now land on Maximize instead of silently defaulting to Full Screen.
+- Strengthened the end-to-end regression harness to verify a fresh default of Maximize, Settings toggling in both directions, and real green-button behavior for both Maximize and Full Screen.
+
 ## [v0.2.4]
 
 - Fixed the Settings action picker so Maximize and Full Screen persist and apply the selected mode immediately without crashing or lagging one click behind.

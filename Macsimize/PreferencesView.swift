@@ -124,11 +124,18 @@ struct PreferencesView: View {
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
 
-            HStack(spacing: 10) {
-                actionModeButton(.maximize)
-                actionModeButton(.fullScreen)
+            Picker("Green button click", selection: $settings.selectedAction) {
+                ForEach(WindowActionMode.allCases) { mode in
+                    Text(mode.displayName).tag(mode)
+                }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .pickerStyle(.radioGroup)
+            .labelsHidden()
+
+            Text(settings.selectedAction.helpText)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -150,23 +157,6 @@ struct PreferencesView: View {
                 .frame(width: 14)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    @ViewBuilder
-    private func actionModeButton(_ mode: WindowActionMode) -> some View {
-        if settings.selectedAction == mode {
-            Button(mode.displayName) {
-                settings.selectedAction = mode
-            }
-            .buttonStyle(BorderedProminentButtonStyle())
-            .controlSize(.regular)
-        } else {
-            Button(mode.displayName) {
-                settings.selectedAction = mode
-            }
-            .buttonStyle(BorderedButtonStyle())
-            .controlSize(.regular)
-        }
     }
 
     private func openGitHubPage() {

@@ -138,7 +138,7 @@ final class SettingsStore: ObservableObject {
 
         switch storedRawValue {
         case "systemDefault":
-            return .fullScreen
+            return .maximize
         case "fillPublic", "fillPrivate", "zoomExperimental":
             return .maximize
         default:

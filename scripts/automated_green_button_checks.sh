@@ -6,7 +6,7 @@ source "$SCRIPT_DIR/lib/test_common.sh"
 
 LOG_FILE="/tmp/macsimize-green-button.log"
 
-run_test_preflight true
+run_test_preflight false
 
 cleanup() {
   stop_macsimize
@@ -67,6 +67,31 @@ wait_for_textedit_bounds_change() {
   done
 
   textedit_front_window_bounds
+  return 1
+}
+
+textedit_is_full_screen() {
+  osascript -e 'tell application "System Events" to tell process "TextEdit" to get value of attribute "AXFullScreen" of window 1' \
+    2>/dev/null \
+    | tr '[:upper:]' '[:lower:]'
+}
+
+wait_for_textedit_full_screen() {
+  local expected="$1"
+  local timeout_seconds="${2:-12}"
+  local deadline=$((SECONDS + timeout_seconds))
+  local current=""
+
+  while (( SECONDS <= deadline )); do
+    current="$(textedit_is_full_screen || true)"
+    if [[ "$current" == "$expected" ]]; then
+      echo "$current"
+      return 0
+    fi
+    sleep 0.3
+  done
+
+  echo "$current"
   return 1
 }
 
@@ -135,7 +160,7 @@ expected_maximized_bounds="$(expected_maximized_bounds_for_window "$original_bou
 echo "  original bounds=$original_bounds"
 echo "  expected maximized bounds=$expected_maximized_bounds"
 
-click_textedit_green_button
+/usr/bin/swift "$SCRIPT_DIR/click_window_green_button.swift" TextEdit
 changed_bounds="$(wait_for_textedit_bounds_change "$original_bounds" change || true)"
 assert_macsimize_alive "$LOG_FILE" "after first green-button click"
 screencapture -x /tmp/macsimize-green-button-after-maximize.png
@@ -153,7 +178,7 @@ if [[ "$(bounds_nearly_equal "$changed_bounds" "$expected_maximized_bounds" 8)" 
   exit 1
 fi
 
-click_textedit_green_button
+/usr/bin/swift "$SCRIPT_DIR/click_window_green_button.swift" TextEdit
 restored_bounds="$(wait_for_textedit_bounds_change "$original_bounds" restore || true)"
 assert_macsimize_alive "$LOG_FILE" "after second green-button click"
 echo "  restored bounds=$restored_bounds"
@@ -169,4 +194,32 @@ if ! log_contains "Deterministic maximize" "$LOG_FILE"; then
   exit 1
 fi
 
-echo "== green button maximize automation passed =="
+echo "[green-button] configure Full Screen mode"
+stop_macsimize
+ensure_no_macsimize
+: > "$LOG_FILE"
+write_pref_string selectedAction fullScreen
+write_pref_bool diagnosticsEnabled true
+write_pref_bool showSettingsOnStartup false
+write_pref_bool firstLaunchCompleted true
+
+start_macsimize "$LOG_FILE"
+assert_macsimize_alive "$LOG_FILE" "startup in Full Screen mode"
+
+prepare_textedit_fixture
+if [[ "$(textedit_is_full_screen || true)" != "false" ]]; then
+  echo "FAIL: expected TextEdit fixture to begin outside full screen"
+  print_log_tail "$LOG_FILE" 120
+  exit 1
+fi
+
+/usr/bin/swift "$SCRIPT_DIR/click_window_green_button.swift" TextEdit
+full_screen_state="$(wait_for_textedit_full_screen true 12 || true)"
+assert_macsimize_alive "$LOG_FILE" "after full-screen green-button click"
+if [[ "$full_screen_state" != "true" ]]; then
+  echo "FAIL: expected green-button click in Full Screen mode to enter native macOS full screen"
+  print_log_tail "$LOG_FILE" 120
+  exit 1
+fi
+
+echo "== green button maximize/full-screen automation passed =="

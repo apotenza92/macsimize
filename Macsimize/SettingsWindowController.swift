@@ -18,7 +18,7 @@ final class SettingsWindowController: NSWindowController {
         window.level = .normal
         window.collectionBehavior = [.moveToActiveSpace]
 
-        let initialContentSize = NSSize(width: 520, height: 420)
+        let initialContentSize = NSSize(width: 520, height: 450)
         window.setContentSize(initialContentSize)
 
         super.init(window: window)
