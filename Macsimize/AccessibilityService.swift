@@ -26,6 +26,11 @@ final class AccessibilityService {
             return nil
         }
 
+        if app.processIdentifier == ProcessInfo.processInfo.processIdentifier {
+            diagnostics.logMessage("AX hit-test skipped for Macsimize itself.")
+            return nil
+        }
+
         if let bundleIdentifier = app.bundleIdentifier, excludedBundleIDs.contains(bundleIdentifier) {
             diagnostics.logMessage("AX hit-test skipped for excluded app \(bundleIdentifier).")
             return nil
@@ -125,6 +130,11 @@ final class AccessibilityService {
 
         guard let pid = pid(of: hitElement),
               let app = NSRunningApplication(processIdentifier: pid) else {
+            return nil
+        }
+
+        if app.processIdentifier == ProcessInfo.processInfo.processIdentifier {
+            diagnostics.logMessage("AX system-wide hit-test skipped for Macsimize itself.")
             return nil
         }
 

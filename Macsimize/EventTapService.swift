@@ -39,7 +39,7 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
         self.configuration = InterceptionConfiguration(
             selectedAction: settings.selectedAction,
             diagnosticsEnabled: settings.diagnosticsEnabled,
-            excludedBundleIDs: Set(settings.excludedBundleIDs)
+            excludedBundleIDs: Self.effectiveExcludedBundleIDs(from: settings.excludedBundleIDs)
         )
     }
 
@@ -48,7 +48,7 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
             configuration = InterceptionConfiguration(
                 selectedAction: settings.selectedAction,
                 diagnosticsEnabled: settings.diagnosticsEnabled,
-                excludedBundleIDs: Set(settings.excludedBundleIDs)
+                excludedBundleIDs: Self.effectiveExcludedBundleIDs(from: settings.excludedBundleIDs)
             )
         }
     }
@@ -146,6 +146,14 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
             self?.isRunning = running
             self?.lastFailureReason = failure
         }
+    }
+
+    private static func effectiveExcludedBundleIDs(from excludedBundleIDs: [String]) -> Set<String> {
+        var bundleIDs = Set(excludedBundleIDs)
+        if let ownBundleID = Bundle.main.bundleIdentifier {
+            bundleIDs.insert(ownBundleID)
+        }
+        return bundleIDs
     }
 
     private func handleEvent(type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
