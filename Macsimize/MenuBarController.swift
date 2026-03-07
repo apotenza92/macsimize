@@ -51,6 +51,7 @@ final class MenuBarController: NSObject {
     }
 }
 
+@MainActor
 private enum MacsimizeGlyphImage {
     private static let image = makeSymbolImage()
 
