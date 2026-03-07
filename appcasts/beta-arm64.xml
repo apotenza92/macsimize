@@ -5,19 +5,19 @@
     <description>Macsimize update feed (beta channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.2.4</title>
-      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.4</link>
-      <sparkle:version>200490000</sparkle:version>
-      <sparkle:shortVersionString>0.2.4</sparkle:shortVersionString>
+      <title>Version 0.2.5</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.5</link>
+      <sparkle:version>200590000</sparkle:version>
+      <sparkle:shortVersionString>0.2.5</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Fixed the Settings action picker so Maximize and Full Screen persist and apply the selected mode immediately without crashing or lagging one click behind.
-- Cleaned up startup permission handling so signed development and release builds no longer emit false Accessibility/Input Monitoring denial churn before the event tap starts.
-- Verified the maximize and full-screen modes end to end against a real green-button click on TextEdit, in addition to the automated test suite.]]></description>
-      <pubDate>Sat, 07 Mar 2026 13:48:48 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.4/Macsimize-Beta-v0.2.4-macos-arm64.zip"
-                 sparkle:edSignature="tetCfx0UkvlQmf1gFLapbSJK3ykDku4MtMb035pSGQwUMj6+inlFcseJrBXO7jLd/xig1STGHWCc2tc99nEODw=="
-                 length="2557976"
+      <description sparkle:format="plain-text"><![CDATA[- Rewrote the Settings action selector to use a native radio-group control so Maximize and Full Screen persist and reflect the active choice reliably.
+- Changed legacy `systemDefault` migration so upgraded installs now land on Maximize instead of silently defaulting to Full Screen.
+- Strengthened the end-to-end regression harness to verify a fresh default of Maximize, Settings toggling in both directions, and real green-button behavior for both Maximize and Full Screen.]]></description>
+      <pubDate>Sat, 07 Mar 2026 14:31:59 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.5/Macsimize-Beta-v0.2.5-macos-arm64.zip"
+                 sparkle:edSignature="CQyuYBFKLTGNggbTmK1xDJ9lmu8eimzjwDYN4Bkmw0ObqoSNoI7FGrowkyhnQ5RVZ0ChR6bm6sVLBCWMKxwZAA=="
+                 length="2557161"
                  type="application/octet-stream" />
     </item>
   </channel>
