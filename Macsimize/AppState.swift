@@ -40,26 +40,23 @@ final class AppState: ObservableObject {
             settings?.diagnosticsEnabled ?? false
         }
 
-        bind()
         refreshPermissions(promptIfNeeded: false)
+        bind()
     }
 
     func refreshPermissions(promptIfNeeded: Bool) {
         permissions.refresh(promptIfNeeded: promptIfNeeded)
-        permissions.startMonitoringForChanges()
-        eventTapService.startIfPossible()
+        syncPermissionDrivenServices()
     }
 
     func requestAccessibilityPermission() {
         permissions.refresh(promptIfNeeded: true)
-        permissions.startMonitoringForChanges()
-        eventTapService.startIfPossible()
+        syncPermissionDrivenServices()
     }
 
     func requestInputMonitoringPermission() {
         permissions.requestInputMonitoringPermission()
-        permissions.startMonitoringForChanges()
-        eventTapService.startIfPossible()
+        syncPermissionDrivenServices()
     }
 
     func restartEventTap() {
@@ -110,25 +107,23 @@ final class AppState: ObservableObject {
             settings.$selectedAction.removeDuplicates(),
             settings.$diagnosticsEnabled.removeDuplicates()
         )
+        .dropFirst()
         .sink { [weak self] _, _ in
-            self?.eventTapService.refreshConfiguration()
-            self?.eventTapService.startIfPossible()
+            guard let self else {
+                return
+            }
+            self.eventTapService.refreshConfiguration()
+            if self.permissions.state.allRequiredPermissionsGranted {
+                self.eventTapService.startIfPossible()
+            }
         }
         .store(in: &cancellables)
 
         permissions.$state
             .removeDuplicates()
+            .dropFirst()
             .sink { [weak self] state in
-                guard let self else {
-                    return
-                }
-                if state.allRequiredPermissionsGranted {
-                    self.permissions.stopMonitoringForChanges()
-                    self.eventTapService.startIfPossible()
-                } else {
-                    self.permissions.startMonitoringForChanges()
-                    self.eventTapService.stop(reason: state.detail)
-                }
+                self?.syncPermissionDrivenServices(for: state)
             }
             .store(in: &cancellables)
 
@@ -137,5 +132,19 @@ final class AppState: ObservableObject {
                 self?.permissions.updateEventTapStatus(isRunning: isRunning, lastFailureReason: lastFailureReason)
             }
             .store(in: &cancellables)
+    }
+
+    private func syncPermissionDrivenServices() {
+        syncPermissionDrivenServices(for: permissions.state)
+    }
+
+    private func syncPermissionDrivenServices(for state: PermissionState) {
+        if state.allRequiredPermissionsGranted {
+            permissions.stopMonitoringForChanges()
+            eventTapService.startIfPossible()
+        } else {
+            permissions.startMonitoringForChanges()
+            eventTapService.stop(reason: state.detail)
+        }
     }
 }

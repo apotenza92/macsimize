@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [v0.2.4]
+
+- Fixed the Settings action picker so Maximize and Full Screen persist and apply the selected mode immediately without crashing or lagging one click behind.
+- Cleaned up startup permission handling so signed development and release builds no longer emit false Accessibility/Input Monitoring denial churn before the event tap starts.
+- Verified the maximize and full-screen modes end to end against a real green-button click on TextEdit, in addition to the automated test suite.
+
 ## [v0.2.3]
 
 - Fixed the Settings action-mode control so switching between Maximize and Full Screen applies the selected behavior immediately instead of behaving one click behind.

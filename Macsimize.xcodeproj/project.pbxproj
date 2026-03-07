@@ -8,12 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		0078EB4061C4BF4D2D37EFC5 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCC9EABC0A52521090781119 /* SettingsStore.swift */; };
-		0FA1A55B4B944A29A3A41531 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7EBA0D193235411C9188C66A /* Assets.xcassets */; };
 		0866F34659970F00A62F1AB6 /* GreenButtonInterceptionControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85477C08043CBA13C681FD8E /* GreenButtonInterceptionControllerTests.swift */; };
 		0C72948B6836D3F29DE95890 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B04EA2F430D809B32F21432 /* PreferencesView.swift */; };
-		A1B2C3D4E5F60718293A4B5C /* UpdateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5F /* UpdateManager.swift */; };
-		A1B2C3D4E5F60718293A4B5D /* UpdateCheckFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B60 /* UpdateCheckFrequency.swift */; };
-		A1B2C3D4E5F60718293A4B5E /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D4E5F60718293A4B62 /* Sparkle */; };
+		0FA1A55B4B944A29A3A41531 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7EBA0D193235411C9188C66A /* Assets.xcassets */; };
 		21F092E0D2C54D0B178BF7E8 /* WindowFrameStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6D0D4D5F0829BF1A678276 /* WindowFrameStoreTests.swift */; };
 		2C39187DFC43A71F6A2A40D7 /* ScreenHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53DA8BF79D2F15C1A5208A6B /* ScreenHelpers.swift */; };
 		4AE4698E1DEAC6E5497527C1 /* AXHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F7D6C0DEE11E07F975C689 /* AXHelpers.swift */; };
@@ -29,6 +26,9 @@
 		83A36437A8F280351FBE8EFE /* MaximizeStrategyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47D37FC9D090345C6A471647 /* MaximizeStrategyTests.swift */; };
 		9223112092FD8BB0C970D527 /* GreenButtonInterceptionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49834A2AF06AABED0928E758 /* GreenButtonInterceptionController.swift */; };
 		9B8F8289BDEA816C53DB238E /* WindowActionMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45E45D5F1E037A744D6BA564 /* WindowActionMode.swift */; };
+		A1B2C3D4E5F60718293A4B5C /* UpdateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5F /* UpdateManager.swift */; };
+		A1B2C3D4E5F60718293A4B5D /* UpdateCheckFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B60 /* UpdateCheckFrequency.swift */; };
+		A1B2C3D4E5F60718293A4B5E /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D4E5F60718293A4B62 /* Sparkle */; };
 		C1C1A083CDE1BA596C1273FA /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77EFEEA6F298CB61FC79BB4C /* MenuBarController.swift */; };
 		D3C556A58592F74861DDF993 /* WindowFrameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC3E30957BDF7F2C466AFF29 /* WindowFrameStore.swift */; };
 		DC60CE739C57CA7000BE8199 /* AccessibilityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC957E784C785E5E29DE4FD /* AccessibilityService.swift */; };
@@ -57,7 +57,6 @@
 		0773551F8EAFAE3E02E0E77A /* ManualTestPlan.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; path = ManualTestPlan.md; sourceTree = "<group>"; };
 		11AA67F3533BB389E21A0D8D /* Macsimize.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Macsimize.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		17FFABECFDAAF65E2540A85D /* ClickedWindowContext.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClickedWindowContext.swift; sourceTree = "<group>"; };
-		7EBA0D193235411C9188C66A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		305D85E6389B1DEBAD851B16 /* MacsimizeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacsimizeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		45C27532EEB4187EB32351B1 /* SettingsWindowController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsWindowController.swift; sourceTree = "<group>"; };
 		45E45D5F1E037A744D6BA564 /* WindowActionMode.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WindowActionMode.swift; sourceTree = "<group>"; };
@@ -72,6 +71,7 @@
 		77EFEEA6F298CB61FC79BB4C /* MenuBarController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
 		78E4CED87C9A622E1DF8399B /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
 		7B04EA2F430D809B32F21432 /* PreferencesView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
+		7EBA0D193235411C9188C66A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		85477C08043CBA13C681FD8E /* GreenButtonInterceptionControllerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GreenButtonInterceptionControllerTests.swift; sourceTree = "<group>"; };
 		8A825EE6AF3223A8F3F1FFD1 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		93BEDCD66454CE9825F6CB01 /* MaximizeStrategy.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MaximizeStrategy.swift; sourceTree = "<group>"; };
@@ -238,10 +238,10 @@
 			);
 			dependencies = (
 			);
+			name = Macsimize;
 			packageProductDependencies = (
 				A1B2C3D4E5F60718293A4B62 /* Sparkle */,
 			);
-			name = Macsimize;
 			productName = Macsimize;
 			productReference = 11AA67F3533BB389E21A0D8D /* Macsimize.app */;
 			productType = "com.apple.product-type.application";
@@ -296,6 +296,7 @@
 			packageReferences = (
 				A1B2C3D4E5F60718293A4B61 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
+			preferredProjectObjectVersion = 77;
 			productRefGroup = CF28374F0907FD4D60B22D41 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -386,7 +387,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				GENERATE_INFOPLIST_FILE = YES;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = pzc.MacsimizeTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -402,6 +407,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Macsimize/Macsimize.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -410,14 +416,17 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Macsimize/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS = "";
-				MARKETING_VERSION = 0.2.3;
+				MARKETING_VERSION = 0.2.4;
 				PRODUCT_BUNDLE_IDENTIFIER = pzc.Macsimize;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
-				SU_FEED_URL = https://raw.githubusercontent.com/apotenza92/macsimize/main/appcasts/stable-arm64.xml;
+				SU_FEED_URL = "https://raw.githubusercontent.com/apotenza92/macsimize/main/appcasts/stable-arm64.xml";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) $(MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS)";
 				SWIFT_VERSION = 6.0;
 			};
@@ -429,6 +438,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Macsimize/Macsimize.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1;
@@ -437,14 +447,17 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Macsimize/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS = "";
-				MARKETING_VERSION = 0.2.3;
+				MARKETING_VERSION = 0.2.4;
 				PRODUCT_BUNDLE_IDENTIFIER = pzc.Macsimize;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
-				SU_FEED_URL = https://raw.githubusercontent.com/apotenza92/macsimize/main/appcasts/stable-arm64.xml;
+				SU_FEED_URL = "https://raw.githubusercontent.com/apotenza92/macsimize/main/appcasts/stable-arm64.xml";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) $(MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS)";
 				SWIFT_VERSION = 6.0;
 			};
@@ -569,7 +582,11 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				GENERATE_INFOPLIST_FILE = YES;
-				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				PRODUCT_BUNDLE_IDENTIFIER = pzc.MacsimizeTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";

@@ -53,15 +53,20 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
 
     func startIfPossible() {
         refreshConfiguration()
+        let hadActiveTap = eventTap != nil || isRunning
 
         guard permissions.state.accessibilityTrusted else {
-            RuntimeLogger.log("startIfPossible: denied (no accessibility).")
+            if hadActiveTap {
+                RuntimeLogger.log("startIfPossible: denied (no accessibility).")
+            }
             stop(reason: "Accessibility permission has not been granted yet.")
             return
         }
 
         guard permissions.state.inputMonitoringGranted else {
-            RuntimeLogger.log("startIfPossible: denied (no input monitoring).")
+            if hadActiveTap {
+                RuntimeLogger.log("startIfPossible: denied (no input monitoring).")
+            }
             stop(reason: "Input Monitoring has not been granted yet.")
             return
         }
@@ -116,7 +121,8 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
     }
 
     func stop(reason: String?) {
-        if let reason {
+        let hadActiveTap = eventTap != nil || isRunning
+        if let reason, hadActiveTap {
             RuntimeLogger.log("Stopping event tap: \(reason)")
         }
 
