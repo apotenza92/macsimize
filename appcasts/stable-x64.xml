@@ -5,22 +5,20 @@
     <description>Macsimize update feed (stable channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.2.1</title>
-      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.1</link>
-      <sparkle:version>200190000</sparkle:version>
-      <sparkle:shortVersionString>0.2.1</sparkle:shortVersionString>
+      <title>Version 0.2.2</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.2</link>
+      <sparkle:version>200290000</sparkle:version>
+      <sparkle:shortVersionString>0.2.2</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Added menu-bar-first green-button interception with maximize and full-screen modes.
-- Added stable and beta side-by-side app variants for release builds.
-- Added automated settings shell checks and green-button regression checks.
-- Fixed release automation issues that blocked signed archive builds.
-- Simplified the settings window layout and fixed first-launch and reopen behavior.
-- Removed the ignored-apps and diagnostics controls from the settings UI.]]></description>
-      <pubDate>Sat, 07 Mar 2026 11:33:47 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.1/Macsimize-v0.2.1-macos-x64.zip"
-                 sparkle:edSignature="Zq60VHZD1GuAOYytzw7GV2PEwWaaqbzE6DZPWHDH5gt9lXdtHG0kqdLw8bPF4++QMLhc6zHhY6+XGpL6qXV+AQ=="
-                 length="1727313"
+      <description sparkle:format="plain-text"><![CDATA[- Added startup permission prompting for Accessibility and Input Monitoring so first-run and reopened launches behave like a standard macOS utility app.
+- Added native Sparkle update support with in-app update checks and configurable update frequency in Settings.
+- Added signed Sparkle appcast generation for stable and beta channels and wired it into the release workflow.
+- Added dedicated Macsimize Sparkle signing key support and embedded per-channel Sparkle feed URLs in release builds.]]></description>
+      <pubDate>Sat, 07 Mar 2026 12:14:49 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.2/Macsimize-v0.2.2-macos-x64.zip"
+                 sparkle:edSignature="dHEd6kwFOtdzVq8eSEUXuLImTxj+rFxTK+ZIurhJj6AC9fEP89KM/VEid7D7mzHB32089YPiGljioJussmpMBA=="
+                 length="2676110"
                  type="application/octet-stream" />
     </item>
   </channel>
