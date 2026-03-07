@@ -2,13 +2,12 @@ import CoreGraphics
 import Foundation
 
 protocol GreenButtonContextResolving {
-    func resolveGreenButtonClick(at location: CGPoint, excludedBundleIDs: Set<String>) -> ClickedWindowContext?
+    func resolveGreenButtonClick(at location: CGPoint) -> ClickedWindowContext?
 }
 
 struct InterceptionConfiguration: Equatable {
     var selectedAction: WindowActionMode
     var diagnosticsEnabled: Bool
-    var excludedBundleIDs: Set<String>
 }
 
 struct PendingWindowAction {
@@ -63,10 +62,7 @@ final class GreenButtonInterceptionController {
             return .passThrough
         }
 
-        guard let context = contextResolver.resolveGreenButtonClick(
-            at: location,
-            excludedBundleIDs: configuration.excludedBundleIDs
-        ) else {
+        guard let context = contextResolver.resolveGreenButtonClick(at: location) else {
             return .passThrough
         }
 

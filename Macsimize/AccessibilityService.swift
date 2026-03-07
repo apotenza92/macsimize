@@ -11,9 +11,9 @@ final class AccessibilityService {
         self.diagnostics = diagnostics
     }
 
-    func resolveGreenButtonClick(at location: CGPoint, excludedBundleIDs: Set<String>) -> ClickedWindowContext? {
+    func resolveGreenButtonClick(at location: CGPoint) -> ClickedWindowContext? {
         for candidatePoint in candidateHitTestPoints(for: location) {
-            if let resolved = resolveUsingSystemWideHitTest(at: candidatePoint, originalLocation: location, excludedBundleIDs: excludedBundleIDs) {
+            if let resolved = resolveUsingSystemWideHitTest(at: candidatePoint, originalLocation: location) {
                 if candidatePoint != location {
                     diagnostics.logMessage("AX hit-test succeeded using flipped screen coordinates.")
                 }
@@ -28,11 +28,6 @@ final class AccessibilityService {
 
         if app.processIdentifier == ProcessInfo.processInfo.processIdentifier {
             diagnostics.logMessage("AX hit-test skipped for Macsimize itself.")
-            return nil
-        }
-
-        if let bundleIdentifier = app.bundleIdentifier, excludedBundleIDs.contains(bundleIdentifier) {
-            diagnostics.logMessage("AX hit-test skipped for excluded app \(bundleIdentifier).")
             return nil
         }
 
@@ -120,7 +115,7 @@ final class AccessibilityService {
         return candidates
     }
 
-    private func resolveUsingSystemWideHitTest(at location: CGPoint, originalLocation: CGPoint, excludedBundleIDs: Set<String>) -> ClickedWindowContext? {
+    private func resolveUsingSystemWideHitTest(at location: CGPoint, originalLocation: CGPoint) -> ClickedWindowContext? {
         let systemWide = AXUIElementCreateSystemWide()
         var hitElement: AXUIElement?
         let hitError = AXUIElementCopyElementAtPosition(systemWide, Float(location.x), Float(location.y), &hitElement)
@@ -135,11 +130,6 @@ final class AccessibilityService {
 
         if app.processIdentifier == ProcessInfo.processInfo.processIdentifier {
             diagnostics.logMessage("AX system-wide hit-test skipped for Macsimize itself.")
-            return nil
-        }
-
-        if let bundleIdentifier = app.bundleIdentifier, excludedBundleIDs.contains(bundleIdentifier) {
-            diagnostics.logMessage("AX system-wide hit-test skipped for excluded app \(bundleIdentifier).")
             return nil
         }
 

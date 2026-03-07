@@ -35,7 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menuBarController = MenuBarController(appDelegate: self)
 
         let firstLaunch = !appState.settings.firstLaunchCompleted
-        let shouldShowSettings = true
+        let shouldShowSettings = firstLaunch || explicitSettingsRequest || appState.settings.showSettingsOnStartup
 
         if firstLaunch {
             appState.settings.firstLaunchCompleted = true
@@ -84,10 +84,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         if shouldRequestSettingsFromExisting {
-            RuntimeLogger.log("Existing instance detected (\(others.map { $0.processIdentifier })); terminating stale instance(s) so this launch can show Settings reliably")
-        } else {
-            RuntimeLogger.log("Terminating other running instances: \(others.map { $0.processIdentifier })")
+            RuntimeLogger.log("Existing instance detected (\(others.map { $0.processIdentifier })); requesting settings window from the running app")
+            requestSettingsOpenFromExistingInstance()
+            NSApp.terminate(nil)
+            return true
         }
+
+        RuntimeLogger.log("Terminating other running instances: \(others.map { $0.processIdentifier })")
 
         for app in others {
             if !app.terminate() {

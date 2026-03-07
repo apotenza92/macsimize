@@ -44,8 +44,7 @@ final class GreenButtonInterceptionControllerTests: XCTestCase {
             timestamp: 1,
             configuration: InterceptionConfiguration(
                 selectedAction: .fullScreen,
-                diagnosticsEnabled: false,
-                excludedBundleIDs: []
+                diagnosticsEnabled: false
             )
         )
 
@@ -67,8 +66,7 @@ final class GreenButtonInterceptionControllerTests: XCTestCase {
             timestamp: 10,
             configuration: InterceptionConfiguration(
                 selectedAction: .maximize,
-                diagnosticsEnabled: true,
-                excludedBundleIDs: []
+                diagnosticsEnabled: true
             )
         )
         let mouseUp = controller.handleMouseUp(location: CGPoint(x: 101, y: 200), timestamp: 10.2)
@@ -97,8 +95,7 @@ final class GreenButtonInterceptionControllerTests: XCTestCase {
             timestamp: 5,
             configuration: InterceptionConfiguration(
                 selectedAction: .maximize,
-                diagnosticsEnabled: false,
-                excludedBundleIDs: []
+                diagnosticsEnabled: false
             )
         )
         let dragDecision = controller.handleMouseDragged(location: CGPoint(x: 110, y: 100))
@@ -124,8 +121,7 @@ final class GreenButtonInterceptionControllerTests: XCTestCase {
             timestamp: 1,
             configuration: InterceptionConfiguration(
                 selectedAction: .maximize,
-                diagnosticsEnabled: false,
-                excludedBundleIDs: []
+                diagnosticsEnabled: false
             )
         )
 
@@ -152,8 +148,7 @@ final class GreenButtonInterceptionControllerTests: XCTestCase {
             timestamp: 1,
             configuration: InterceptionConfiguration(
                 selectedAction: .maximize,
-                diagnosticsEnabled: false,
-                excludedBundleIDs: []
+                diagnosticsEnabled: false
             )
         )
 
@@ -202,7 +197,7 @@ private final class ResolverSpy: GreenButtonContextResolving {
     var context: ClickedWindowContext?
     private(set) var resolveCallCount = 0
 
-    func resolveGreenButtonClick(at location: CGPoint, excludedBundleIDs: Set<String>) -> ClickedWindowContext? {
+    func resolveGreenButtonClick(at location: CGPoint) -> ClickedWindowContext? {
         resolveCallCount += 1
         return context
     }

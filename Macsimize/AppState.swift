@@ -52,17 +52,6 @@ final class AppState: ObservableObject {
         eventTapService.restart()
     }
 
-    func addFrontmostAppToExclusions() {
-        guard let app = NSWorkspace.shared.frontmostApplication,
-              let bundleIdentifier = app.bundleIdentifier else {
-            diagnostics.logMessage("Unable to exclude the frontmost app because no bundle identifier was available.", forceVisible: true)
-            return
-        }
-
-        settings.addExcludedBundleID(bundleIdentifier)
-        diagnostics.logMessage("Added \(bundleIdentifier) to the exclusion list.", forceVisible: true)
-    }
-
     func captureDiagnosticsSnapshot() {
         accessibilityService.captureFrontmostWindowSnapshot()
     }
@@ -104,12 +93,11 @@ final class AppState: ObservableObject {
     }
 
     private func bind() {
-        Publishers.CombineLatest3(
+        Publishers.CombineLatest(
             settings.$selectedAction.removeDuplicates(),
-            settings.$diagnosticsEnabled.removeDuplicates(),
-            settings.$excludedBundleIDs.removeDuplicates()
+            settings.$diagnosticsEnabled.removeDuplicates()
         )
-        .sink { [weak self] _, _, _ in
+        .sink { [weak self] _, _ in
             self?.eventTapService.refreshConfiguration()
             self?.eventTapService.startIfPossible()
         }

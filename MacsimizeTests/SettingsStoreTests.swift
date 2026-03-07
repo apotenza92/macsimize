@@ -10,6 +10,8 @@ final class SettingsStoreTests: XCTestCase {
         let store = SettingsStore(userDefaults: defaults)
 
         XCTAssertEqual(store.selectedAction, .maximize)
+        XCTAssertFalse(store.showSettingsOnStartup)
+        XCTAssertFalse(store.firstLaunchCompleted)
     }
 
     func testSettingsPersistAcrossInstances() {
@@ -20,14 +22,12 @@ final class SettingsStoreTests: XCTestCase {
         let store = SettingsStore(userDefaults: defaults)
         store.selectedAction = .maximize
         store.diagnosticsEnabled = false
-        store.excludedBundleIDs = ["com.apple.Finder"]
         store.showSettingsOnStartup = true
         store.firstLaunchCompleted = true
 
         let reloaded = SettingsStore(userDefaults: defaults)
         XCTAssertEqual(reloaded.selectedAction, .maximize)
         XCTAssertFalse(reloaded.diagnosticsEnabled)
-        XCTAssertEqual(reloaded.excludedBundleIDs, ["com.apple.Finder"])
         XCTAssertTrue(reloaded.showSettingsOnStartup)
         XCTAssertTrue(reloaded.firstLaunchCompleted)
     }
@@ -71,17 +71,14 @@ final class SettingsStoreTests: XCTestCase {
         }
     }
 
-    func testParseBundleIDsDeduplicatesAndTrimsValues() {
-        let parsed = SettingsStore.parseBundleIDs(from: " com.apple.finder,com.apple.finder\n com.apple.TextEdit ")
-        XCTAssertEqual(parsed, ["com.apple.TextEdit", "com.apple.finder"])
-    }
+    func testInitRemovesLegacyExcludedBundleIDs() {
+        let defaults = UserDefaults(suiteName: #function)!
+        defaults.removePersistentDomain(forName: #function)
+        defer { defaults.removePersistentDomain(forName: #function) }
+        defaults.set(["com.example.Legacy"], forKey: "excludedBundleIDs")
 
-    func testEffectiveExcludedBundleIDsIncludesOwnBundleIdentifier() {
-        let effective = EventTapService.effectiveExcludedBundleIDs(
-            from: ["com.apple.Finder"],
-            ownBundleID: "pzc.Macsimize"
-        )
+        _ = SettingsStore(userDefaults: defaults)
 
-        XCTAssertEqual(effective, ["com.apple.Finder", "pzc.Macsimize"])
+        XCTAssertNil(defaults.object(forKey: "excludedBundleIDs"))
     }
 }

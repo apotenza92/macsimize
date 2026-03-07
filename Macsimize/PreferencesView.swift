@@ -6,7 +6,8 @@ struct PreferencesView: View {
     @ObservedObject private var permissions: PermissionsCoordinator
 
     private let appState: AppState
-    private let horizontalPadding: CGFloat = 16
+    private let preferredContentWidth: CGFloat = 500
+    private let horizontalPadding: CGFloat = 20
     private let contentFont: Font = .system(size: 14)
     private let sectionTitleFont: Font = .system(size: 14, weight: .semibold)
 
@@ -22,13 +23,13 @@ struct PreferencesView: View {
             behaviorSection
             permissionsSection
         }
-        .font(contentFont)
         .padding(horizontalPadding)
-        .frame(width: 380, height: 332, alignment: .topLeading)
+        .font(contentFont)
+        .frame(width: preferredContentWidth, alignment: .topLeading)
     }
 
     private var generalSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             Text("General")
                 .font(sectionTitleFont)
 
@@ -66,7 +67,7 @@ struct PreferencesView: View {
     }
 
     private var permissionsSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             Text("Permissions")
                 .font(sectionTitleFont)
 
@@ -81,17 +82,17 @@ struct PreferencesView: View {
                     granted: permissions.state.inputMonitoringGranted,
                     action: appState.openInputMonitoringSettings
                 )
-                permissionActionButton(
-                    title: "Secure Event Input",
-                    granted: !permissions.state.secureEventInputEnabled,
-                    action: { appState.refreshPermissions(promptIfNeeded: false) }
-                )
             }
+
+            Text("Macsimize needs Accessibility and Input Monitoring to intercept the green button reliably.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
     private var behaviorSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             Text("Behaviour")
                 .font(sectionTitleFont)
 

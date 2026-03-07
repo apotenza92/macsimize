@@ -6,7 +6,6 @@ final class SettingsStore: ObservableObject {
     private enum Key {
         static let selectedAction = "selectedAction"
         static let diagnosticsEnabled = "diagnosticsEnabled"
-        static let excludedBundleIDs = "excludedBundleIDs"
         static let showSettingsOnStartup = "showSettingsOnStartup"
         static let firstLaunchCompleted = "firstLaunchCompleted"
         static let startAtLogin = "startAtLogin"
@@ -24,12 +23,6 @@ final class SettingsStore: ObservableObject {
     @Published var diagnosticsEnabled: Bool {
         didSet {
             userDefaults.set(diagnosticsEnabled, forKey: Key.diagnosticsEnabled)
-        }
-    }
-
-    @Published var excludedBundleIDs: [String] {
-        didSet {
-            userDefaults.set(excludedBundleIDs, forKey: Key.excludedBundleIDs)
         }
     }
 
@@ -79,8 +72,7 @@ final class SettingsStore: ObservableObject {
         }
 
         let diagnosticsEnabled = userDefaults.object(forKey: Key.diagnosticsEnabled) as? Bool ?? true
-        let excludedBundleIDs = userDefaults.stringArray(forKey: Key.excludedBundleIDs) ?? []
-        let showSettingsOnStartup = userDefaults.object(forKey: Key.showSettingsOnStartup) as? Bool ?? true
+        let showSettingsOnStartup = userDefaults.object(forKey: Key.showSettingsOnStartup) as? Bool ?? false
         let firstLaunchCompleted = userDefaults.object(forKey: Key.firstLaunchCompleted) as? Bool ?? false
         let loginItemEnabled = SMAppService.mainApp.status == .enabled
         let startAtLogin: Bool
@@ -92,55 +84,10 @@ final class SettingsStore: ObservableObject {
 
         self.selectedAction = selectedAction
         self.diagnosticsEnabled = diagnosticsEnabled
-        self.excludedBundleIDs = excludedBundleIDs
         self.showSettingsOnStartup = showSettingsOnStartup
         self.firstLaunchCompleted = firstLaunchCompleted
         self.startAtLogin = startAtLogin
-    }
-
-    var excludedBundleIDsText: String {
-        get {
-            excludedBundleIDs.joined(separator: ", ")
-        }
-        set {
-            excludedBundleIDs = Self.parseBundleIDs(from: newValue)
-        }
-    }
-
-    func addExcludedBundleID(_ bundleIdentifier: String) {
-        let normalized = bundleIdentifier.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !normalized.isEmpty else {
-            return
-        }
-
-        if !excludedBundleIDs.contains(normalized) {
-            excludedBundleIDs.append(normalized)
-            excludedBundleIDs.sort()
-        }
-    }
-
-    func removeExcludedBundleID(_ bundleIdentifier: String) {
-        excludedBundleIDs.removeAll { $0 == bundleIdentifier }
-    }
-
-    func isExcluded(bundleIdentifier: String?) -> Bool {
-        guard let bundleIdentifier else {
-            return false
-        }
-        return excludedBundleIDs.contains(bundleIdentifier)
-    }
-
-    static func parseBundleIDs(from text: String) -> [String] {
-        text
-            .components(separatedBy: CharacterSet(charactersIn: ",\n"))
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-            .reduce(into: [String]()) { partialResult, item in
-                if !partialResult.contains(item) {
-                    partialResult.append(item)
-                }
-            }
-            .sorted()
+        userDefaults.removeObject(forKey: "excludedBundleIDs")
     }
 
     private static func migratedAction(from storedRawValue: String?) -> WindowActionMode {
