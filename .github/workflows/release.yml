@@ -239,13 +239,9 @@ jobs:
           fi
 
           KEY_PATH=""
-          ISSUER_ARGS=()
           if [[ "$MODE" == "api_key" ]]; then
             KEY_PATH="$RUNNER_TEMP/AuthKey_${APPLE_NOTARYTOOL_KEY_ID}.p8"
             python3 -c 'import base64, pathlib, sys; pathlib.Path(sys.argv[1]).write_bytes(base64.b64decode(sys.argv[2]))' "$KEY_PATH" "$APPLE_NOTARYTOOL_KEY_P8_BASE64"
-            if [[ -n "${APPLE_NOTARYTOOL_ISSUER_ID:-}" ]]; then
-              ISSUER_ARGS=(--issuer "$APPLE_NOTARYTOOL_ISSUER_ID")
-            fi
           fi
 
           APP_PATH="dist/${{ matrix.product_name }}.app"
@@ -256,12 +252,20 @@ jobs:
           SUBMIT_JSON=""
 
           if [[ "$MODE" == "api_key" ]]; then
-            SUBMIT_JSON="$(xcrun notarytool submit "$UPLOAD_ZIP" \
-              --key "$KEY_PATH" \
-              --key-id "$APPLE_NOTARYTOOL_KEY_ID" \
-              "${ISSUER_ARGS[@]}" \
-              --wait \
-              --output-format json)"
+            if [[ -n "${APPLE_NOTARYTOOL_ISSUER_ID:-}" ]]; then
+              SUBMIT_JSON="$(xcrun notarytool submit "$UPLOAD_ZIP" \
+                --key "$KEY_PATH" \
+                --key-id "$APPLE_NOTARYTOOL_KEY_ID" \
+                --issuer "$APPLE_NOTARYTOOL_ISSUER_ID" \
+                --wait \
+                --output-format json)"
+            else
+              SUBMIT_JSON="$(xcrun notarytool submit "$UPLOAD_ZIP" \
+                --key "$KEY_PATH" \
+                --key-id "$APPLE_NOTARYTOOL_KEY_ID" \
+                --wait \
+                --output-format json)"
+            fi
           else
             SUBMIT_JSON="$(xcrun notarytool submit "$UPLOAD_ZIP" \
               --apple-id "$APPLE_ID" \
@@ -284,11 +288,18 @@ jobs:
           if [[ "$SUBMISSION_STATUS" != "Accepted" ]]; then
             echo "::error::Notary submission status is '$SUBMISSION_STATUS' (expected 'Accepted')."
             if [[ "$MODE" == "api_key" ]]; then
-              xcrun notarytool log "$SUBMISSION_ID" \
-                --key "$KEY_PATH" \
-                --key-id "$APPLE_NOTARYTOOL_KEY_ID" \
-                "${ISSUER_ARGS[@]}" \
-                --output-format json || true
+              if [[ -n "${APPLE_NOTARYTOOL_ISSUER_ID:-}" ]]; then
+                xcrun notarytool log "$SUBMISSION_ID" \
+                  --key "$KEY_PATH" \
+                  --key-id "$APPLE_NOTARYTOOL_KEY_ID" \
+                  --issuer "$APPLE_NOTARYTOOL_ISSUER_ID" \
+                  --output-format json || true
+              else
+                xcrun notarytool log "$SUBMISSION_ID" \
+                  --key "$KEY_PATH" \
+                  --key-id "$APPLE_NOTARYTOOL_KEY_ID" \
+                  --output-format json || true
+              fi
             else
               xcrun notarytool log "$SUBMISSION_ID" \
                 --apple-id "$APPLE_ID" \
