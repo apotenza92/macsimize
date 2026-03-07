@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [v0.2.3]
+
+- Fixed the Settings action-mode control so switching between Maximize and Full Screen applies the selected behavior immediately instead of behaving one click behind.
+
 ## [v0.2.2]
 
 - Added startup permission prompting for Accessibility and Input Monitoring so first-run and reopened launches behave like a standard macOS utility app.

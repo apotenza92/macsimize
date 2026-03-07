@@ -124,13 +124,8 @@ struct PreferencesView: View {
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
 
-            Picker("", selection: $settings.selectedAction) {
-                ForEach(WindowActionMode.allCases) { mode in
-                    Text(mode.displayName).tag(mode)
-                }
-            }
-            .labelsHidden()
-            .pickerStyle(.segmented)
+            WindowActionSegmentedControl(selection: $settings.selectedAction)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
@@ -159,5 +154,59 @@ struct PreferencesView: View {
             return
         }
         NSWorkspace.shared.open(url)
+    }
+}
+
+private struct WindowActionSegmentedControl: NSViewRepresentable {
+    @Binding var selection: WindowActionMode
+
+    private let modes = WindowActionMode.allCases
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(selection: $selection, modes: modes)
+    }
+
+    func makeNSView(context: Context) -> NSSegmentedControl {
+        let control = NSSegmentedControl(
+            labels: modes.map(\.displayName),
+            trackingMode: .selectOne,
+            target: context.coordinator,
+            action: #selector(Coordinator.selectionChanged(_:))
+        )
+        control.selectedSegment = selectedSegmentIndex
+        return control
+    }
+
+    func updateNSView(_ control: NSSegmentedControl, context: Context) {
+        context.coordinator.selection = $selection
+
+        if control.selectedSegment != selectedSegmentIndex {
+            control.selectedSegment = selectedSegmentIndex
+        }
+    }
+
+    private var selectedSegmentIndex: Int {
+        modes.firstIndex(of: selection) ?? 0
+    }
+
+    final class Coordinator: NSObject {
+        var selection: Binding<WindowActionMode>
+
+        private let modes: [WindowActionMode]
+
+        init(selection: Binding<WindowActionMode>, modes: [WindowActionMode]) {
+            self.selection = selection
+            self.modes = modes
+        }
+
+        @MainActor
+        @objc func selectionChanged(_ sender: NSSegmentedControl) {
+            let index = sender.selectedSegment
+            guard modes.indices.contains(index) else {
+                return
+            }
+
+            selection.wrappedValue = modes[index]
+        }
     }
 }
