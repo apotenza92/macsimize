@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-: "${BUNDLE_ID:=com.example.Macsimize}"
+: "${BUNDLE_ID:=pzc.Macsimize}"
 : "${APP_NAME:=Macsimize}"
 : "${MACSIMIZE_START_TIMEOUT_SECONDS:=12}"
 : "${MACSIMIZE_READY_LOG_MARKER:=Event tap started.}"

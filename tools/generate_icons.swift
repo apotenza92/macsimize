@@ -154,13 +154,29 @@ func drawGlyphVerticalGradient(in rect: NSRect, lineWidth: CGFloat, topAlpha: CG
     ctx.restoreGState()
 }
 
-func drawIcon(size: Int, theme: IconTheme) -> NSImage {
+func drawIcon(size: Int, theme: IconTheme) -> NSBitmapImageRep {
     let s = CGFloat(size)
-    let image = NSImage(size: NSSize(width: s, height: s))
+    guard let rep = NSBitmapImageRep(
+        bitmapDataPlanes: nil,
+        pixelsWide: size,
+        pixelsHigh: size,
+        bitsPerSample: 8,
+        samplesPerPixel: 4,
+        hasAlpha: true,
+        isPlanar: false,
+        colorSpaceName: .deviceRGB,
+        bytesPerRow: 0,
+        bitsPerPixel: 0
+    ) else {
+        fatalError("Failed to allocate bitmap for icon size \(size)")
+    }
 
-    image.lockFocus()
-    defer { image.unlockFocus() }
+    rep.size = NSSize(width: s, height: s)
 
+    NSGraphicsContext.saveGraphicsState()
+    defer { NSGraphicsContext.restoreGraphicsState() }
+
+    NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
     NSGraphicsContext.current?.imageInterpolation = .high
     let canvas = NSRect(x: 0, y: 0, width: s, height: s)
     NSColor.clear.setFill()
@@ -200,13 +216,11 @@ func drawIcon(size: Int, theme: IconTheme) -> NSImage {
         bottomAlpha: theme.glyphBottomAlpha
     )
 
-    return image
+    return rep
 }
 
-func writePNG(_ image: NSImage, to url: URL) throws {
-    guard let tiff = image.tiffRepresentation,
-          let rep = NSBitmapImageRep(data: tiff),
-          let data = rep.representation(using: .png, properties: [:]) else {
+func writePNG(_ rep: NSBitmapImageRep, to url: URL) throws {
+    guard let data = rep.representation(using: .png, properties: [:]) else {
         throw NSError(domain: "MacsimizeIcon", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to encode PNG"])
     }
     try data.write(to: url, options: .atomic)

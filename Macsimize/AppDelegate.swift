@@ -7,7 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var settingsWindowController = SettingsWindowController(appState: appState)
     private var menuBarController: MenuBarController?
     private let openSettingsLaunchArguments: Set<String> = ["--settings", "-settings", "--open-settings"]
-    private let openSettingsDistributedNotification = Notification.Name("com.example.Macsimize.openSettings")
+    private let openSettingsDistributedNotification = Notification.Name("pzc.Macsimize.openSettings")
     private var openSettingsObserver: NSObjectProtocol?
 
     func applicationDidFinishLaunching(_ notification: Notification) {

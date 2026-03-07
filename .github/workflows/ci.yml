@@ -17,11 +17,11 @@ jobs:
         include:
           - channel: stable
             product_name: Macsimize
-            bundle_id: com.example.Macsimize
+            bundle_id: pzc.Macsimize
             app_icon: AppIcon
           - channel: beta
             product_name: Macsimize Beta
-            bundle_id: com.example.Macsimize.beta
+            bundle_id: pzc.Macsimize.beta
             app_icon: AppIconBeta
     runs-on: macos-15
     steps:

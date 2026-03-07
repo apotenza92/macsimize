@@ -372,7 +372,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.MacsimizeTests;
+				PRODUCT_BUNDLE_IDENTIFIER = pzc.MacsimizeTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_VERSION = 6.0;
@@ -397,7 +397,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS = "";
 				MARKETING_VERSION = 0.2.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.Macsimize;
+				PRODUCT_BUNDLE_IDENTIFIER = pzc.Macsimize;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) $(MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS)";
@@ -422,7 +422,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS = "";
 				MARKETING_VERSION = 0.2.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.Macsimize;
+				PRODUCT_BUNDLE_IDENTIFIER = pzc.Macsimize;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) $(MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS)";
@@ -551,7 +551,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.MacsimizeTests;
+				PRODUCT_BUNDLE_IDENTIFIER = pzc.MacsimizeTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";

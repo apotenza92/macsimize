@@ -79,9 +79,9 @@ final class SettingsStoreTests: XCTestCase {
     func testEffectiveExcludedBundleIDsIncludesOwnBundleIdentifier() {
         let effective = EventTapService.effectiveExcludedBundleIDs(
             from: ["com.apple.Finder"],
-            ownBundleID: "com.example.Macsimize"
+            ownBundleID: "pzc.Macsimize"
         )
 
-        XCTAssertEqual(effective, ["com.apple.Finder", "com.example.Macsimize"])
+        XCTAssertEqual(effective, ["com.apple.Finder", "pzc.Macsimize"])
     }
 }

@@ -9,7 +9,7 @@ final class DebugDiagnostics: ObservableObject, @unchecked Sendable {
         let message: String
     }
 
-    private let logger = Logger(subsystem: "com.example.Macsimize", category: "Diagnostics")
+    private let logger = Logger(subsystem: "pzc.Macsimize", category: "Diagnostics")
     private let maxEntries = 40
     private var isEnabled: (() -> Bool)?
 
