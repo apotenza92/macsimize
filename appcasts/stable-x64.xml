@@ -5,20 +5,17 @@
     <description>Macsimize update feed (stable channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.2.2</title>
-      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.2</link>
-      <sparkle:version>200290000</sparkle:version>
-      <sparkle:shortVersionString>0.2.2</sparkle:shortVersionString>
+      <title>Version 0.2.3</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.3</link>
+      <sparkle:version>200390000</sparkle:version>
+      <sparkle:shortVersionString>0.2.3</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Added startup permission prompting for Accessibility and Input Monitoring so first-run and reopened launches behave like a standard macOS utility app.
-- Added native Sparkle update support with in-app update checks and configurable update frequency in Settings.
-- Added signed Sparkle appcast generation for stable and beta channels and wired it into the release workflow.
-- Added dedicated Macsimize Sparkle signing key support and embedded per-channel Sparkle feed URLs in release builds.]]></description>
-      <pubDate>Sat, 07 Mar 2026 12:14:49 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.2/Macsimize-v0.2.2-macos-x64.zip"
-                 sparkle:edSignature="dHEd6kwFOtdzVq8eSEUXuLImTxj+rFxTK+ZIurhJj6AC9fEP89KM/VEid7D7mzHB32089YPiGljioJussmpMBA=="
-                 length="2676110"
+      <description sparkle:format="plain-text"><![CDATA[- Fixed the Settings action-mode control so switching between Maximize and Full Screen applies the selected behavior immediately instead of behaving one click behind.]]></description>
+      <pubDate>Sat, 07 Mar 2026 12:33:28 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.3/Macsimize-v0.2.3-macos-x64.zip"
+                 sparkle:edSignature="0dzGRY+NiKMzqkoNsX1FR/HUo2tq1z9HCi6SCnzuJGd9xotWvWUEqNSId/3QbWDXSyeKwZ02rLpKFcSZf7DRDg=="
+                 length="2680147"
                  type="application/octet-stream" />
     </item>
   </channel>
