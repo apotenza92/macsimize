@@ -5,17 +5,19 @@
     <description>Macsimize update feed (stable channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.2.3</title>
-      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.3</link>
-      <sparkle:version>200390000</sparkle:version>
-      <sparkle:shortVersionString>0.2.3</sparkle:shortVersionString>
+      <title>Version 0.2.4</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.4</link>
+      <sparkle:version>200490000</sparkle:version>
+      <sparkle:shortVersionString>0.2.4</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Fixed the Settings action-mode control so switching between Maximize and Full Screen applies the selected behavior immediately instead of behaving one click behind.]]></description>
-      <pubDate>Sat, 07 Mar 2026 12:33:28 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.3/Macsimize-v0.2.3-macos-x64.zip"
-                 sparkle:edSignature="0dzGRY+NiKMzqkoNsX1FR/HUo2tq1z9HCi6SCnzuJGd9xotWvWUEqNSId/3QbWDXSyeKwZ02rLpKFcSZf7DRDg=="
-                 length="2680147"
+      <description sparkle:format="plain-text"><![CDATA[- Fixed the Settings action picker so Maximize and Full Screen persist and apply the selected mode immediately without crashing or lagging one click behind.
+- Cleaned up startup permission handling so signed development and release builds no longer emit false Accessibility/Input Monitoring denial churn before the event tap starts.
+- Verified the maximize and full-screen modes end to end against a real green-button click on TextEdit, in addition to the automated test suite.]]></description>
+      <pubDate>Sat, 07 Mar 2026 13:48:48 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.4/Macsimize-v0.2.4-macos-x64.zip"
+                 sparkle:edSignature="YE8noa+ND8QNon5vDg0nRoKu3Pwck87LQMjFN5tCXj0LJAEC5iMOLOtfYp9jJMY6KqBt/gEQ0K4t8k2yhoglCg=="
+                 length="2678225"
                  type="application/octet-stream" />
     </item>
   </channel>
