@@ -6,6 +6,13 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [v0.2.2]
+
+- Added startup permission prompting for Accessibility and Input Monitoring so first-run and reopened launches behave like a standard macOS utility app.
+- Added native Sparkle update support with in-app update checks and configurable update frequency in Settings.
+- Added signed Sparkle appcast generation for stable and beta channels and wired it into the release workflow.
+- Added dedicated Macsimize Sparkle signing key support and embedded per-channel Sparkle feed URLs in release builds.
+
 ## [v0.2.1]
 
 - Added menu-bar-first green-button interception with maximize and full-screen modes.

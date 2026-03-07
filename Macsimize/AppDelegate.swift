@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let openSettingsDistributedNotification = Notification.Name("pzc.Macsimize.openSettings")
     private var openSettingsObserver: NSObjectProtocol?
     private var updateManager: UpdateManager { appState.updateManager }
+    private let isAutomatedTestSuite = ProcessInfo.processInfo.environment["MACSIMIZE_TEST_SUITE"] == "1"
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -78,6 +79,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let needsInputMonitoring = !permissionState.inputMonitoringGranted
         guard needsAccessibility || needsInputMonitoring else { return }
 
+        if isAutomatedTestSuite {
+            appState.permissions.startMonitoringForChanges()
+            return
+        }
+
         if allowPrompt && needsAccessibility {
             appState.requestAccessibilityPermission()
         }
@@ -114,6 +120,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if shouldRequestSettingsFromExisting {
             RuntimeLogger.log("Existing instance detected (\(others.map { $0.processIdentifier })); requesting settings window from the running app")
             requestSettingsOpenFromExistingInstance()
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
             NSApp.terminate(nil)
             return true
         }
