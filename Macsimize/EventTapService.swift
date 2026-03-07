@@ -148,9 +148,12 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
         }
     }
 
-    private static func effectiveExcludedBundleIDs(from excludedBundleIDs: [String]) -> Set<String> {
+    static func effectiveExcludedBundleIDs(
+        from excludedBundleIDs: [String],
+        ownBundleID: String? = Bundle.main.bundleIdentifier
+    ) -> Set<String> {
         var bundleIDs = Set(excludedBundleIDs)
-        if let ownBundleID = Bundle.main.bundleIdentifier {
+        if let ownBundleID {
             bundleIDs.insert(ownBundleID)
         }
         return bundleIDs
