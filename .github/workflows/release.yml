@@ -229,7 +229,7 @@ jobs:
           set -euo pipefail
 
           MODE=""
-          if [[ -n "${APPLE_NOTARYTOOL_KEY_ID:-}" && -n "${APPLE_NOTARYTOOL_ISSUER_ID:-}" && -n "${APPLE_NOTARYTOOL_KEY_P8_BASE64:-}" ]]; then
+          if [[ -n "${APPLE_NOTARYTOOL_KEY_ID:-}" && -n "${APPLE_NOTARYTOOL_KEY_P8_BASE64:-}" ]]; then
             MODE="api_key"
           elif [[ -n "${APPLE_ID:-}" && -n "${APPLE_APP_SPECIFIC_PASSWORD:-}" && -n "${APPLE_TEAM_ID:-}" ]]; then
             MODE="apple_id"
@@ -239,9 +239,13 @@ jobs:
           fi
 
           KEY_PATH=""
+          ISSUER_ARGS=()
           if [[ "$MODE" == "api_key" ]]; then
             KEY_PATH="$RUNNER_TEMP/AuthKey_${APPLE_NOTARYTOOL_KEY_ID}.p8"
             python3 -c 'import base64, pathlib, sys; pathlib.Path(sys.argv[1]).write_bytes(base64.b64decode(sys.argv[2]))' "$KEY_PATH" "$APPLE_NOTARYTOOL_KEY_P8_BASE64"
+            if [[ -n "${APPLE_NOTARYTOOL_ISSUER_ID:-}" ]]; then
+              ISSUER_ARGS=(--issuer "$APPLE_NOTARYTOOL_ISSUER_ID")
+            fi
           fi
 
           APP_PATH="dist/${{ matrix.product_name }}.app"
@@ -255,7 +259,7 @@ jobs:
             SUBMIT_JSON="$(xcrun notarytool submit "$UPLOAD_ZIP" \
               --key "$KEY_PATH" \
               --key-id "$APPLE_NOTARYTOOL_KEY_ID" \
-              --issuer "$APPLE_NOTARYTOOL_ISSUER_ID" \
+              "${ISSUER_ARGS[@]}" \
               --wait \
               --output-format json)"
           else
@@ -283,7 +287,7 @@ jobs:
               xcrun notarytool log "$SUBMISSION_ID" \
                 --key "$KEY_PATH" \
                 --key-id "$APPLE_NOTARYTOOL_KEY_ID" \
-                --issuer "$APPLE_NOTARYTOOL_ISSUER_ID" \
+                "${ISSUER_ARGS[@]}" \
                 --output-format json || true
             else
               xcrun notarytool log "$SUBMISSION_ID" \
