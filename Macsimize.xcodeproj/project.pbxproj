@@ -1,0 +1,592 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0078EB4061C4BF4D2D37EFC5 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCC9EABC0A52521090781119 /* SettingsStore.swift */; };
+		0866F34659970F00A62F1AB6 /* GreenButtonInterceptionControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85477C08043CBA13C681FD8E /* GreenButtonInterceptionControllerTests.swift */; };
+		0C72948B6836D3F29DE95890 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B04EA2F430D809B32F21432 /* PreferencesView.swift */; };
+		21F092E0D2C54D0B178BF7E8 /* WindowFrameStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6D0D4D5F0829BF1A678276 /* WindowFrameStoreTests.swift */; };
+		2C39187DFC43A71F6A2A40D7 /* ScreenHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53DA8BF79D2F15C1A5208A6B /* ScreenHelpers.swift */; };
+		4AE4698E1DEAC6E5497527C1 /* AXHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F7D6C0DEE11E07F975C689 /* AXHelpers.swift */; };
+		5005E746BCEEB488D7A5B0FD /* WindowActionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 592678B556CE4E12A200760F /* WindowActionEngine.swift */; };
+		529B03F012F6339FC7619FF8 /* MacsimizeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB8C7A9E5C3303B2FFBCE1B3 /* MacsimizeApp.swift */; };
+		5489456F5F4CA0F36C591AE8 /* MaximizeStrategy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93BEDCD66454CE9825F6CB01 /* MaximizeStrategy.swift */; };
+		59EFAB08DD3E6971BF7B6CB8 /* SecureEventInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7C76DBF48B91DAF0D7B0527 /* SecureEventInput.swift */; };
+		5F934AFAAFB875192BB52DA5 /* PermissionStateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F44994B9169C68C9FF8B5260 /* PermissionStateTests.swift */; };
+		6480B4566F9330B7BF0D4A99 /* PermissionsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA1B7A1EBB9D3930CBC69187 /* PermissionsCoordinator.swift */; };
+		69654F029BEE1B1EB99D2E54 /* ClickedWindowContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17FFABECFDAAF65E2540A85D /* ClickedWindowContext.swift */; };
+		6CEDDCC383DFD1F96EB1B537 /* SettingsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C27532EEB4187EB32351B1 /* SettingsWindowController.swift */; };
+		6EC8DC3C1B223FD44EE9808A /* DebugDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = D855925665EF48DC2F303E6B /* DebugDiagnostics.swift */; };
+		83A36437A8F280351FBE8EFE /* MaximizeStrategyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47D37FC9D090345C6A471647 /* MaximizeStrategyTests.swift */; };
+		9223112092FD8BB0C970D527 /* GreenButtonInterceptionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49834A2AF06AABED0928E758 /* GreenButtonInterceptionController.swift */; };
+		9B8F8289BDEA816C53DB238E /* WindowActionMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45E45D5F1E037A744D6BA564 /* WindowActionMode.swift */; };
+		C1C1A083CDE1BA596C1273FA /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77EFEEA6F298CB61FC79BB4C /* MenuBarController.swift */; };
+		D3C556A58592F74861DDF993 /* WindowFrameStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC3E30957BDF7F2C466AFF29 /* WindowFrameStore.swift */; };
+		DC60CE739C57CA7000BE8199 /* AccessibilityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DDC957E784C785E5E29DE4FD /* AccessibilityService.swift */; };
+		DE79ECD5E048678A45620E41 /* PermissionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2DAD306D6C174F410351714 /* PermissionState.swift */; };
+		E1D4171A60F9531CDFC396B2 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62231D81BDCE9A2631E61186 /* AppDelegate.swift */; };
+		E5E6036DAD92596A39EF5ED2 /* EventTapService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7FCB5830085F5C4B999BE3C /* EventTapService.swift */; };
+		E9CD70A8EAD98C7A1BDDBF0C /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 78E4CED87C9A622E1DF8399B /* Cocoa.framework */; };
+		EBA891D548840AF28B9EADE4 /* RuntimeLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B778E538ADF6995AD4900DD /* RuntimeLogger.swift */; };
+		ED44708BD3D00D3ACD5E6360 /* WindowActionEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F05F341F856A19558AB88CD6 /* WindowActionEngineTests.swift */; };
+		F0213AF62E1A7E1182A32BB8 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 78E4CED87C9A622E1DF8399B /* Cocoa.framework */; };
+		F848FCF8E2EFDC21EB2509C9 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C84A9F92F687B14DF66FC445 /* AppState.swift */; };
+		FE8371893A5540E249E7B826 /* SettingsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56F75A96FF840A05E84CFA8F /* SettingsStoreTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		AEE71FCEB0D0601B2BC690DD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F9B04B2E9AE8435406E0B0A0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6F76AA400FC3541750581AB7;
+			remoteInfo = Macsimize;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0773551F8EAFAE3E02E0E77A /* ManualTestPlan.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; path = ManualTestPlan.md; sourceTree = "<group>"; };
+		11AA67F3533BB389E21A0D8D /* Macsimize.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Macsimize.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		17FFABECFDAAF65E2540A85D /* ClickedWindowContext.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClickedWindowContext.swift; sourceTree = "<group>"; };
+		305D85E6389B1DEBAD851B16 /* MacsimizeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacsimizeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		45C27532EEB4187EB32351B1 /* SettingsWindowController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsWindowController.swift; sourceTree = "<group>"; };
+		45E45D5F1E037A744D6BA564 /* WindowActionMode.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WindowActionMode.swift; sourceTree = "<group>"; };
+		47D37FC9D090345C6A471647 /* MaximizeStrategyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MaximizeStrategyTests.swift; sourceTree = "<group>"; };
+		49834A2AF06AABED0928E758 /* GreenButtonInterceptionController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GreenButtonInterceptionController.swift; sourceTree = "<group>"; };
+		53DA8BF79D2F15C1A5208A6B /* ScreenHelpers.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScreenHelpers.swift; sourceTree = "<group>"; };
+		56F75A96FF840A05E84CFA8F /* SettingsStoreTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsStoreTests.swift; sourceTree = "<group>"; };
+		592678B556CE4E12A200760F /* WindowActionEngine.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WindowActionEngine.swift; sourceTree = "<group>"; };
+		5C288B7CC408B2FDFF17DE83 /* Macsimize.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = Macsimize.entitlements; sourceTree = "<group>"; };
+		62231D81BDCE9A2631E61186 /* AppDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		6B778E538ADF6995AD4900DD /* RuntimeLogger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RuntimeLogger.swift; sourceTree = "<group>"; };
+		77EFEEA6F298CB61FC79BB4C /* MenuBarController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
+		78E4CED87C9A622E1DF8399B /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
+		7B04EA2F430D809B32F21432 /* PreferencesView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
+		85477C08043CBA13C681FD8E /* GreenButtonInterceptionControllerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GreenButtonInterceptionControllerTests.swift; sourceTree = "<group>"; };
+		8A825EE6AF3223A8F3F1FFD1 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		93BEDCD66454CE9825F6CB01 /* MaximizeStrategy.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MaximizeStrategy.swift; sourceTree = "<group>"; };
+		9A6D0D4D5F0829BF1A678276 /* WindowFrameStoreTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WindowFrameStoreTests.swift; sourceTree = "<group>"; };
+		B7C76DBF48B91DAF0D7B0527 /* SecureEventInput.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SecureEventInput.swift; sourceTree = "<group>"; };
+		C2DAD306D6C174F410351714 /* PermissionState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PermissionState.swift; sourceTree = "<group>"; };
+		C5F7D6C0DEE11E07F975C689 /* AXHelpers.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AXHelpers.swift; sourceTree = "<group>"; };
+		C84A9F92F687B14DF66FC445 /* AppState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		CB8C7A9E5C3303B2FFBCE1B3 /* MacsimizeApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MacsimizeApp.swift; sourceTree = "<group>"; };
+		D49364C02B10669742DA715E /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		D7FCB5830085F5C4B999BE3C /* EventTapService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = EventTapService.swift; sourceTree = "<group>"; };
+		D855925665EF48DC2F303E6B /* DebugDiagnostics.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DebugDiagnostics.swift; sourceTree = "<group>"; };
+		DCC9EABC0A52521090781119 /* SettingsStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
+		DDC957E784C785E5E29DE4FD /* AccessibilityService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AccessibilityService.swift; sourceTree = "<group>"; };
+		EA1B7A1EBB9D3930CBC69187 /* PermissionsCoordinator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PermissionsCoordinator.swift; sourceTree = "<group>"; };
+		F05F341F856A19558AB88CD6 /* WindowActionEngineTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WindowActionEngineTests.swift; sourceTree = "<group>"; };
+		F44994B9169C68C9FF8B5260 /* PermissionStateTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PermissionStateTests.swift; sourceTree = "<group>"; };
+		FC3E30957BDF7F2C466AFF29 /* WindowFrameStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WindowFrameStore.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		143D6413BE54ABDDF1D72EB4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F0213AF62E1A7E1182A32BB8 /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FF54B3AB2AFA4F3EDAED7EBE /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E9CD70A8EAD98C7A1BDDBF0C /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		1CA5B21EBCBEB8CADE957DEF /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				C5F7D6C0DEE11E07F975C689 /* AXHelpers.swift */,
+				53DA8BF79D2F15C1A5208A6B /* ScreenHelpers.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		1CB398781A8C3D741AA3AADB /* OS X */ = {
+			isa = PBXGroup;
+			children = (
+				78E4CED87C9A622E1DF8399B /* Cocoa.framework */,
+			);
+			name = "OS X";
+			sourceTree = "<group>";
+		};
+		2593C02D3150DECF98C5CB7C /* Macsimize */ = {
+			isa = PBXGroup;
+			children = (
+				390509AA723CDBC1BB12DF4E /* Models */,
+				1CA5B21EBCBEB8CADE957DEF /* Utilities */,
+				D49364C02B10669742DA715E /* Info.plist */,
+				5C288B7CC408B2FDFF17DE83 /* Macsimize.entitlements */,
+				CB8C7A9E5C3303B2FFBCE1B3 /* MacsimizeApp.swift */,
+				62231D81BDCE9A2631E61186 /* AppDelegate.swift */,
+				C84A9F92F687B14DF66FC445 /* AppState.swift */,
+				77EFEEA6F298CB61FC79BB4C /* MenuBarController.swift */,
+				45C27532EEB4187EB32351B1 /* SettingsWindowController.swift */,
+				7B04EA2F430D809B32F21432 /* PreferencesView.swift */,
+				DCC9EABC0A52521090781119 /* SettingsStore.swift */,
+				EA1B7A1EBB9D3930CBC69187 /* PermissionsCoordinator.swift */,
+				D7FCB5830085F5C4B999BE3C /* EventTapService.swift */,
+				49834A2AF06AABED0928E758 /* GreenButtonInterceptionController.swift */,
+				DDC957E784C785E5E29DE4FD /* AccessibilityService.swift */,
+				592678B556CE4E12A200760F /* WindowActionEngine.swift */,
+				93BEDCD66454CE9825F6CB01 /* MaximizeStrategy.swift */,
+				FC3E30957BDF7F2C466AFF29 /* WindowFrameStore.swift */,
+				D855925665EF48DC2F303E6B /* DebugDiagnostics.swift */,
+				6B778E538ADF6995AD4900DD /* RuntimeLogger.swift */,
+				B7C76DBF48B91DAF0D7B0527 /* SecureEventInput.swift */,
+			);
+			path = Macsimize;
+			sourceTree = "<group>";
+		};
+		390509AA723CDBC1BB12DF4E /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				45E45D5F1E037A744D6BA564 /* WindowActionMode.swift */,
+				17FFABECFDAAF65E2540A85D /* ClickedWindowContext.swift */,
+				C2DAD306D6C174F410351714 /* PermissionState.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		3C6670D3C87B80FE9F28F4E0 = {
+			isa = PBXGroup;
+			children = (
+				CF28374F0907FD4D60B22D41 /* Products */,
+				C0DBD9643B039B9C1C8B2C05 /* Frameworks */,
+				2593C02D3150DECF98C5CB7C /* Macsimize */,
+				AC6ABC9059FEEE4E8D821F68 /* MacsimizeTests */,
+				546E260641CE286F433E70C4 /* Tests */,
+				8A825EE6AF3223A8F3F1FFD1 /* README.md */,
+			);
+			sourceTree = "<group>";
+		};
+		546E260641CE286F433E70C4 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				0773551F8EAFAE3E02E0E77A /* ManualTestPlan.md */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		AC6ABC9059FEEE4E8D821F68 /* MacsimizeTests */ = {
+			isa = PBXGroup;
+			children = (
+				56F75A96FF840A05E84CFA8F /* SettingsStoreTests.swift */,
+				47D37FC9D090345C6A471647 /* MaximizeStrategyTests.swift */,
+				9A6D0D4D5F0829BF1A678276 /* WindowFrameStoreTests.swift */,
+				F05F341F856A19558AB88CD6 /* WindowActionEngineTests.swift */,
+				85477C08043CBA13C681FD8E /* GreenButtonInterceptionControllerTests.swift */,
+				F44994B9169C68C9FF8B5260 /* PermissionStateTests.swift */,
+			);
+			path = MacsimizeTests;
+			sourceTree = "<group>";
+		};
+		C0DBD9643B039B9C1C8B2C05 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1CB398781A8C3D741AA3AADB /* OS X */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		CF28374F0907FD4D60B22D41 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				11AA67F3533BB389E21A0D8D /* Macsimize.app */,
+				305D85E6389B1DEBAD851B16 /* MacsimizeTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		6F76AA400FC3541750581AB7 /* Macsimize */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 576BBAA446E284E479844812 /* Build configuration list for PBXNativeTarget "Macsimize" */;
+			buildPhases = (
+				427B6D1D5872D6C9349C68CA /* Sources */,
+				FF54B3AB2AFA4F3EDAED7EBE /* Frameworks */,
+				8C59DC18BD298E2F19A3CDA7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Macsimize;
+			productName = Macsimize;
+			productReference = 11AA67F3533BB389E21A0D8D /* Macsimize.app */;
+			productType = "com.apple.product-type.application";
+		};
+		FCB33F8815A005FB6FD321A0 /* MacsimizeTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DB9602ECB84161BEC0B4C7E3 /* Build configuration list for PBXNativeTarget "MacsimizeTests" */;
+			buildPhases = (
+				517306034336C79938D3B48B /* Sources */,
+				143D6413BE54ABDDF1D72EB4 /* Frameworks */,
+				4BE0D79F5F5AD022E7E1EED7 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				6922DC2AA2C487B7A57A63DD /* PBXTargetDependency */,
+			);
+			name = MacsimizeTests;
+			productName = MacsimizeTests;
+			productReference = 305D85E6389B1DEBAD851B16 /* MacsimizeTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F9B04B2E9AE8435406E0B0A0 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					6F76AA400FC3541750581AB7 = {
+						CreatedOnToolsVersion = 26.3;
+						DevelopmentTeam = 27JL2VERNC;
+						ProvisioningStyle = Automatic;
+					};
+					FCB33F8815A005FB6FD321A0 = {
+						CreatedOnToolsVersion = 26.3;
+						TestTargetID = 6F76AA400FC3541750581AB7;
+					};
+				};
+			};
+			buildConfigurationList = 30BCE9F1FCFC358EEF823521 /* Build configuration list for PBXProject "Macsimize" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 3C6670D3C87B80FE9F28F4E0;
+			productRefGroup = CF28374F0907FD4D60B22D41 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				6F76AA400FC3541750581AB7 /* Macsimize */,
+				FCB33F8815A005FB6FD321A0 /* MacsimizeTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		4BE0D79F5F5AD022E7E1EED7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8C59DC18BD298E2F19A3CDA7 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		427B6D1D5872D6C9349C68CA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				529B03F012F6339FC7619FF8 /* MacsimizeApp.swift in Sources */,
+				E1D4171A60F9531CDFC396B2 /* AppDelegate.swift in Sources */,
+				F848FCF8E2EFDC21EB2509C9 /* AppState.swift in Sources */,
+				C1C1A083CDE1BA596C1273FA /* MenuBarController.swift in Sources */,
+				6CEDDCC383DFD1F96EB1B537 /* SettingsWindowController.swift in Sources */,
+				0C72948B6836D3F29DE95890 /* PreferencesView.swift in Sources */,
+				0078EB4061C4BF4D2D37EFC5 /* SettingsStore.swift in Sources */,
+				6480B4566F9330B7BF0D4A99 /* PermissionsCoordinator.swift in Sources */,
+				E5E6036DAD92596A39EF5ED2 /* EventTapService.swift in Sources */,
+				9223112092FD8BB0C970D527 /* GreenButtonInterceptionController.swift in Sources */,
+				DC60CE739C57CA7000BE8199 /* AccessibilityService.swift in Sources */,
+				5005E746BCEEB488D7A5B0FD /* WindowActionEngine.swift in Sources */,
+				5489456F5F4CA0F36C591AE8 /* MaximizeStrategy.swift in Sources */,
+				D3C556A58592F74861DDF993 /* WindowFrameStore.swift in Sources */,
+				6EC8DC3C1B223FD44EE9808A /* DebugDiagnostics.swift in Sources */,
+				EBA891D548840AF28B9EADE4 /* RuntimeLogger.swift in Sources */,
+				59EFAB08DD3E6971BF7B6CB8 /* SecureEventInput.swift in Sources */,
+				9B8F8289BDEA816C53DB238E /* WindowActionMode.swift in Sources */,
+				69654F029BEE1B1EB99D2E54 /* ClickedWindowContext.swift in Sources */,
+				DE79ECD5E048678A45620E41 /* PermissionState.swift in Sources */,
+				4AE4698E1DEAC6E5497527C1 /* AXHelpers.swift in Sources */,
+				2C39187DFC43A71F6A2A40D7 /* ScreenHelpers.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		517306034336C79938D3B48B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FE8371893A5540E249E7B826 /* SettingsStoreTests.swift in Sources */,
+				83A36437A8F280351FBE8EFE /* MaximizeStrategyTests.swift in Sources */,
+				21F092E0D2C54D0B178BF7E8 /* WindowFrameStoreTests.swift in Sources */,
+				ED44708BD3D00D3ACD5E6360 /* WindowActionEngineTests.swift in Sources */,
+				0866F34659970F00A62F1AB6 /* GreenButtonInterceptionControllerTests.swift in Sources */,
+				5F934AFAAFB875192BB52DA5 /* PermissionStateTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		6922DC2AA2C487B7A57A63DD /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = Macsimize;
+			target = 6F76AA400FC3541750581AB7 /* Macsimize */;
+			targetProxy = AEE71FCEB0D0601B2BC690DD /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0BA9080AE76BA03AC05576D2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.MacsimizeTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Macsimize.app/Contents/MacOS/Macsimize";
+			};
+			name = Release;
+		};
+		4ED22AF937824F8DE9D8FB2A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Macsimize/Macsimize.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 27JL2VERNC;
+				ENABLE_APP_SANDBOX = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Macsimize/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS = "";
+				MARKETING_VERSION = 0.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.Macsimize;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) $(MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS)";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		9B50599B7FB21F50D8B6F7D0 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Macsimize/Macsimize.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 27JL2VERNC;
+				ENABLE_APP_SANDBOX = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Macsimize/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS = "";
+				MARKETING_VERSION = 0.2.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.Macsimize;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) $(MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS)";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		9EF7405B4D153AF54A8C7C7F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		DADDBC2BAF47F576C0121743 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		DC6FDAE0BE1AC8F84C2B5E06 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.MacsimizeTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Macsimize.app/Contents/MacOS/Macsimize";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		30BCE9F1FCFC358EEF823521 /* Build configuration list for PBXProject "Macsimize" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9EF7405B4D153AF54A8C7C7F /* Debug */,
+				DADDBC2BAF47F576C0121743 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		576BBAA446E284E479844812 /* Build configuration list for PBXNativeTarget "Macsimize" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9B50599B7FB21F50D8B6F7D0 /* Release */,
+				4ED22AF937824F8DE9D8FB2A /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DB9602ECB84161BEC0B4C7E3 /* Build configuration list for PBXNativeTarget "MacsimizeTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0BA9080AE76BA03AC05576D2 /* Release */,
+				DC6FDAE0BE1AC8F84C2B5E06 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = F9B04B2E9AE8435406E0B0A0 /* Project object */;
+}

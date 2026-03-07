@@ -1,0 +1,209 @@
+import ApplicationServices
+import CoreGraphics
+import XCTest
+@testable import Macsimize
+
+final class GreenButtonInterceptionControllerTests: XCTestCase {
+    func testBestFrameMatchIndexPrefersNearestMatchingButtonFrame() {
+        let frames = [
+            CGRect(x: 10, y: 10, width: 16, height: 16),
+            CGRect(x: 40, y: 10, width: 16, height: 16)
+        ]
+
+        let match = AccessibilityService.bestFrameMatchIndex(
+            for: CGPoint(x: 46, y: 18),
+            candidateFrames: frames,
+            tolerance: 6
+        )
+
+        XCTAssertEqual(match, 1)
+    }
+
+    func testBestFrameMatchIndexReturnsNilWhenPointMissesAllCandidates() {
+        let frames = [CGRect(x: 10, y: 10, width: 16, height: 16)]
+
+        let match = AccessibilityService.bestFrameMatchIndex(
+            for: CGPoint(x: 60, y: 60),
+            candidateFrames: frames,
+            tolerance: 4
+        )
+
+        XCTAssertNil(match)
+    }
+
+    func testMouseDownPassesThroughWhenFullScreenSelected() {
+        let resolver = ResolverSpy()
+        let diagnostics = DebugDiagnostics()
+        let controller = GreenButtonInterceptionController(
+            contextResolver: resolver,
+            diagnostics: diagnostics
+        )
+
+        let decision = controller.handleMouseDown(
+            location: CGPoint(x: 12, y: 24),
+            timestamp: 1,
+            configuration: InterceptionConfiguration(
+                selectedAction: .fullScreen,
+                diagnosticsEnabled: false,
+                excludedBundleIDs: []
+            )
+        )
+
+        assertDecision(decision, equals: .passThrough)
+        XCTAssertEqual(resolver.resolveCallCount, 0)
+    }
+
+    func testCleanClickConsumesThenReturnsPendingAction() {
+        let resolver = ResolverSpy()
+        resolver.context = Self.makeContext()
+        let diagnostics = DebugDiagnostics()
+        let controller = GreenButtonInterceptionController(
+            contextResolver: resolver,
+            diagnostics: diagnostics
+        )
+
+        let mouseDown = controller.handleMouseDown(
+            location: CGPoint(x: 100, y: 200),
+            timestamp: 10,
+            configuration: InterceptionConfiguration(
+                selectedAction: .maximize,
+                diagnosticsEnabled: true,
+                excludedBundleIDs: []
+            )
+        )
+        let mouseUp = controller.handleMouseUp(location: CGPoint(x: 101, y: 200), timestamp: 10.2)
+
+        assertDecision(mouseDown, equals: .consume)
+        guard case .performAction(let pendingAction) = mouseUp else {
+            return XCTFail("Expected performAction decision")
+        }
+        XCTAssertEqual(pendingAction.mode, .maximize)
+        XCTAssertEqual(pendingAction.context.windowIdentifier, Self.makeContext().windowIdentifier)
+    }
+
+    func testDragBeyondThresholdFlushesBufferedEventsImmediately() {
+        let resolver = ResolverSpy()
+        resolver.context = Self.makeContext()
+        let diagnostics = DebugDiagnostics()
+        let controller = GreenButtonInterceptionController(
+            contextResolver: resolver,
+            diagnostics: diagnostics,
+            maxClickDuration: 0.35,
+            maxMovement: 4
+        )
+
+        _ = controller.handleMouseDown(
+            location: CGPoint(x: 100, y: 100),
+            timestamp: 5,
+            configuration: InterceptionConfiguration(
+                selectedAction: .maximize,
+                diagnosticsEnabled: false,
+                excludedBundleIDs: []
+            )
+        )
+        let dragDecision = controller.handleMouseDragged(location: CGPoint(x: 110, y: 100))
+        let mouseUpDecision = controller.handleMouseUp(location: CGPoint(x: 110, y: 100), timestamp: 5.1)
+
+        assertDecision(dragDecision, equals: .flushBufferedEvents)
+        assertDecision(mouseUpDecision, equals: .passThrough)
+    }
+
+    func testHoldTimeoutFlushesBufferedEventsBeforeMouseUp() {
+        let resolver = ResolverSpy()
+        resolver.context = Self.makeContext()
+        let diagnostics = DebugDiagnostics()
+        let controller = GreenButtonInterceptionController(
+            contextResolver: resolver,
+            diagnostics: diagnostics,
+            maxClickDuration: 0.35,
+            maxMovement: 4
+        )
+
+        _ = controller.handleMouseDown(
+            location: CGPoint(x: 100, y: 100),
+            timestamp: 1,
+            configuration: InterceptionConfiguration(
+                selectedAction: .maximize,
+                diagnosticsEnabled: false,
+                excludedBundleIDs: []
+            )
+        )
+
+        let timeoutDecision = controller.handleHoldTimeout(timestamp: 1.36)
+        let mouseUpDecision = controller.handleMouseUp(location: CGPoint(x: 100, y: 100), timestamp: 1.6)
+
+        assertDecision(timeoutDecision, equals: .flushBufferedEvents)
+        assertDecision(mouseUpDecision, equals: .passThrough)
+    }
+
+    func testMouseDraggedWithinThresholdKeepsConsuming() {
+        let resolver = ResolverSpy()
+        resolver.context = Self.makeContext()
+        let diagnostics = DebugDiagnostics()
+        let controller = GreenButtonInterceptionController(
+            contextResolver: resolver,
+            diagnostics: diagnostics,
+            maxClickDuration: 0.35,
+            maxMovement: 4
+        )
+
+        _ = controller.handleMouseDown(
+            location: CGPoint(x: 100, y: 100),
+            timestamp: 1,
+            configuration: InterceptionConfiguration(
+                selectedAction: .maximize,
+                diagnosticsEnabled: false,
+                excludedBundleIDs: []
+            )
+        )
+
+        let dragDecision = controller.handleMouseDragged(location: CGPoint(x: 102, y: 101))
+
+        assertDecision(dragDecision, equals: .consume)
+    }
+
+    private func assertDecision(_ decision: MouseInterceptionDecision, equals expected: MouseInterceptionDecision) {
+        switch (decision, expected) {
+        case (.passThrough, .passThrough),
+             (.consume, .consume),
+             (.flushBufferedEvents, .flushBufferedEvents):
+            return
+        default:
+            XCTFail("Unexpected decision \(decision) != \(expected)")
+        }
+    }
+
+    private static func makeContext() -> ClickedWindowContext {
+        let element = AXUIElementCreateApplication(ProcessInfo.processInfo.processIdentifier)
+        return ClickedWindowContext(
+            appName: "Fixture",
+            bundleIdentifier: "com.example.fixture",
+            pid: ProcessInfo.processInfo.processIdentifier,
+            clickLocation: CGPoint(x: 100, y: 100),
+            buttonElement: element,
+            windowElement: element,
+            windowIdentifier: "fixture-window",
+            windowNumber: 1,
+            windowTitle: "Fixture",
+            elementRole: "AXButton",
+            elementSubrole: "AXZoomButton",
+            availableActions: ["AXPress"],
+            windowFrame: CGRect(x: 10, y: 10, width: 500, height: 400),
+            canSetPosition: true,
+            canSetSize: true,
+            isResizable: true,
+            isMainWindow: true,
+            isFocusedWindow: true
+        )
+    }
+}
+
+private final class ResolverSpy: GreenButtonContextResolving {
+    var context: ClickedWindowContext?
+    private(set) var resolveCallCount = 0
+
+    func resolveGreenButtonClick(at location: CGPoint, excludedBundleIDs: Set<String>) -> ClickedWindowContext? {
+        resolveCallCount += 1
+        return context
+    }
+}
