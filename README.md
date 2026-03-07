@@ -2,7 +2,7 @@
 
 <img src="Macsimize/Assets.xcassets/AppIcon.appiconset/icon_256x256.png" alt="Macsimize icon" width="96" />
 
-Macsimize is a lightweight macOS menu bar app that remaps a clean click on the green window button to either deterministic maximize behavior or the normal macOS full-screen action.
+Simple macOS menu bar app that remaps a click on the green window button from Full Screen to a simple maximize in the style of Windows / Linux.
 
 ## Install
 
@@ -47,11 +47,3 @@ xcodebuild -project Macsimize.xcodeproj -scheme Macsimize -configuration Debug b
 ```bash
 xcodebuild test -project Macsimize.xcodeproj -scheme Macsimize -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO
 ```
-
-## Releases
-
-Releases follow the same tag-driven flow as Docktor:
-
-1. Add a `## [vX.Y.Z]` or `## [vX.Y.Z-beta.N]` section to `CHANGELOG.md`.
-2. Ensure `MARKETING_VERSION` in `Macsimize.xcodeproj` matches the core version.
-3. Run `./scripts/release.sh <version>` from a clean `main` branch.
