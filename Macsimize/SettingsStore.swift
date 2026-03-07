@@ -9,6 +9,8 @@ final class SettingsStore: ObservableObject {
         static let showSettingsOnStartup = "showSettingsOnStartup"
         static let firstLaunchCompleted = "firstLaunchCompleted"
         static let startAtLogin = "startAtLogin"
+        static let updateCheckFrequency = "updateCheckFrequency"
+        static let lastUpdateCheckTimestamp = "lastUpdateCheckTimestamp"
     }
 
     private let userDefaults: UserDefaults
@@ -62,6 +64,18 @@ final class SettingsStore: ObservableObject {
         }
     }
 
+    @Published var updateCheckFrequency: UpdateCheckFrequency {
+        didSet {
+            userDefaults.set(updateCheckFrequency.rawValue, forKey: Key.updateCheckFrequency)
+        }
+    }
+
+    @Published private(set) var lastUpdateCheckTimestamp: TimeInterval {
+        didSet {
+            userDefaults.set(lastUpdateCheckTimestamp, forKey: Key.lastUpdateCheckTimestamp)
+        }
+    }
+
     init(userDefaults: UserDefaults = .standard) {
         self.userDefaults = userDefaults
 
@@ -75,6 +89,10 @@ final class SettingsStore: ObservableObject {
         let showSettingsOnStartup = userDefaults.object(forKey: Key.showSettingsOnStartup) as? Bool ?? false
         let firstLaunchCompleted = userDefaults.object(forKey: Key.firstLaunchCompleted) as? Bool ?? false
         let loginItemEnabled = SMAppService.mainApp.status == .enabled
+        let updateCheckFrequency = UpdateCheckFrequency(
+            rawValue: userDefaults.string(forKey: Key.updateCheckFrequency) ?? ""
+        ) ?? .daily
+        let lastUpdateCheckTimestamp = userDefaults.object(forKey: Key.lastUpdateCheckTimestamp) as? TimeInterval ?? 0
         let startAtLogin: Bool
         if loginItemEnabled {
             startAtLogin = true
@@ -87,7 +105,26 @@ final class SettingsStore: ObservableObject {
         self.showSettingsOnStartup = showSettingsOnStartup
         self.firstLaunchCompleted = firstLaunchCompleted
         self.startAtLogin = startAtLogin
+        self.updateCheckFrequency = updateCheckFrequency
+        self.lastUpdateCheckTimestamp = lastUpdateCheckTimestamp
         userDefaults.removeObject(forKey: "excludedBundleIDs")
+    }
+
+    func markUpdateCheckNow(now: Date = Date()) {
+        lastUpdateCheckTimestamp = now.timeIntervalSince1970
+    }
+
+    func shouldCheckForUpdatesOnLaunch(now: Date = Date()) -> Bool {
+        switch updateCheckFrequency {
+        case .never:
+            return false
+        case .startup:
+            return true
+        case .hourly, .sixHours, .twelveHours, .daily, .weekly:
+            guard let interval = updateCheckFrequency.interval else { return false }
+            let elapsed = now.timeIntervalSince1970 - lastUpdateCheckTimestamp
+            return elapsed >= interval
+        }
     }
 
     private static func migratedAction(from storedRawValue: String?) -> WindowActionMode {

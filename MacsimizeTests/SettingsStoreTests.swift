@@ -12,6 +12,7 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(store.selectedAction, .maximize)
         XCTAssertFalse(store.showSettingsOnStartup)
         XCTAssertFalse(store.firstLaunchCompleted)
+        XCTAssertEqual(store.updateCheckFrequency, .daily)
     }
 
     func testSettingsPersistAcrossInstances() {
@@ -24,12 +25,14 @@ final class SettingsStoreTests: XCTestCase {
         store.diagnosticsEnabled = false
         store.showSettingsOnStartup = true
         store.firstLaunchCompleted = true
+        store.updateCheckFrequency = .weekly
 
         let reloaded = SettingsStore(userDefaults: defaults)
         XCTAssertEqual(reloaded.selectedAction, .maximize)
         XCTAssertFalse(reloaded.diagnosticsEnabled)
         XCTAssertTrue(reloaded.showSettingsOnStartup)
         XCTAssertTrue(reloaded.firstLaunchCompleted)
+        XCTAssertEqual(reloaded.updateCheckFrequency, .weekly)
     }
 
     func testFullScreenPersistsAcrossInstances() {
@@ -80,5 +83,29 @@ final class SettingsStoreTests: XCTestCase {
         _ = SettingsStore(userDefaults: defaults)
 
         XCTAssertNil(defaults.object(forKey: "excludedBundleIDs"))
+    }
+
+    func testUpdateCheckFrequencyStartupAlwaysChecks() {
+        let defaults = UserDefaults(suiteName: #function)!
+        defaults.removePersistentDomain(forName: #function)
+        defer { defaults.removePersistentDomain(forName: #function) }
+
+        let store = SettingsStore(userDefaults: defaults)
+        store.updateCheckFrequency = .startup
+
+        XCTAssertTrue(store.shouldCheckForUpdatesOnLaunch(now: Date(timeIntervalSince1970: 1)))
+    }
+
+    func testUpdateCheckFrequencyRespectsElapsedInterval() {
+        let defaults = UserDefaults(suiteName: #function)!
+        defaults.removePersistentDomain(forName: #function)
+        defer { defaults.removePersistentDomain(forName: #function) }
+
+        let store = SettingsStore(userDefaults: defaults)
+        store.updateCheckFrequency = .daily
+        store.markUpdateCheckNow(now: Date(timeIntervalSince1970: 10))
+
+        XCTAssertFalse(store.shouldCheckForUpdatesOnLaunch(now: Date(timeIntervalSince1970: 10 + (23 * 60 * 60))))
+        XCTAssertTrue(store.shouldCheckForUpdatesOnLaunch(now: Date(timeIntervalSince1970: 10 + (24 * 60 * 60))))
     }
 }

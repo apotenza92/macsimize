@@ -7,6 +7,7 @@ final class AppState: ObservableObject {
     let settings: SettingsStore
     let permissions: PermissionsCoordinator
     let diagnostics: DebugDiagnostics
+    let updateManager: UpdateManager
     let accessibilityService: AccessibilityService
     let frameStore: WindowFrameStore
     let maximizeStrategy: MaximizeStrategy
@@ -19,6 +20,7 @@ final class AppState: ObservableObject {
         settings = SettingsStore(userDefaults: userDefaults)
         permissions = PermissionsCoordinator()
         diagnostics = DebugDiagnostics()
+        updateManager = UpdateManager(settings: settings)
         accessibilityService = AccessibilityService(diagnostics: diagnostics)
         frameStore = WindowFrameStore()
         maximizeStrategy = MaximizeStrategy(frameStore: frameStore, diagnostics: diagnostics)
@@ -48,6 +50,18 @@ final class AppState: ObservableObject {
         eventTapService.startIfPossible()
     }
 
+    func requestAccessibilityPermission() {
+        permissions.refresh(promptIfNeeded: true)
+        permissions.startMonitoringForChanges()
+        eventTapService.startIfPossible()
+    }
+
+    func requestInputMonitoringPermission() {
+        permissions.requestInputMonitoringPermission()
+        permissions.startMonitoringForChanges()
+        eventTapService.startIfPossible()
+    }
+
     func restartEventTap() {
         eventTapService.restart()
     }
@@ -60,15 +74,14 @@ final class AppState: ObservableObject {
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
             NSWorkspace.shared.open(url)
         }
-        refreshPermissions(promptIfNeeded: true)
+        requestAccessibilityPermission()
     }
 
     func openInputMonitoringSettings() {
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent") {
             NSWorkspace.shared.open(url)
         }
-        permissions.requestInputMonitoringPermission()
-        permissions.startMonitoringForChanges()
+        requestInputMonitoringPermission()
     }
 
     func showAboutPanel() {

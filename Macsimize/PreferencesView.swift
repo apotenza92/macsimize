@@ -4,6 +4,7 @@ import SwiftUI
 struct PreferencesView: View {
     @ObservedObject private var settings: SettingsStore
     @ObservedObject private var permissions: PermissionsCoordinator
+    @ObservedObject private var updateManager: UpdateManager
 
     private let appState: AppState
     private let preferredContentWidth: CGFloat = 500
@@ -15,12 +16,14 @@ struct PreferencesView: View {
         self.appState = appState
         _settings = ObservedObject(wrappedValue: appState.settings)
         _permissions = ObservedObject(wrappedValue: appState.permissions)
+        _updateManager = ObservedObject(wrappedValue: appState.updateManager)
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 16) {
             generalSection
             behaviorSection
+            updatesSection
             permissionsSection
         }
         .padding(horizontalPadding)
@@ -88,6 +91,27 @@ struct PreferencesView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var updatesSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Updates")
+                .font(sectionTitleFont)
+
+            HStack(alignment: .center, spacing: 12) {
+                Button("Check for Updates", action: updateManager.checkForUpdates)
+                    .buttonStyle(.borderedProminent)
+                    .disabled(!updateManager.canCheckForUpdates)
+
+                Picker("Check frequency", selection: $settings.updateCheckFrequency) {
+                    ForEach(UpdateCheckFrequency.allCases) { frequency in
+                        Text(frequency.displayName).tag(frequency)
+                    }
+                }
+                .labelsHidden()
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
     }
 

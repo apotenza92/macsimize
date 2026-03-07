@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+  <channel>
+    <title>Macsimize Stable Updates</title>
+    <description>Macsimize update feed (stable channel)</description>
+    <language>en</language>
+    <item>
+      <title>Version 0.2.1</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.1</link>
+      <sparkle:version>200190000</sparkle:version>
+      <sparkle:shortVersionString>0.2.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
+      <description sparkle:format="plain-text"><![CDATA[- Added menu-bar-first green-button interception with maximize and full-screen modes.
+- Added stable and beta side-by-side app variants for release builds.
+- Added automated settings shell checks and green-button regression checks.
+- Fixed release automation issues that blocked signed archive builds.
+- Simplified the settings window layout and fixed first-launch and reopen behavior.
+- Removed the ignored-apps and diagnostics controls from the settings UI.]]></description>
+      <pubDate>Sat, 07 Mar 2026 11:33:47 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.1/Macsimize-v0.2.1-macos-x64.zip"
+                 sparkle:edSignature="Zq60VHZD1GuAOYytzw7GV2PEwWaaqbzE6DZPWHDH5gt9lXdtHG0kqdLw8bPF4++QMLhc6zHhY6+XGpL6qXV+AQ=="
+                 length="1727313"
+                 type="application/octet-stream" />
+    </item>
+  </channel>
+</rss>

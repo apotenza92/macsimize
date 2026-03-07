@@ -11,6 +11,9 @@
 		0FA1A55B4B944A29A3A41531 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7EBA0D193235411C9188C66A /* Assets.xcassets */; };
 		0866F34659970F00A62F1AB6 /* GreenButtonInterceptionControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85477C08043CBA13C681FD8E /* GreenButtonInterceptionControllerTests.swift */; };
 		0C72948B6836D3F29DE95890 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B04EA2F430D809B32F21432 /* PreferencesView.swift */; };
+		A1B2C3D4E5F60718293A4B5C /* UpdateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5F /* UpdateManager.swift */; };
+		A1B2C3D4E5F60718293A4B5D /* UpdateCheckFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B60 /* UpdateCheckFrequency.swift */; };
+		A1B2C3D4E5F60718293A4B5E /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D4E5F60718293A4B62 /* Sparkle */; };
 		21F092E0D2C54D0B178BF7E8 /* WindowFrameStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6D0D4D5F0829BF1A678276 /* WindowFrameStoreTests.swift */; };
 		2C39187DFC43A71F6A2A40D7 /* ScreenHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53DA8BF79D2F15C1A5208A6B /* ScreenHelpers.swift */; };
 		4AE4698E1DEAC6E5497527C1 /* AXHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F7D6C0DEE11E07F975C689 /* AXHelpers.swift */; };
@@ -73,6 +76,8 @@
 		8A825EE6AF3223A8F3F1FFD1 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		93BEDCD66454CE9825F6CB01 /* MaximizeStrategy.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MaximizeStrategy.swift; sourceTree = "<group>"; };
 		9A6D0D4D5F0829BF1A678276 /* WindowFrameStoreTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WindowFrameStoreTests.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B5F /* UpdateManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UpdateManager.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A4B60 /* UpdateCheckFrequency.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UpdateCheckFrequency.swift; sourceTree = "<group>"; };
 		B7C76DBF48B91DAF0D7B0527 /* SecureEventInput.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SecureEventInput.swift; sourceTree = "<group>"; };
 		C2DAD306D6C174F410351714 /* PermissionState.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PermissionState.swift; sourceTree = "<group>"; };
 		C5F7D6C0DEE11E07F975C689 /* AXHelpers.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AXHelpers.swift; sourceTree = "<group>"; };
@@ -102,6 +107,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1B2C3D4E5F60718293A4B5E /* Sparkle in Frameworks */,
 				E9CD70A8EAD98C7A1BDDBF0C /* Cocoa.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -141,6 +147,7 @@
 				45C27532EEB4187EB32351B1 /* SettingsWindowController.swift */,
 				7B04EA2F430D809B32F21432 /* PreferencesView.swift */,
 				DCC9EABC0A52521090781119 /* SettingsStore.swift */,
+				A1B2C3D4E5F60718293A4B5F /* UpdateManager.swift */,
 				EA1B7A1EBB9D3930CBC69187 /* PermissionsCoordinator.swift */,
 				D7FCB5830085F5C4B999BE3C /* EventTapService.swift */,
 				49834A2AF06AABED0928E758 /* GreenButtonInterceptionController.swift */,
@@ -159,6 +166,7 @@
 			isa = PBXGroup;
 			children = (
 				45E45D5F1E037A744D6BA564 /* WindowActionMode.swift */,
+				A1B2C3D4E5F60718293A4B60 /* UpdateCheckFrequency.swift */,
 				17FFABECFDAAF65E2540A85D /* ClickedWindowContext.swift */,
 				C2DAD306D6C174F410351714 /* PermissionState.swift */,
 			);
@@ -230,6 +238,9 @@
 			);
 			dependencies = (
 			);
+			packageProductDependencies = (
+				A1B2C3D4E5F60718293A4B62 /* Sparkle */,
+			);
 			name = Macsimize;
 			productName = Macsimize;
 			productReference = 11AA67F3533BB389E21A0D8D /* Macsimize.app */;
@@ -282,6 +293,9 @@
 				Base,
 			);
 			mainGroup = 3C6670D3C87B80FE9F28F4E0;
+			packageReferences = (
+				A1B2C3D4E5F60718293A4B61 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			productRefGroup = CF28374F0907FD4D60B22D41 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -322,6 +336,7 @@
 				6CEDDCC383DFD1F96EB1B537 /* SettingsWindowController.swift in Sources */,
 				0C72948B6836D3F29DE95890 /* PreferencesView.swift in Sources */,
 				0078EB4061C4BF4D2D37EFC5 /* SettingsStore.swift in Sources */,
+				A1B2C3D4E5F60718293A4B5C /* UpdateManager.swift in Sources */,
 				6480B4566F9330B7BF0D4A99 /* PermissionsCoordinator.swift in Sources */,
 				E5E6036DAD92596A39EF5ED2 /* EventTapService.swift in Sources */,
 				9223112092FD8BB0C970D527 /* GreenButtonInterceptionController.swift in Sources */,
@@ -333,6 +348,7 @@
 				EBA891D548840AF28B9EADE4 /* RuntimeLogger.swift in Sources */,
 				59EFAB08DD3E6971BF7B6CB8 /* SecureEventInput.swift in Sources */,
 				9B8F8289BDEA816C53DB238E /* WindowActionMode.swift in Sources */,
+				A1B2C3D4E5F60718293A4B5D /* UpdateCheckFrequency.swift in Sources */,
 				69654F029BEE1B1EB99D2E54 /* ClickedWindowContext.swift in Sources */,
 				DE79ECD5E048678A45620E41 /* PermissionState.swift in Sources */,
 				4AE4698E1DEAC6E5497527C1 /* AXHelpers.swift in Sources */,
@@ -401,6 +417,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = pzc.Macsimize;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				SU_FEED_URL = https://raw.githubusercontent.com/apotenza92/macsimize/main/appcasts/stable-arm64.xml;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) $(MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS)";
 				SWIFT_VERSION = 6.0;
 			};
@@ -427,6 +444,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = pzc.Macsimize;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
+				SU_FEED_URL = https://raw.githubusercontent.com/apotenza92/macsimize/main/appcasts/stable-arm64.xml;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) $(MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS)";
 				SWIFT_VERSION = 6.0;
 			};
@@ -593,6 +611,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A1B2C3D4E5F60718293A4B61 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.6.4;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A1B2C3D4E5F60718293A4B62 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A1B2C3D4E5F60718293A4B61 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = F9B04B2E9AE8435406E0B0A0 /* Project object */;
 }

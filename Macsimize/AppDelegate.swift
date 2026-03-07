@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let openSettingsLaunchArguments: Set<String> = ["--settings", "-settings", "--open-settings"]
     private let openSettingsDistributedNotification = Notification.Name("pzc.Macsimize.openSettings")
     private var openSettingsObserver: NSObjectProtocol?
+    private var updateManager: UpdateManager { appState.updateManager }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -19,7 +20,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let launchRequestsSettings = ProcessInfo.processInfo.arguments.contains { openSettingsLaunchArguments.contains($0) }
         let finderLaunch = isFinderLaunch()
         let explicitSettingsRequest = launchRequestsSettings || finderLaunch
-        let shouldRequestSettingsFromExisting = explicitSettingsRequest
+
+        // Finder-style relaunches are also used by restart/update flows.
+        // Hand off only explicit settings launches to an already-running instance.
+        let shouldRequestSettingsFromExisting = launchRequestsSettings
 
         if launchRequestsSettings {
             RuntimeLogger.log("Launch argument requested settings window")
@@ -33,16 +37,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         menuBarController = MenuBarController(appDelegate: self)
+        updateManager.configureForLaunch(isAutomatedMode: false)
 
         let firstLaunch = !appState.settings.firstLaunchCompleted
         let shouldShowSettings = firstLaunch || explicitSettingsRequest || appState.settings.showSettingsOnStartup
 
-        if firstLaunch {
-            appState.settings.firstLaunchCompleted = true
-        }
-
-        if shouldShowSettings {
-            showSettingsWindow()
+        DispatchQueue.main.async {
+            if shouldShowSettings {
+                self.showSettingsWindow()
+            }
+            self.handlePermissionsIfNeeded(allowPrompt: shouldShowSettings)
+            if firstLaunch {
+                self.appState.settings.firstLaunchCompleted = true
+            }
         }
     }
 
@@ -63,6 +70,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func showSettingsWindow() {
         RuntimeLogger.log("Opening settings window")
         settingsWindowController.show()
+    }
+
+    private func handlePermissionsIfNeeded(allowPrompt: Bool) {
+        let permissionState = appState.permissions.state
+        let needsAccessibility = !permissionState.accessibilityTrusted
+        let needsInputMonitoring = !permissionState.inputMonitoringGranted
+        guard needsAccessibility || needsInputMonitoring else { return }
+
+        if allowPrompt && needsAccessibility {
+            appState.requestAccessibilityPermission()
+        }
+
+        if allowPrompt && needsInputMonitoring {
+            let delay: TimeInterval = needsAccessibility ? 0.6 : 0
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                guard let self else { return }
+                self.appState.requestInputMonitoringPermission()
+            }
+        } else {
+            appState.permissions.startMonitoringForChanges()
+        }
     }
 
     private func isFinderLaunch() -> Bool {

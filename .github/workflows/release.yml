@@ -180,6 +180,7 @@ jobs:
             PRODUCT_NAME="${{ matrix.product_name }}" \
             PRODUCT_BUNDLE_IDENTIFIER="${{ matrix.bundle_id }}" \
             ASSETCATALOG_COMPILER_APPICON_NAME="${{ matrix.app_icon }}" \
+            SU_FEED_URL="https://raw.githubusercontent.com/apotenza92/macsimize/main/appcasts/${{ matrix.channel }}-${{ matrix.arch }}.xml" \
             OTHER_CODE_SIGN_FLAGS="--timestamp"
 
           cat > "$EXPORT_OPTIONS_PATH" <<EOF
@@ -356,6 +357,48 @@ jobs:
           else
             gh release create "$TAG" dist/* --title "$TAG" --notes-file "$NOTES_FILE" --repo "$GH_REPO"
           fi
+
+  update-sparkle-appcasts:
+    needs:
+      - prepare
+      - publish-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Update Sparkle appcast files
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SPARKLE_PRIVATE_ED_KEY: ${{ secrets.SPARKLE_PRIVATE_ED_KEY }}
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet cryptography
+          python3 scripts/release/update_sparkle_appcasts.py \
+            --repo "${{ github.repository }}" \
+            --output-dir appcasts \
+            --github-token "$GITHUB_TOKEN" \
+            --require-signatures
+
+      - name: Commit and push appcast updates
+        env:
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet -- appcasts; then
+            echo "No Sparkle appcast changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add appcasts/*.xml
+          git commit -m "chore: update Sparkle appcasts for ${TAG}"
+          git push origin HEAD:main
 
   update-homebrew-tap:
     needs:
