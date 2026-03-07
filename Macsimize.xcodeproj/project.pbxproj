@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0078EB4061C4BF4D2D37EFC5 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCC9EABC0A52521090781119 /* SettingsStore.swift */; };
+		0FA1A55B4B944A29A3A41531 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7EBA0D193235411C9188C66A /* Assets.xcassets */; };
 		0866F34659970F00A62F1AB6 /* GreenButtonInterceptionControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85477C08043CBA13C681FD8E /* GreenButtonInterceptionControllerTests.swift */; };
 		0C72948B6836D3F29DE95890 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B04EA2F430D809B32F21432 /* PreferencesView.swift */; };
 		21F092E0D2C54D0B178BF7E8 /* WindowFrameStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6D0D4D5F0829BF1A678276 /* WindowFrameStoreTests.swift */; };
@@ -53,6 +54,7 @@
 		0773551F8EAFAE3E02E0E77A /* ManualTestPlan.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; path = ManualTestPlan.md; sourceTree = "<group>"; };
 		11AA67F3533BB389E21A0D8D /* Macsimize.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Macsimize.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		17FFABECFDAAF65E2540A85D /* ClickedWindowContext.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClickedWindowContext.swift; sourceTree = "<group>"; };
+		7EBA0D193235411C9188C66A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		305D85E6389B1DEBAD851B16 /* MacsimizeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacsimizeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		45C27532EEB4187EB32351B1 /* SettingsWindowController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsWindowController.swift; sourceTree = "<group>"; };
 		45E45D5F1E037A744D6BA564 /* WindowActionMode.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WindowActionMode.swift; sourceTree = "<group>"; };
@@ -129,6 +131,7 @@
 			children = (
 				390509AA723CDBC1BB12DF4E /* Models */,
 				1CA5B21EBCBEB8CADE957DEF /* Utilities */,
+				7EBA0D193235411C9188C66A /* Assets.xcassets */,
 				D49364C02B10669742DA715E /* Info.plist */,
 				5C288B7CC408B2FDFF17DE83 /* Macsimize.entitlements */,
 				CB8C7A9E5C3303B2FFBCE1B3 /* MacsimizeApp.swift */,
@@ -301,6 +304,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0FA1A55B4B944A29A3A41531 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

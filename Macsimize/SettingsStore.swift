@@ -1,5 +1,6 @@
 import Combine
 import Foundation
+import ServiceManagement
 
 final class SettingsStore: ObservableObject {
     private enum Key {
@@ -8,9 +9,11 @@ final class SettingsStore: ObservableObject {
         static let excludedBundleIDs = "excludedBundleIDs"
         static let showSettingsOnStartup = "showSettingsOnStartup"
         static let firstLaunchCompleted = "firstLaunchCompleted"
+        static let startAtLogin = "startAtLogin"
     }
 
     private let userDefaults: UserDefaults
+    private var applyingLoginItemChange = false
 
     @Published var selectedAction: WindowActionMode {
         didSet {
@@ -42,6 +45,30 @@ final class SettingsStore: ObservableObject {
         }
     }
 
+    @Published var startAtLogin: Bool {
+        didSet {
+            guard !applyingLoginItemChange else {
+                return
+            }
+
+            applyingLoginItemChange = true
+            do {
+                if startAtLogin {
+                    try SMAppService.mainApp.register()
+                } else {
+                    try SMAppService.mainApp.unregister()
+                }
+                userDefaults.set(startAtLogin, forKey: Key.startAtLogin)
+            } catch {
+                RuntimeLogger.log("Failed to update login item state: \(error.localizedDescription)")
+                let enabled = SMAppService.mainApp.status == .enabled
+                startAtLogin = enabled
+                userDefaults.set(enabled, forKey: Key.startAtLogin)
+            }
+            applyingLoginItemChange = false
+        }
+    }
+
     init(userDefaults: UserDefaults = .standard) {
         self.userDefaults = userDefaults
 
@@ -55,12 +82,20 @@ final class SettingsStore: ObservableObject {
         let excludedBundleIDs = userDefaults.stringArray(forKey: Key.excludedBundleIDs) ?? []
         let showSettingsOnStartup = userDefaults.object(forKey: Key.showSettingsOnStartup) as? Bool ?? true
         let firstLaunchCompleted = userDefaults.object(forKey: Key.firstLaunchCompleted) as? Bool ?? false
+        let loginItemEnabled = SMAppService.mainApp.status == .enabled
+        let startAtLogin: Bool
+        if loginItemEnabled {
+            startAtLogin = true
+        } else {
+            startAtLogin = userDefaults.object(forKey: Key.startAtLogin) as? Bool ?? false
+        }
 
         self.selectedAction = selectedAction
         self.diagnosticsEnabled = diagnosticsEnabled
         self.excludedBundleIDs = excludedBundleIDs
         self.showSettingsOnStartup = showSettingsOnStartup
         self.firstLaunchCompleted = firstLaunchCompleted
+        self.startAtLogin = startAtLogin
     }
 
     var excludedBundleIDsText: String {

@@ -60,59 +60,42 @@ private enum MacsimizeGlyphImage {
         NSColor.clear.setFill()
         NSRect(origin: .zero, size: size).fill()
 
-        let stroke = NSColor.labelColor
-        stroke.setStroke()
-
-        let inset = max(1.5, floor(size.width * 0.16))
-        let corner = max(3.0, floor(size.width * 0.26))
-        let lineWidth = max(1.6, size.width * 0.11)
-
-        func path(points: [NSPoint]) {
-            let path = NSBezierPath()
-            path.lineWidth = lineWidth
-            path.lineCapStyle = .round
-            path.lineJoinStyle = .round
-            path.move(to: points[0])
-            for point in points.dropFirst() {
-                path.line(to: point)
-            }
-            path.stroke()
-        }
-
-        let minX = inset
-        let maxX = size.width - inset
-        let minY = inset
-        let maxY = size.height - inset
-
-        path(points: [
-            NSPoint(x: minX + corner, y: maxY),
-            NSPoint(x: minX, y: maxY),
-            NSPoint(x: minX, y: maxY - corner)
-        ])
-        path(points: [
-            NSPoint(x: maxX - corner, y: maxY),
-            NSPoint(x: maxX, y: maxY),
-            NSPoint(x: maxX, y: maxY - corner)
-        ])
-        path(points: [
-            NSPoint(x: minX, y: minY + corner),
-            NSPoint(x: minX, y: minY),
-            NSPoint(x: minX + corner, y: minY)
-        ])
-        path(points: [
-            NSPoint(x: maxX - corner, y: minY),
-            NSPoint(x: maxX, y: minY),
-            NSPoint(x: maxX, y: minY + corner)
-        ])
-
-        let centerBar = NSBezierPath()
-        centerBar.lineWidth = max(1.2, lineWidth * 0.86)
-        centerBar.lineCapStyle = .round
-        centerBar.move(to: NSPoint(x: minX + corner * 0.9, y: size.height / 2))
-        centerBar.line(to: NSPoint(x: maxX - corner * 0.9, y: size.height / 2))
-        centerBar.stroke()
+        drawCirclePlusGlyph(in: NSRect(origin: .zero, size: size), strokeColor: .labelColor, lineWidth: 1.85)
 
         image.isTemplate = true
         return image
+    }
+
+    private static func drawCirclePlusGlyph(in rect: NSRect, strokeColor: NSColor, lineWidth: CGFloat) {
+        NSGraphicsContext.saveGraphicsState()
+
+        let transform = NSAffineTransform()
+        transform.translateX(by: rect.minX, yBy: rect.minY)
+        transform.scaleX(by: rect.width / 24.0, yBy: rect.height / 24.0)
+        transform.concat()
+
+        strokeColor.setStroke()
+
+        let circle = NSBezierPath(ovalIn: NSRect(x: 2.4, y: 2.4, width: 19.2, height: 19.2))
+        circle.lineWidth = lineWidth
+        circle.lineJoinStyle = .round
+        circle.lineCapStyle = .round
+        circle.stroke()
+
+        let horizontal = NSBezierPath()
+        horizontal.lineWidth = lineWidth
+        horizontal.lineCapStyle = .round
+        horizontal.move(to: NSPoint(x: 7.0, y: 12.0))
+        horizontal.line(to: NSPoint(x: 17.0, y: 12.0))
+        horizontal.stroke()
+
+        let vertical = NSBezierPath()
+        vertical.lineWidth = lineWidth
+        vertical.lineCapStyle = .round
+        vertical.move(to: NSPoint(x: 12.0, y: 7.0))
+        vertical.line(to: NSPoint(x: 12.0, y: 17.0))
+        vertical.stroke()
+
+        NSGraphicsContext.restoreGraphicsState()
     }
 }

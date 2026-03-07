@@ -10,10 +10,13 @@ struct IconSpec {
 struct IconTheme {
     let baseTop: NSColor
     let baseBottom: NSColor
-    let diagonalTop: NSColor
-    let diagonalMid: NSColor
-    let diagonalBottom: NSColor
-    let vignetteBottom: NSColor
+    let glow: NSColor
+    let sheenTop: NSColor
+    let sheenBottom: NSColor
+    let panelTop: NSColor
+    let panelBottom: NSColor
+    let panelStroke: NSColor
+    let vignette: NSColor
     let glyphTopAlpha: CGFloat
     let glyphBottomAlpha: CGFloat
 }
@@ -38,25 +41,31 @@ let specs: [IconSpec] = [
 ]
 
 let stableTheme = IconTheme(
-    baseTop: NSColor(calibratedRed: 1.00, green: 0.90, blue: 0.47, alpha: 1.0),
-    baseBottom: NSColor(calibratedRed: 0.95, green: 0.43, blue: 0.13, alpha: 1.0),
-    diagonalTop: NSColor(calibratedRed: 1.00, green: 0.97, blue: 0.83, alpha: 0.38),
-    diagonalMid: NSColor(calibratedRed: 1.00, green: 0.70, blue: 0.31, alpha: 0.10),
-    diagonalBottom: NSColor(calibratedRed: 0.82, green: 0.29, blue: 0.08, alpha: 0.22),
-    vignetteBottom: NSColor(calibratedRed: 0.52, green: 0.17, blue: 0.04, alpha: 0.22),
+    baseTop: NSColor(calibratedRed: 0.29, green: 0.86, blue: 0.38, alpha: 1.0),
+    baseBottom: NSColor(calibratedRed: 0.17, green: 0.73, blue: 0.27, alpha: 1.0),
+    glow: NSColor(calibratedRed: 0.84, green: 1.00, blue: 0.86, alpha: 0.34),
+    sheenTop: NSColor(calibratedRed: 1.00, green: 1.00, blue: 1.00, alpha: 0.16),
+    sheenBottom: NSColor(calibratedRed: 0.86, green: 1.00, blue: 0.87, alpha: 0.0),
+    panelTop: NSColor(calibratedRed: 0.98, green: 1.00, blue: 0.99, alpha: 0.10),
+    panelBottom: NSColor(calibratedRed: 0.08, green: 0.42, blue: 0.12, alpha: 0.10),
+    panelStroke: NSColor(calibratedRed: 1.00, green: 1.00, blue: 1.00, alpha: 0.12),
+    vignette: NSColor(calibratedRed: 0.05, green: 0.30, blue: 0.09, alpha: 0.16),
     glyphTopAlpha: 0.98,
-    glyphBottomAlpha: 0.74
+    glyphBottomAlpha: 0.82
 )
 
 let betaTheme = IconTheme(
-    baseTop: NSColor(calibratedRed: 0.58, green: 0.79, blue: 1.00, alpha: 1.0),
-    baseBottom: NSColor(calibratedRed: 0.27, green: 0.26, blue: 0.83, alpha: 1.0),
-    diagonalTop: NSColor(calibratedRed: 0.94, green: 0.97, blue: 1.00, alpha: 0.36),
-    diagonalMid: NSColor(calibratedRed: 0.62, green: 0.73, blue: 1.00, alpha: 0.12),
-    diagonalBottom: NSColor(calibratedRed: 0.17, green: 0.17, blue: 0.57, alpha: 0.24),
-    vignetteBottom: NSColor(calibratedRed: 0.10, green: 0.10, blue: 0.32, alpha: 0.24),
+    baseTop: NSColor(calibratedRed: 0.52, green: 0.79, blue: 1.00, alpha: 1.0),
+    baseBottom: NSColor(calibratedRed: 0.33, green: 0.19, blue: 0.82, alpha: 1.0),
+    glow: NSColor(calibratedRed: 0.87, green: 0.92, blue: 1.00, alpha: 0.58),
+    sheenTop: NSColor(calibratedRed: 1.00, green: 1.00, blue: 1.00, alpha: 0.22),
+    sheenBottom: NSColor(calibratedRed: 0.88, green: 0.91, blue: 1.00, alpha: 0.0),
+    panelTop: NSColor(calibratedRed: 0.99, green: 0.99, blue: 1.00, alpha: 0.18),
+    panelBottom: NSColor(calibratedRed: 0.15, green: 0.11, blue: 0.42, alpha: 0.22),
+    panelStroke: NSColor(calibratedRed: 1.00, green: 1.00, blue: 1.00, alpha: 0.19),
+    vignette: NSColor(calibratedRed: 0.08, green: 0.07, blue: 0.24, alpha: 0.28),
     glyphTopAlpha: 0.98,
-    glyphBottomAlpha: 0.74
+    glyphBottomAlpha: 0.78
 )
 
 let iconSets: [IconSet] = [
@@ -73,7 +82,7 @@ func roundedRect(_ rect: NSRect, radius: CGFloat) -> NSBezierPath {
     NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
 }
 
-func newStrokePath(lineWidth: CGFloat) -> NSBezierPath {
+func configuredStrokePath(lineWidth: CGFloat) -> NSBezierPath {
     let path = NSBezierPath()
     path.lineWidth = lineWidth
     path.lineJoinStyle = .round
@@ -81,11 +90,7 @@ func newStrokePath(lineWidth: CGFloat) -> NSBezierPath {
     return path
 }
 
-func drawMaximizeCornersGlyph(
-    in rect: NSRect,
-    strokeColor: NSColor,
-    lineWidth: CGFloat
-) {
+func drawCirclePlusGlyph(in rect: NSRect, strokeColor: NSColor, lineWidth: CGFloat) {
     NSGraphicsContext.saveGraphicsState()
 
     let transform = NSAffineTransform()
@@ -95,62 +100,46 @@ func drawMaximizeCornersGlyph(
 
     strokeColor.setStroke()
 
-    let topLeft = newStrokePath(lineWidth: lineWidth)
-    topLeft.move(to: NSPoint(x: 9, y: 3.5))
-    topLeft.line(to: NSPoint(x: 4.5, y: 3.5))
-    topLeft.line(to: NSPoint(x: 4.5, y: 8))
-    topLeft.stroke()
+    let outlineWidth = lineWidth * 0.92
 
-    let topRight = newStrokePath(lineWidth: lineWidth)
-    topRight.move(to: NSPoint(x: 15, y: 3.5))
-    topRight.line(to: NSPoint(x: 19.5, y: 3.5))
-    topRight.line(to: NSPoint(x: 19.5, y: 8))
-    topRight.stroke()
+    let circle = NSBezierPath(ovalIn: NSRect(x: 2.4, y: 2.4, width: 19.2, height: 19.2))
+    circle.lineWidth = outlineWidth
+    circle.lineJoinStyle = .round
+    circle.lineCapStyle = .round
+    circle.stroke()
 
-    let bottomLeft = newStrokePath(lineWidth: lineWidth)
-    bottomLeft.move(to: NSPoint(x: 4.5, y: 16))
-    bottomLeft.line(to: NSPoint(x: 4.5, y: 20.5))
-    bottomLeft.line(to: NSPoint(x: 9, y: 20.5))
-    bottomLeft.stroke()
+    let horizontal = configuredStrokePath(lineWidth: lineWidth)
+    horizontal.move(to: NSPoint(x: 7.0, y: 12.0))
+    horizontal.line(to: NSPoint(x: 17.0, y: 12.0))
+    horizontal.stroke()
 
-    let bottomRight = newStrokePath(lineWidth: lineWidth)
-    bottomRight.move(to: NSPoint(x: 15, y: 20.5))
-    bottomRight.line(to: NSPoint(x: 19.5, y: 20.5))
-    bottomRight.line(to: NSPoint(x: 19.5, y: 16))
-    bottomRight.stroke()
-
-    let center = newStrokePath(lineWidth: lineWidth * 0.92)
-    center.move(to: NSPoint(x: 8.25, y: 12))
-    center.line(to: NSPoint(x: 15.75, y: 12))
-    center.stroke()
+    let vertical = configuredStrokePath(lineWidth: lineWidth)
+    vertical.move(to: NSPoint(x: 12.0, y: 7.0))
+    vertical.line(to: NSPoint(x: 12.0, y: 17.0))
+    vertical.stroke()
 
     NSGraphicsContext.restoreGraphicsState()
 }
 
-func drawGlyphVerticalGradient(
-    in rect: NSRect,
-    lineWidth: CGFloat,
-    topAlpha: CGFloat,
-    bottomAlpha: CGFloat
-) {
+func drawGlyphVerticalGradient(in rect: NSRect, lineWidth: CGFloat, topAlpha: CGFloat, bottomAlpha: CGFloat) {
     let maskImage = NSImage(size: rect.size)
     maskImage.lockFocus()
     NSColor.clear.setFill()
     NSRect(origin: .zero, size: rect.size).fill()
-    drawMaximizeCornersGlyph(in: NSRect(origin: .zero, size: rect.size), strokeColor: .white, lineWidth: lineWidth)
+    drawCirclePlusGlyph(in: NSRect(origin: .zero, size: rect.size), strokeColor: .white, lineWidth: lineWidth)
     maskImage.unlockFocus()
 
     guard let maskCG = maskImage.cgImage(forProposedRect: nil, context: nil, hints: nil),
           let ctx = NSGraphicsContext.current?.cgContext,
           let gradient = CGGradient(
-              colorsSpace: CGColorSpaceCreateDeviceRGB(),
-              colors: [
+            colorsSpace: CGColorSpaceCreateDeviceRGB(),
+            colors: [
                 NSColor(calibratedWhite: 1.0, alpha: topAlpha).cgColor,
                 NSColor(calibratedWhite: 1.0, alpha: bottomAlpha).cgColor
-              ] as CFArray,
-              locations: [0.0, 1.0]
+            ] as CFArray,
+            locations: [0.0, 1.0]
           ) else {
-        drawMaximizeCornersGlyph(in: rect, strokeColor: NSColor(calibratedWhite: 1.0, alpha: bottomAlpha), lineWidth: lineWidth)
+        drawCirclePlusGlyph(in: rect, strokeColor: NSColor(calibratedWhite: 1.0, alpha: bottomAlpha), lineWidth: lineWidth)
         return
     }
 
@@ -179,34 +168,34 @@ func drawIcon(size: Int, theme: IconTheme) -> NSImage {
 
     let outerInset = s * 0.06
     let outerRect = canvas.insetBy(dx: outerInset, dy: outerInset)
-    let outer = roundedRect(outerRect, radius: s * 0.24)
+    let outerPath = roundedRect(outerRect, radius: s * 0.24)
 
     let baseGradient = NSGradient(colors: [theme.baseTop, theme.baseBottom])!
-    baseGradient.draw(in: outer, angle: -90)
+    baseGradient.draw(in: outerPath, angle: -90)
 
     NSGraphicsContext.saveGraphicsState()
-    outer.addClip()
+    outerPath.addClip()
 
-    let diagonal = NSGradient(colors: [theme.diagonalTop, theme.diagonalMid, theme.diagonalBottom])!
-    diagonal.draw(in: outerRect, angle: -35)
+    let glowGradient = NSGradient(colors: [theme.glow, NSColor.clear])!
+    glowGradient.draw(in: outerRect, relativeCenterPosition: NSPoint(x: -0.22, y: 0.30))
 
-    let subtleVignette = NSGradient(colors: [NSColor(calibratedWhite: 0.0, alpha: 0.0), theme.vignetteBottom])!
-    subtleVignette.draw(in: outerRect, relativeCenterPosition: NSPoint(x: 0.0, y: -0.14))
+    let sheenGradient = NSGradient(colors: [theme.sheenTop, theme.sheenBottom])!
+    sheenGradient.draw(in: outerRect, angle: -35)
+
+    let vignetteGradient = NSGradient(colors: [NSColor.clear, theme.vignette])!
+    vignetteGradient.draw(in: outerRect, relativeCenterPosition: NSPoint(x: 0.0, y: -0.20))
 
     NSGraphicsContext.restoreGraphicsState()
 
-    let innerGlowRect = outerRect.insetBy(dx: s * 0.085, dy: s * 0.085)
-    let innerGlow = roundedRect(innerGlowRect, radius: s * 0.18)
-    NSColor(calibratedWhite: 1.0, alpha: 0.09).setStroke()
-    innerGlow.lineWidth = max(1.0, s * 0.012)
-    innerGlow.stroke()
+    let outerStroke = roundedRect(outerRect.insetBy(dx: s * 0.004, dy: s * 0.004), radius: s * 0.23)
+    NSColor(calibratedWhite: 1.0, alpha: 0.14).setStroke()
+    outerStroke.lineWidth = max(1.0, s * 0.01)
+    outerStroke.stroke()
 
-    var glyphRect = outerRect.insetBy(dx: s * 0.17, dy: s * 0.17)
-    glyphRect.origin.y += s * 0.004
-
+    let glyphRect = outerRect
     drawGlyphVerticalGradient(
         in: glyphRect,
-        lineWidth: max(1.7, s * 0.075),
+        lineWidth: 1.85,
         topAlpha: theme.glyphTopAlpha,
         bottomAlpha: theme.glyphBottomAlpha
     )
@@ -259,9 +248,9 @@ func writeCatalogScaffolding() throws {
             "color-space" : "srgb",
             "components" : {
               "alpha" : "1.000",
-              "blue" : "0.180",
-              "green" : "0.490",
-              "red" : "0.980"
+              "blue" : "0.270",
+              "green" : "0.730",
+              "red" : "0.170"
             }
           },
           "idiom" : "universal"

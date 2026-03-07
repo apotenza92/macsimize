@@ -52,6 +52,8 @@ Open from System Settings:
 
 ## Stable / Beta builds
 
+Macsimize now follows the same side-by-side build pattern as Docktor.
+
 Macsimize now follows the same side-by-side build pattern as Docktor:
 
 - stable uses:

@@ -18,7 +18,7 @@ final class SettingsWindowController: NSWindowController {
         window.level = .normal
         window.collectionBehavior = [.moveToActiveSpace]
 
-        let initialContentSize = NSSize(width: 760, height: 560)
+        let initialContentSize = NSSize(width: 380, height: 332)
         window.setContentSize(initialContentSize)
         window.minSize = initialContentSize
 
@@ -97,11 +97,16 @@ final class SettingsWindowController: NSWindowController {
         }
 
         let frame = NSRectFromString(frameString)
-        guard frame.width > 0, frame.height > 0, frameIsVisible(frame) else {
+        guard frame.width > 0, frame.height > 0 else {
             return false
         }
 
-        window.setFrame(frame, display: false)
+        let restoredFrame = NSRect(origin: frame.origin, size: window.frame.size)
+        guard frameIsVisible(restoredFrame) else {
+            return false
+        }
+
+        window.setFrame(restoredFrame, display: false)
         return true
     }
 
