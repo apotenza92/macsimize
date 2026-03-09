@@ -42,17 +42,26 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
         )
     }
 
-    func refreshConfiguration() {
+    func refreshConfiguration(
+        selectedAction: WindowActionMode? = nil,
+        diagnosticsEnabled: Bool? = nil
+    ) {
         stateQueue.sync {
             configuration = InterceptionConfiguration(
-                selectedAction: settings.selectedAction,
-                diagnosticsEnabled: settings.diagnosticsEnabled
+                selectedAction: selectedAction ?? settings.selectedAction,
+                diagnosticsEnabled: diagnosticsEnabled ?? settings.diagnosticsEnabled
             )
         }
     }
 
-    func startIfPossible() {
-        refreshConfiguration()
+    func startIfPossible(
+        selectedAction: WindowActionMode? = nil,
+        diagnosticsEnabled: Bool? = nil
+    ) {
+        refreshConfiguration(
+            selectedAction: selectedAction,
+            diagnosticsEnabled: diagnosticsEnabled
+        )
         let hadActiveTap = eventTap != nil || isRunning
 
         guard permissions.state.accessibilityTrusted else {

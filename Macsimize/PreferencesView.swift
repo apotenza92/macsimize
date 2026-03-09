@@ -124,13 +124,12 @@ struct PreferencesView: View {
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
 
-            Picker("Green button click", selection: $settings.selectedAction) {
+            HStack(spacing: 10) {
                 ForEach(WindowActionMode.allCases) { mode in
-                    Text(mode.displayName).tag(mode)
+                    actionModeButton(mode)
                 }
             }
-            .pickerStyle(.radioGroup)
-            .labelsHidden()
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             Text(settings.selectedAction.helpText)
                 .font(.caption)
@@ -157,6 +156,23 @@ struct PreferencesView: View {
                 .frame(width: 14)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private func actionModeButton(_ mode: WindowActionMode) -> some View {
+        if settings.selectedAction == mode {
+            Button(mode.displayName) {
+                settings.selectedAction = mode
+            }
+            .buttonStyle(BorderedProminentButtonStyle())
+            .controlSize(.regular)
+        } else {
+            Button(mode.displayName) {
+                settings.selectedAction = mode
+            }
+            .buttonStyle(BorderedButtonStyle())
+            .controlSize(.regular)
+        }
     }
 
     private func openGitHubPage() {

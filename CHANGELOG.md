@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [v0.2.6]
+
+- Fixed the Settings action toggle so switching between Maximize and Full Screen applies immediately in the running app instead of lagging one click behind.
+- Updated the Settings UI buttons and live interception refresh path so the selected mode is written and activated on the same click.
+- Hardened the green-button automation helper and verified the live toggle flow end to end against a real TextEdit window with native macOS screenshots.
+
 ## [v0.2.5]
 
 - Rewrote the Settings action selector to use a native radio-group control so Maximize and Full Screen persist and reflect the active choice reliably.

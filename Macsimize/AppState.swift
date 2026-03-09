@@ -103,21 +103,21 @@ final class AppState: ObservableObject {
     }
 
     private func bind() {
-        Publishers.CombineLatest(
-            settings.$selectedAction.removeDuplicates(),
-            settings.$diagnosticsEnabled.removeDuplicates()
-        )
-        .dropFirst()
-        .sink { [weak self] _, _ in
-            guard let self else {
-                return
+        settings.$selectedAction
+            .removeDuplicates()
+            .dropFirst()
+            .sink { [weak self] selectedAction in
+                self?.refreshLiveInterceptionConfiguration(selectedAction: selectedAction)
             }
-            self.eventTapService.refreshConfiguration()
-            if self.permissions.state.allRequiredPermissionsGranted {
-                self.eventTapService.startIfPossible()
+            .store(in: &cancellables)
+
+        settings.$diagnosticsEnabled
+            .removeDuplicates()
+            .dropFirst()
+            .sink { [weak self] diagnosticsEnabled in
+                self?.refreshLiveInterceptionConfiguration(diagnosticsEnabled: diagnosticsEnabled)
             }
-        }
-        .store(in: &cancellables)
+            .store(in: &cancellables)
 
         permissions.$state
             .removeDuplicates()
@@ -132,6 +132,23 @@ final class AppState: ObservableObject {
                 self?.permissions.updateEventTapStatus(isRunning: isRunning, lastFailureReason: lastFailureReason)
             }
             .store(in: &cancellables)
+    }
+
+    private func refreshLiveInterceptionConfiguration(
+        selectedAction: WindowActionMode? = nil,
+        diagnosticsEnabled: Bool? = nil
+    ) {
+        if permissions.state.allRequiredPermissionsGranted {
+            eventTapService.startIfPossible(
+                selectedAction: selectedAction,
+                diagnosticsEnabled: diagnosticsEnabled
+            )
+        } else {
+            eventTapService.refreshConfiguration(
+                selectedAction: selectedAction,
+                diagnosticsEnabled: diagnosticsEnabled
+            )
+        }
     }
 
     private func syncPermissionDrivenServices() {
