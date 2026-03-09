@@ -5,19 +5,19 @@
     <description>Macsimize update feed (beta channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.2.6</title>
-      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.6</link>
-      <sparkle:version>200690000</sparkle:version>
-      <sparkle:shortVersionString>0.2.6</sparkle:shortVersionString>
+      <title>Version 0.2.8</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.8</link>
+      <sparkle:version>200890000</sparkle:version>
+      <sparkle:shortVersionString>0.2.8</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Fixed the Settings action toggle so switching between Maximize and Full Screen applies immediately in the running app instead of lagging one click behind.
-- Updated the Settings UI buttons and live interception refresh path so the selected mode is written and activated on the same click.
-- Hardened the green-button automation helper and verified the live toggle flow end to end against a real TextEdit window with native macOS screenshots.]]></description>
-      <pubDate>Mon, 09 Mar 2026 08:33:18 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.6/Macsimize-Beta-v0.2.6-macos-arm64.zip"
-                 sparkle:edSignature="VEo1JlYjViOmU/1rIub5qJQXpcdv2Bt/oH8ri/fSKVxdK9N/61Ajg+I3Xpx2XV8zQ2agC+6ZkmhExZKNScItCA=="
-                 length="2558986"
+      <description sparkle:format="plain-text"><![CDATA[- Hardened Sparkle integration for menu bar safety by making manual update checks non-blocking, adding updater state diagnostics, and gating launcher-service-dependent startup paths.
+- Reduced menu bar interaction stalls by bypassing event-tap accessibility resolution for menu bar region clicks before expensive AX traversal.
+- Added release and CI Sparkle bundle validation plus release workflow resilience for transient Apple timestamp service outages during signing/export.]]></description>
+      <pubDate>Mon, 09 Mar 2026 13:06:01 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.8/Macsimize-Beta-v0.2.8-macos-arm64.zip"
+                 sparkle:edSignature="VrmU8p53LHAhlbyOViDeDnQlzrLKRJ5RohiQbiWCOjjb/6Oo3e6H7/VO0c/hvu+qCyduTEGEfH06xUFrmYCmCA=="
+                 length="2565369"
                  type="application/octet-stream" />
     </item>
   </channel>
