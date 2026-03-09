@@ -128,6 +128,9 @@ final class AppState: ObservableObject {
             .store(in: &cancellables)
 
         Publishers.CombineLatest(eventTapService.$isRunning, eventTapService.$lastFailureReason)
+            .removeDuplicates { lhs, rhs in
+                lhs.0 == rhs.0 && lhs.1 == rhs.1
+            }
             .sink { [weak self] isRunning, lastFailureReason in
                 self?.permissions.updateEventTapStatus(isRunning: isRunning, lastFailureReason: lastFailureReason)
             }

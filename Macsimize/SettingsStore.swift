@@ -88,17 +88,11 @@ final class SettingsStore: ObservableObject {
         let diagnosticsEnabled = userDefaults.object(forKey: Key.diagnosticsEnabled) as? Bool ?? true
         let showSettingsOnStartup = userDefaults.object(forKey: Key.showSettingsOnStartup) as? Bool ?? false
         let firstLaunchCompleted = userDefaults.object(forKey: Key.firstLaunchCompleted) as? Bool ?? false
-        let loginItemEnabled = SMAppService.mainApp.status == .enabled
         let updateCheckFrequency = UpdateCheckFrequency(
             rawValue: userDefaults.string(forKey: Key.updateCheckFrequency) ?? ""
         ) ?? .daily
         let lastUpdateCheckTimestamp = userDefaults.object(forKey: Key.lastUpdateCheckTimestamp) as? TimeInterval ?? 0
-        let startAtLogin: Bool
-        if loginItemEnabled {
-            startAtLogin = true
-        } else {
-            startAtLogin = userDefaults.object(forKey: Key.startAtLogin) as? Bool ?? false
-        }
+        let startAtLogin = userDefaults.object(forKey: Key.startAtLogin) as? Bool ?? false
 
         self.selectedAction = selectedAction
         self.diagnosticsEnabled = diagnosticsEnabled

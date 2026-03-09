@@ -12,15 +12,6 @@ final class AccessibilityService {
     }
 
     func resolveGreenButtonClick(at location: CGPoint) -> ClickedWindowContext? {
-        for candidatePoint in candidateHitTestPoints(for: location) {
-            if let resolved = resolveUsingSystemWideHitTest(at: candidatePoint, originalLocation: location) {
-                if candidatePoint != location {
-                    diagnostics.logMessage("AX hit-test succeeded using flipped screen coordinates.")
-                }
-                return resolved
-            }
-        }
-
         guard let app = NSWorkspace.shared.frontmostApplication else {
             diagnostics.logMessage("AX hit-test skipped: no frontmost app.")
             return nil
@@ -54,6 +45,16 @@ final class AccessibilityService {
                 } else {
                     diagnostics.logMessage("AX window-button lookup succeeded after hit-test fallback.")
                 }
+                return resolved
+            }
+        }
+
+        for candidatePoint in candidateHitTestPoints(for: location) {
+            if let resolved = resolveUsingSystemWideHitTest(at: candidatePoint, originalLocation: location) {
+                let message = candidatePoint != location
+                    ? "AX system-wide hit-test fallback succeeded using flipped screen coordinates."
+                    : "AX system-wide hit-test fallback succeeded after app-scoped lookup failure."
+                diagnostics.logMessage(message)
                 return resolved
             }
         }

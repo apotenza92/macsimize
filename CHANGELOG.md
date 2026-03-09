@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [v0.2.7]
+
+- Reduced false-positive AX permission churn by preferring frontmost-app hit testing and only using system-wide AX hit testing as a fallback path.
+- Hardened singleton startup so stale Macsimize instances are terminated (with escalation) before a new menu-bar instance proceeds.
+- Reduced CPU spikes from no-op state churn by deduplicating permission/event-tap state publishes and avoiding redundant secure-input polling on unchanged tap status updates.
+
 ## [v0.2.6]
 
 - Fixed the Settings action toggle so switching between Maximize and Full Screen applies immediately in the running app instead of lagging one click behind.

@@ -18,7 +18,7 @@ enum WindowActionMode: String, CaseIterable, Codable, Identifiable {
     var helpText: String {
         switch self {
         case .maximize:
-            return "Resize the window to the current display’s visible usable frame, then restore the previous frame on the next clean click."
+            return "Click again to restore the pre-maximized size."
         case .fullScreen:
             return "Pass the green-button click through to standard macOS full-screen behavior."
         }

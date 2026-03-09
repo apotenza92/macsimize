@@ -156,8 +156,14 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
 
     private func updateRunningState(_ running: Bool, failure: String?) {
         DispatchQueue.main.async { [weak self] in
-            self?.isRunning = running
-            self?.lastFailureReason = failure
+            guard let self else {
+                return
+            }
+            guard self.isRunning != running || self.lastFailureReason != failure else {
+                return
+            }
+            self.isRunning = running
+            self.lastFailureReason = failure
         }
     }
 

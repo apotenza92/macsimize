@@ -36,7 +36,7 @@ final class PermissionsCoordinator: ObservableObject, @unchecked Sendable {
         let nextState = PermissionState(
             accessibilityTrusted: currentState.accessibilityTrusted,
             inputMonitoringGranted: currentState.inputMonitoringGranted,
-            secureEventInputEnabled: SecureEventInput.isEnabled(),
+            secureEventInputEnabled: currentState.secureEventInputEnabled,
             eventTapRunning: isRunning,
             lastFailureReason: lastFailureReason
         )
@@ -84,10 +84,16 @@ final class PermissionsCoordinator: ObservableObject, @unchecked Sendable {
 
     private func publish(_ nextState: PermissionState) {
         if Thread.isMainThread {
+            guard state != nextState else {
+                return
+            }
             state = nextState
         } else {
             DispatchQueue.main.async { [weak self] in
-                self?.state = nextState
+                guard let self, self.state != nextState else {
+                    return
+                }
+                self.state = nextState
             }
         }
     }

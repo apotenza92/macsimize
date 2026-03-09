@@ -1,4 +1,5 @@
 import AppKit
+import Darwin
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -11,6 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var openSettingsObserver: NSObjectProtocol?
     private var updateManager: UpdateManager { appState.updateManager }
     private let isAutomatedTestSuite = ProcessInfo.processInfo.environment["MACSIMIZE_TEST_SUITE"] == "1"
+    private var scheduledPermissionPrompts: [DispatchWorkItem] = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -38,7 +40,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         menuBarController = MenuBarController(appDelegate: self)
-        updateManager.configureForLaunch(isAutomatedMode: false)
 
         let firstLaunch = !appState.settings.firstLaunchCompleted
         let shouldShowSettings = firstLaunch || explicitSettingsRequest || appState.settings.showSettingsOnStartup
@@ -52,9 +53,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.appState.settings.firstLaunchCompleted = true
             }
         }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+            guard let self else { return }
+            self.updateManager.configureForLaunch(isAutomatedMode: false)
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        cancelScheduledPermissionPrompts()
         if let openSettingsObserver {
             DistributedNotificationCenter.default().removeObserver(openSettingsObserver)
             self.openSettingsObserver = nil
@@ -74,6 +81,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func handlePermissionsIfNeeded(allowPrompt: Bool) {
+        cancelScheduledPermissionPrompts()
+
         let permissionState = appState.permissions.state
         let needsAccessibility = !permissionState.accessibilityTrusted
         let needsInputMonitoring = !permissionState.inputMonitoringGranted
@@ -84,19 +93,51 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        if allowPrompt && needsAccessibility {
-            appState.requestAccessibilityPermission()
+        appState.permissions.startMonitoringForChanges()
+
+        guard allowPrompt else {
+            return
         }
 
-        if allowPrompt && needsInputMonitoring {
-            let delay: TimeInterval = needsAccessibility ? 0.6 : 0
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+        schedulePermissionPrompts(
+            needsAccessibility: needsAccessibility,
+            needsInputMonitoring: needsInputMonitoring
+        )
+    }
+
+    private func schedulePermissionPrompts(
+        needsAccessibility: Bool,
+        needsInputMonitoring: Bool
+    ) {
+        if needsAccessibility {
+            let accessibilityPrompt = DispatchWorkItem { [weak self] in
                 guard let self else { return }
+                guard !self.appState.permissions.state.accessibilityTrusted else { return }
+                RuntimeLogger.log("Prompting for Accessibility permission after launch delay")
+                self.appState.requestAccessibilityPermission()
+            }
+            scheduledPermissionPrompts.append(accessibilityPrompt)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: accessibilityPrompt)
+        }
+
+        if needsInputMonitoring {
+            let inputMonitoringPrompt = DispatchWorkItem { [weak self] in
+                guard let self else { return }
+                guard !self.appState.permissions.state.inputMonitoringGranted else { return }
+                RuntimeLogger.log("Prompting for Input Monitoring permission after launch delay")
                 self.appState.requestInputMonitoringPermission()
             }
-        } else {
-            appState.permissions.startMonitoringForChanges()
+            scheduledPermissionPrompts.append(inputMonitoringPrompt)
+            let delay: TimeInterval = needsAccessibility ? 3.5 : 1.5
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: inputMonitoringPrompt)
         }
+    }
+
+    private func cancelScheduledPermissionPrompts() {
+        for workItem in scheduledPermissionPrompts {
+            workItem.cancel()
+        }
+        scheduledPermissionPrompts.removeAll()
     }
 
     private func isFinderLaunch() -> Bool {
@@ -133,7 +174,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
+        let survivorsAfterTerminate = waitForOtherInstancesToExit(bundleId: bundleId)
+        if !survivorsAfterTerminate.isEmpty {
+            RuntimeLogger.log("Escalating termination for lingering instances: \(survivorsAfterTerminate.map { $0.processIdentifier })")
+            for app in survivorsAfterTerminate {
+                _ = app.forceTerminate()
+                _ = kill(app.processIdentifier, SIGKILL)
+            }
+        }
+
+        let survivorsAfterKill = waitForOtherInstancesToExit(bundleId: bundleId)
+        if !survivorsAfterKill.isEmpty {
+            RuntimeLogger.log("Aborting launch because old instances are still alive: \(survivorsAfterKill.map { $0.processIdentifier })")
+            NSApp.terminate(nil)
+            return true
+        }
+
         return false
+    }
+
+    private func waitForOtherInstancesToExit(bundleId: String, timeout: TimeInterval = 1.5) -> [NSRunningApplication] {
+        let deadline = Date().addingTimeInterval(timeout)
+        var remaining = otherRunningInstances(bundleId: bundleId)
+
+        while !remaining.isEmpty, Date() < deadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.05))
+            remaining = otherRunningInstances(bundleId: bundleId)
+        }
+
+        return remaining
+    }
+
+    private func otherRunningInstances(bundleId: String) -> [NSRunningApplication] {
+        let me = ProcessInfo.processInfo.processIdentifier
+        return NSRunningApplication.runningApplications(withBundleIdentifier: bundleId)
+            .filter { $0.processIdentifier != me && !$0.isTerminated }
     }
 
     private func startObservingOpenSettingsRequests() {
