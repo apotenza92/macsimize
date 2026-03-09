@@ -3,10 +3,12 @@ import Foundation
 import Sparkle
 
 @MainActor
-final class UpdateManager: NSObject, ObservableObject, SPUUpdaterDelegate {
+final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdaterDelegate {
     @Published private(set) var canCheckForUpdates = false
+    @Published private(set) var updateStatusMessage: String?
 
     private let settings: SettingsStore
+    private let diagnostics: DebugDiagnostics
     private var updateCheckTimer: Timer?
     private var cancellables: Set<AnyCancellable> = []
     private var didConfigure = false
@@ -17,8 +19,9 @@ final class UpdateManager: NSObject, ObservableObject, SPUUpdaterDelegate {
         userDriverDelegate: nil
     )
 
-    init(settings: SettingsStore) {
+    init(settings: SettingsStore, diagnostics: DebugDiagnostics) {
         self.settings = settings
+        self.diagnostics = diagnostics
         super.init()
     }
 
@@ -28,15 +31,25 @@ final class UpdateManager: NSObject, ObservableObject, SPUUpdaterDelegate {
 
         guard !isAutomatedMode else {
             RuntimeLogger.log("UpdateManager disabled in automated test mode")
+            updateStatus("Updates disabled in automated mode.")
             return
         }
 
         guard !Self.isDevelopmentBuild else {
             RuntimeLogger.log("UpdateManager disabled in development build")
             canCheckForUpdates = false
+            updateStatus("Updates disabled in development builds.")
             return
         }
 
+        guard !Self.requiresSparkleInstallerLauncherService || Self.hasInstalledSparkleInstallerLauncherService else {
+            RuntimeLogger.log("UpdateManager disabled because Sparkle launcher service is missing from app bundle")
+            canCheckForUpdates = false
+            updateStatus("Updates unavailable: incomplete Sparkle runtime in app bundle.")
+            return
+        }
+
+        RuntimeLogger.log("UpdateManager configuring updater (requiresLauncherService=\(Self.requiresSparkleInstallerLauncherService))")
         updaterController.startUpdater()
         bindUpdaterState()
         bindSettings()
@@ -48,7 +61,11 @@ final class UpdateManager: NSObject, ObservableObject, SPUUpdaterDelegate {
         guard didConfigure else { return }
         guard updaterController.updater.canCheckForUpdates else { return }
         settings.markUpdateCheckNow()
-        updaterController.checkForUpdates(nil)
+        RuntimeLogger.log("User initiated update check (background mode)")
+        updateStatus("Checking for updates...")
+        // Avoid Sparkle's modal "up to date" alert path, which can stall LSUIElement
+        // menu bar apps when invoked from the Settings window.
+        updaterController.updater.checkForUpdatesInBackground()
     }
 
     private func bindUpdaterState() {
@@ -91,6 +108,7 @@ final class UpdateManager: NSObject, ObservableObject, SPUUpdaterDelegate {
 
     private func performBackgroundUpdateCheck() {
         guard updaterController.updater.canCheckForUpdates else { return }
+        RuntimeLogger.log("Running scheduled launch/background update check")
         settings.markUpdateCheckNow()
         updaterController.updater.checkForUpdatesInBackground()
     }
@@ -100,6 +118,40 @@ final class UpdateManager: NSObject, ObservableObject, SPUUpdaterDelegate {
         let channel = Self.isBetaBuild ? "beta" : "stable"
         let arch = Self.architectureSuffix
         return "\(base)/\(channel)-\(arch).xml"
+    }
+
+    func updater(_ updater: SPUUpdater, didFinishLoading appcast: SUAppcast) {
+        RuntimeLogger.log("Sparkle appcast loaded successfully")
+    }
+
+    func updater(_ updater: SPUUpdater, didFindValidUpdate item: SUAppcastItem) {
+        let version = item.displayVersionString
+        RuntimeLogger.log("Sparkle found update: \(version)")
+        updateStatus("Update available: \(version)")
+    }
+
+    func updaterDidNotFindUpdate(_ updater: SPUUpdater, error: Error) {
+        RuntimeLogger.log("Sparkle did not find an update: \(error.localizedDescription)")
+        updateStatus("You're up to date.")
+    }
+
+    func updaterDidNotFindUpdate(_ updater: SPUUpdater) {
+        RuntimeLogger.log("Sparkle did not find an update")
+        updateStatus("You're up to date.")
+    }
+
+    func updater(_ updater: SPUUpdater, didAbortWithError error: Error) {
+        RuntimeLogger.log("Sparkle aborted update cycle: \(error.localizedDescription)")
+        updateStatus("Update check failed: \(error.localizedDescription)")
+    }
+
+    func updater(_ updater: SPUUpdater, didFinishUpdateCycleFor updateCheck: SPUUpdateCheck, error: Error?) {
+        if let error {
+            RuntimeLogger.log("Sparkle finished update cycle with error: \(error.localizedDescription)")
+            updateStatus("Update cycle failed: \(error.localizedDescription)")
+        } else {
+            RuntimeLogger.log("Sparkle finished update cycle (\(String(describing: updateCheck)))")
+        }
     }
 
     nonisolated private static var isBetaBuild: Bool {
@@ -120,5 +172,44 @@ final class UpdateManager: NSObject, ObservableObject, SPUUpdaterDelegate {
         #else
         return false
         #endif
+    }
+
+    nonisolated static func sparkleInstallerLauncherServicePath(bundleIdentifier: String, bundleURL: URL) -> String {
+        let launcherServiceName = "\(bundleIdentifier)-spks.xpc"
+        return bundleURL
+            .appendingPathComponent("Contents/XPCServices/\(launcherServiceName)")
+            .path
+    }
+
+    nonisolated static func hasSparkleInstallerLauncherService(
+        bundleIdentifier: String,
+        bundleURL: URL,
+        fileManager: FileManager = .default
+    ) -> Bool {
+        let launcherPath = sparkleInstallerLauncherServicePath(
+            bundleIdentifier: bundleIdentifier,
+            bundleURL: bundleURL
+        )
+        return fileManager.fileExists(atPath: launcherPath)
+    }
+
+    nonisolated private static var requiresSparkleInstallerLauncherService: Bool {
+        (Bundle.main.object(forInfoDictionaryKey: "SUEnableInstallerLauncherService") as? Bool) ?? true
+    }
+
+    nonisolated private static var hasInstalledSparkleInstallerLauncherService: Bool {
+        guard let bundleId = Bundle.main.bundleIdentifier else {
+            return false
+        }
+
+        return hasSparkleInstallerLauncherService(
+            bundleIdentifier: bundleId,
+            bundleURL: Bundle.main.bundleURL
+        )
+    }
+
+    private func updateStatus(_ message: String) {
+        updateStatusMessage = message
+        diagnostics.logMessage(message)
     }
 }

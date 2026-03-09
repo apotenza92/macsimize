@@ -108,4 +108,38 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertFalse(store.shouldCheckForUpdatesOnLaunch(now: Date(timeIntervalSince1970: 10 + (23 * 60 * 60))))
         XCTAssertTrue(store.shouldCheckForUpdatesOnLaunch(now: Date(timeIntervalSince1970: 10 + (24 * 60 * 60))))
     }
+
+    func testSparkleLauncherServicePathIncludesBundleIdentifier() {
+        let bundleURL = URL(fileURLWithPath: "/tmp/Macsimize.app", isDirectory: true)
+        let path = UpdateManager.sparkleInstallerLauncherServicePath(
+            bundleIdentifier: "pzc.Macsimize.beta",
+            bundleURL: bundleURL
+        )
+
+        XCTAssertEqual(path, "/tmp/Macsimize.app/Contents/XPCServices/pzc.Macsimize.beta-spks.xpc")
+    }
+
+    func testHasSparkleInstallerLauncherServiceDetectsPresence() throws {
+        let tempRoot = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: tempRoot) }
+
+        let appURL = tempRoot.appendingPathComponent("Macsimize.app", isDirectory: true)
+        let serviceURL = appURL
+            .appendingPathComponent("Contents/XPCServices/pzc.Macsimize.beta-spks.xpc", isDirectory: true)
+        try FileManager.default.createDirectory(at: serviceURL, withIntermediateDirectories: true)
+
+        XCTAssertTrue(
+            UpdateManager.hasSparkleInstallerLauncherService(
+                bundleIdentifier: "pzc.Macsimize.beta",
+                bundleURL: appURL
+            )
+        )
+        XCTAssertFalse(
+            UpdateManager.hasSparkleInstallerLauncherService(
+                bundleIdentifier: "pzc.Macsimize",
+                bundleURL: appURL
+            )
+        )
+    }
 }

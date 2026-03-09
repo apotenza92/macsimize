@@ -12,6 +12,10 @@ final class AccessibilityService {
     }
 
     func resolveGreenButtonClick(at location: CGPoint) -> ClickedWindowContext? {
+        if isLikelyInMenuBar(location) {
+            return nil
+        }
+
         guard let app = NSWorkspace.shared.frontmostApplication else {
             diagnostics.logMessage("AX hit-test skipped: no frontmost app.")
             return nil
@@ -114,6 +118,15 @@ final class AccessibilityService {
             candidates.append(flipped)
         }
         return candidates
+    }
+
+    private func isLikelyInMenuBar(_ location: CGPoint) -> Bool {
+        guard let screen = NSScreen.screens.first(where: { $0.frame.contains(location) }) else {
+            return false
+        }
+
+        // Menu bar area is above visibleFrame on macOS screens.
+        return location.y > screen.visibleFrame.maxY
     }
 
     private func resolveUsingSystemWideHitTest(at location: CGPoint, originalLocation: CGPoint) -> ClickedWindowContext? {

@@ -162,8 +162,42 @@ jobs:
           ARCHIVE_PATH="$RUNNER_TEMP/${{ matrix.package_prefix }}-${{ matrix.arch }}.xcarchive"
           EXPORT_PATH="$RUNNER_TEMP/export-${{ matrix.package_prefix }}-${{ matrix.arch }}"
           EXPORT_OPTIONS_PATH="$RUNNER_TEMP/export-options-${{ matrix.package_prefix }}-${{ matrix.arch }}.plist"
+          ARCHIVE_LOG="$RUNNER_TEMP/archive-${{ matrix.package_prefix }}-${{ matrix.arch }}.log"
+          EXPORT_LOG="$RUNNER_TEMP/export-${{ matrix.package_prefix }}-${{ matrix.arch }}.log"
 
-          xcodebuild \
+          run_with_timestamp_retry() {
+            local log_path="$1"
+            shift
+            local max_attempts=3
+            local attempt=1
+            local status=0
+
+            while [[ "$attempt" -le "$max_attempts" ]]; do
+              echo "Running command (attempt ${attempt}/${max_attempts}): $*"
+              set +e
+              "$@" 2>&1 | tee "$log_path"
+              status=${PIPESTATUS[0]}
+              set -e
+
+              if [[ "$status" -eq 0 ]]; then
+                return 0
+              fi
+
+              if grep -qi "The timestamp service is not available" "$log_path" && [[ "$attempt" -lt "$max_attempts" ]]; then
+                local sleep_seconds=$((attempt * 20))
+                echo "::warning::Apple timestamp service unavailable; retrying in ${sleep_seconds}s."
+                sleep "$sleep_seconds"
+                attempt=$((attempt + 1))
+                continue
+              fi
+
+              return "$status"
+            done
+
+            return "$status"
+          }
+
+          run_with_timestamp_retry "$ARCHIVE_LOG" xcodebuild \
             -project Macsimize.xcodeproj \
             -scheme Macsimize \
             -configuration Release \
@@ -200,17 +234,27 @@ jobs:
           </plist>
           EOF
 
-          xcodebuild \
+          if ! run_with_timestamp_retry "$EXPORT_LOG" xcodebuild \
             -exportArchive \
             -archivePath "$ARCHIVE_PATH" \
             -exportPath "$EXPORT_PATH" \
-            -exportOptionsPlist "$EXPORT_OPTIONS_PATH"
+            -exportOptionsPlist "$EXPORT_OPTIONS_PATH"; then
+            if grep -qi "The timestamp service is not available" "$EXPORT_LOG"; then
+              echo "::warning::Export failed after timestamp retries; using signed app directly from archive."
+              mkdir -p "$EXPORT_PATH"
+              cp -R "$ARCHIVE_PATH/Products/Applications/${{ matrix.product_name }}.app" "$EXPORT_PATH/${{ matrix.product_name }}.app"
+            else
+              exit 1
+            fi
+          fi
 
           APP_PATH="$EXPORT_PATH/${{ matrix.product_name }}.app"
           if [[ ! -d "$APP_PATH" ]]; then
             echo "::error::Expected app bundle not found at $APP_PATH"
             exit 1
           fi
+
+          python3 scripts/release/validate_sparkle_bundle.py --app-path "$APP_PATH"
 
           codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 

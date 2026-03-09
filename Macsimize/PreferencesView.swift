@@ -112,6 +112,13 @@ struct PreferencesView: View {
                 .labelsHidden()
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
+
+            if let updateStatusMessage = updateManager.updateStatusMessage {
+                Text(updateStatusMessage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
     }
 

@@ -1,3 +1,4 @@
+import AppKit
 import ApplicationServices
 import Foundation
 
@@ -205,6 +206,10 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
     }
 
     private func processMouseDown(_ event: CGEvent, configuration: InterceptionConfiguration) -> Unmanaged<CGEvent>? {
+        if shouldBypassInterception(for: event.location) {
+            return Unmanaged.passUnretained(event)
+        }
+
         let decision = controller.handleMouseDown(
             location: event.location,
             timestamp: ProcessInfo.processInfo.systemUptime,
@@ -353,6 +358,13 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
             copiedEvent.setIntegerValueField(.eventSourceUserData, value: WindowActionEngine.syntheticEventMarker)
             copiedEvent.post(tap: .cghidEventTap)
         }
+    }
+
+    private func shouldBypassInterception(for location: CGPoint) -> Bool {
+        guard let screen = NSScreen.screens.first(where: { $0.frame.contains(location) }) else {
+            return false
+        }
+        return location.y > screen.visibleFrame.maxY
     }
 
     deinit {

@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [v0.2.8]
+
+- Hardened Sparkle integration for menu bar safety by making manual update checks non-blocking, adding updater state diagnostics, and gating launcher-service-dependent startup paths.
+- Reduced menu bar interaction stalls by bypassing event-tap accessibility resolution for menu bar region clicks before expensive AX traversal.
+- Added release and CI Sparkle bundle validation plus release workflow resilience for transient Apple timestamp service outages during signing/export.
+
 ## [v0.2.7]
 
 - Reduced false-positive AX permission churn by preferring frontmost-app hit testing and only using system-wide AX hit testing as a fallback path.

@@ -38,6 +38,8 @@
     <false/>
     <key>SUAutomaticallyUpdate</key>
     <false/>
+    <key>SUEnableInstallerLauncherService</key>
+    <false/>
     <key>SUVerifyUpdateBeforeExtraction</key>
     <true/>
 </dict>

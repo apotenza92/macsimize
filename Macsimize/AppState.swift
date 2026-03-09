@@ -20,7 +20,7 @@ final class AppState: ObservableObject {
         settings = SettingsStore(userDefaults: userDefaults)
         permissions = PermissionsCoordinator()
         diagnostics = DebugDiagnostics()
-        updateManager = UpdateManager(settings: settings)
+        updateManager = UpdateManager(settings: settings, diagnostics: diagnostics)
         accessibilityService = AccessibilityService(diagnostics: diagnostics)
         frameStore = WindowFrameStore()
         maximizeStrategy = MaximizeStrategy(frameStore: frameStore, diagnostics: diagnostics)
