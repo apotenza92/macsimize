@@ -4,6 +4,10 @@ import Sparkle
 
 @MainActor
 final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdaterDelegate {
+    nonisolated private static let checkingStatusMessage = "Checking for updates..."
+    nonisolated private static let upToDateStatusMessage = "Up to date."
+    nonisolated private static let updateCheckFailedStatusMessage = "Unable to check for updates."
+
     @Published private(set) var canCheckForUpdates = false
     @Published private(set) var updateStatusMessage: String?
 
@@ -62,7 +66,7 @@ final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdate
         guard updaterController.updater.canCheckForUpdates else { return }
         settings.markUpdateCheckNow()
         RuntimeLogger.log("User initiated update check (background mode)")
-        updateStatus("Checking for updates...")
+        updateStatus(Self.checkingStatusMessage)
         // Avoid Sparkle's modal "up to date" alert path, which can stall LSUIElement
         // menu bar apps when invoked from the Settings window.
         updaterController.updater.checkForUpdatesInBackground()
@@ -132,23 +136,27 @@ final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdate
 
     func updaterDidNotFindUpdate(_ updater: SPUUpdater, error: Error) {
         RuntimeLogger.log("Sparkle did not find an update: \(error.localizedDescription)")
-        updateStatus("You're up to date.")
+        updateStatus(Self.upToDateStatusMessage)
     }
 
     func updaterDidNotFindUpdate(_ updater: SPUUpdater) {
         RuntimeLogger.log("Sparkle did not find an update")
-        updateStatus("You're up to date.")
+        updateStatus(Self.upToDateStatusMessage)
     }
 
     func updater(_ updater: SPUUpdater, didAbortWithError error: Error) {
         RuntimeLogger.log("Sparkle aborted update cycle: \(error.localizedDescription)")
-        updateStatus("Update check failed: \(error.localizedDescription)")
+        updateStatus(Self.updateCheckFailedStatusMessage)
     }
 
     func updater(_ updater: SPUUpdater, didFinishUpdateCycleFor updateCheck: SPUUpdateCheck, error: Error?) {
         if let error {
             RuntimeLogger.log("Sparkle finished update cycle with error: \(error.localizedDescription)")
-            updateStatus("Update cycle failed: \(error.localizedDescription)")
+            if let message = Self.finalCycleStatusMessage(
+                currentStatusMessage: updateStatusMessage
+            ) {
+                updateStatus(message)
+            }
         } else {
             RuntimeLogger.log("Sparkle finished update cycle (\(String(describing: updateCheck)))")
         }
@@ -206,6 +214,17 @@ final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdate
             bundleIdentifier: bundleId,
             bundleURL: Bundle.main.bundleURL
         )
+    }
+
+    nonisolated static func finalCycleStatusMessage(currentStatusMessage: String?) -> String? {
+        switch currentStatusMessage {
+        case upToDateStatusMessage, nil:
+            return nil
+        case let message? where message.hasPrefix("Update available:"):
+            return nil
+        default:
+            return updateCheckFailedStatusMessage
+        }
     }
 
     private func updateStatus(_ message: String) {

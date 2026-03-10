@@ -44,10 +44,23 @@ struct PermissionState: Equatable {
         if !eventTapRunning {
             return "Permissions are granted, but the event tap is not running yet. Macsimize is not active until the status changes to Ready."
         }
-        return "\(AppIdentity.displayName) is ready to start intercepting clean green-button clicks."
+        return "\(AppIdentity.displayName) is active and intercepting green-button clicks."
     }
 
     var allRequiredPermissionsGranted: Bool {
         accessibilityTrusted && inputMonitoringGranted
+    }
+
+    var hasVisibleIssue: Bool {
+        if !accessibilityTrusted || !inputMonitoringGranted {
+            return true
+        }
+        if secureEventInputEnabled {
+            return true
+        }
+        if let lastFailureReason, !lastFailureReason.isEmpty {
+            return true
+        }
+        return !eventTapRunning
     }
 }

@@ -43,10 +43,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let firstLaunch = !appState.settings.firstLaunchCompleted
         let needsPermissions = !appState.permissions.state.allRequiredPermissionsGranted
-        let shouldShowSettings = firstLaunch
-            || explicitSettingsRequest
-            || appState.settings.showSettingsOnStartup
-            || needsPermissions
+        let shouldShowSettings = appState.settings.shouldShowSettingsOnLaunch(
+            explicitSettingsRequest: explicitSettingsRequest,
+            needsPermissions: needsPermissions
+        )
 
         DispatchQueue.main.async {
             if shouldShowSettings {

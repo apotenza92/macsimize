@@ -12,6 +12,7 @@ final class PermissionStateTests: XCTestCase {
         )
 
         XCTAssertEqual(state.summary, "Accessibility required")
+        XCTAssertTrue(state.hasVisibleIssue)
     }
 
     func testSummaryShowsInputMonitoringWhenAccessibilityIsGranted() {
@@ -24,6 +25,7 @@ final class PermissionStateTests: XCTestCase {
         )
 
         XCTAssertEqual(state.summary, "Input Monitoring required")
+        XCTAssertTrue(state.hasVisibleIssue)
     }
 
     func testDetailMentionsSecureEventInputWhenPermissionsGranted() {
@@ -36,6 +38,7 @@ final class PermissionStateTests: XCTestCase {
         )
 
         XCTAssertTrue(state.detail.contains("Secure Event Input"))
+        XCTAssertTrue(state.hasVisibleIssue)
     }
 
     func testDetailWarnsThatNativeBehaviorContinuesWithoutAccessibility() {
@@ -49,6 +52,7 @@ final class PermissionStateTests: XCTestCase {
 
         XCTAssertTrue(state.detail.contains("cannot intercept the green button"))
         XCTAssertTrue(state.detail.contains("normal behavior"))
+        XCTAssertTrue(state.hasVisibleIssue)
     }
 
     func testDetailExplainsEventTapMustBeRunningAfterPermissionsGranted() {
@@ -62,5 +66,18 @@ final class PermissionStateTests: XCTestCase {
 
         XCTAssertTrue(state.detail.contains("event tap is not running yet"))
         XCTAssertTrue(state.detail.contains("not active"))
+        XCTAssertTrue(state.hasVisibleIssue)
+    }
+
+    func testHasVisibleIssueIsFalseWhenPermissionsAndEventTapAreReady() {
+        let state = PermissionState(
+            accessibilityTrusted: true,
+            inputMonitoringGranted: true,
+            secureEventInputEnabled: false,
+            eventTapRunning: true,
+            lastFailureReason: nil
+        )
+
+        XCTAssertFalse(state.hasVisibleIssue)
     }
 }

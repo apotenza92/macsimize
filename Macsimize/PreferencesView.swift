@@ -75,26 +75,28 @@ struct PreferencesView: View {
             Text("Permissions")
                 .font(sectionTitleFont)
 
-            HStack(alignment: .top, spacing: 10) {
-                Image(systemName: statusIconName)
-                    .foregroundStyle(statusAccentColor)
-                    .frame(width: 16, height: 16)
+            if permissions.state.hasVisibleIssue {
+                HStack(alignment: .top, spacing: 10) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.red)
+                        .frame(width: 16, height: 16)
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(permissions.state.summary)
-                        .font(.system(size: 13, weight: .semibold))
-                    Text(statusDetailText)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(permissions.state.summary)
+                            .font(.system(size: 13, weight: .semibold))
+                        Text(statusDetailText)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color.red.opacity(0.1))
+                )
             }
-            .padding(12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(statusBackgroundColor)
-            )
 
             VStack(alignment: .leading, spacing: 8) {
                 permissionActionButton(
@@ -108,11 +110,6 @@ struct PreferencesView: View {
                     action: appState.openInputMonitoringSettings
                 )
             }
-
-            Text("\(appDisplayName) needs Accessibility and Input Monitoring to intercept the green button reliably.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -132,7 +129,7 @@ struct PreferencesView: View {
                     }
                 }
                 .labelsHidden()
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(width: 140, alignment: .leading)
             }
 
             if let updateStatusMessage = updateManager.updateStatusMessage {
@@ -180,9 +177,11 @@ struct PreferencesView: View {
         HStack(alignment: .center, spacing: 8) {
             Button(title, action: action)
                 .buttonStyle(.bordered)
-            Image(systemName: granted ? "checkmark.circle.fill" : "exclamationmark.circle")
-                .foregroundColor(granted ? .green : .orange)
-                .frame(width: 14)
+            if !granted {
+                Image(systemName: "exclamationmark.circle.fill")
+                    .foregroundStyle(.red)
+                    .frame(width: 14)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -217,35 +216,5 @@ struct PreferencesView: View {
             detail += " While this is inactive, clicking the green button may still trigger native macOS full screen."
         }
         return detail
-    }
-
-    private var statusIconName: String {
-        if permissions.state.eventTapRunning {
-            return "checkmark.circle.fill"
-        }
-        if permissions.state.allRequiredPermissionsGranted {
-            return "clock.badge.exclamationmark"
-        }
-        return "exclamationmark.triangle.fill"
-    }
-
-    private var statusAccentColor: Color {
-        if permissions.state.eventTapRunning {
-            return .green
-        }
-        if permissions.state.allRequiredPermissionsGranted {
-            return .orange
-        }
-        return .red
-    }
-
-    private var statusBackgroundColor: Color {
-        if permissions.state.eventTapRunning {
-            return Color.green.opacity(0.1)
-        }
-        if permissions.state.allRequiredPermissionsGranted {
-            return Color.orange.opacity(0.12)
-        }
-        return Color.red.opacity(0.1)
     }
 }

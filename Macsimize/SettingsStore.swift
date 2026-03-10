@@ -121,6 +121,16 @@ final class SettingsStore: ObservableObject {
         }
     }
 
+    func shouldShowSettingsOnLaunch(
+        explicitSettingsRequest: Bool,
+        needsPermissions: Bool
+    ) -> Bool {
+        !firstLaunchCompleted
+            || explicitSettingsRequest
+            || showSettingsOnStartup
+            || needsPermissions
+    }
+
     private static func migratedAction(from storedRawValue: String?) -> WindowActionMode {
         guard let storedRawValue else {
             return .maximize

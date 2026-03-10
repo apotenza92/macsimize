@@ -12,7 +12,57 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertEqual(store.selectedAction, .maximize)
         XCTAssertFalse(store.showSettingsOnStartup)
         XCTAssertFalse(store.firstLaunchCompleted)
+        XCTAssertFalse(store.startAtLogin)
         XCTAssertEqual(store.updateCheckFrequency, .daily)
+    }
+
+    func testFirstLaunchShowsSettingsEvenWhenStartupPreferenceIsDisabled() {
+        let defaults = UserDefaults(suiteName: #function)!
+        defaults.removePersistentDomain(forName: #function)
+        defer { defaults.removePersistentDomain(forName: #function) }
+
+        let store = SettingsStore(userDefaults: defaults)
+
+        XCTAssertTrue(
+            store.shouldShowSettingsOnLaunch(
+                explicitSettingsRequest: false,
+                needsPermissions: false
+            )
+        )
+    }
+
+    func testSubsequentLaunchDoesNotShowSettingsWhenStartupPreferenceIsDisabled() {
+        let defaults = UserDefaults(suiteName: #function)!
+        defaults.removePersistentDomain(forName: #function)
+        defer { defaults.removePersistentDomain(forName: #function) }
+
+        let store = SettingsStore(userDefaults: defaults)
+        store.firstLaunchCompleted = true
+        store.showSettingsOnStartup = false
+
+        XCTAssertFalse(
+            store.shouldShowSettingsOnLaunch(
+                explicitSettingsRequest: false,
+                needsPermissions: false
+            )
+        )
+    }
+
+    func testSubsequentLaunchShowsSettingsWhenStartupPreferenceIsEnabled() {
+        let defaults = UserDefaults(suiteName: #function)!
+        defaults.removePersistentDomain(forName: #function)
+        defer { defaults.removePersistentDomain(forName: #function) }
+
+        let store = SettingsStore(userDefaults: defaults)
+        store.firstLaunchCompleted = true
+        store.showSettingsOnStartup = true
+
+        XCTAssertTrue(
+            store.shouldShowSettingsOnLaunch(
+                explicitSettingsRequest: false,
+                needsPermissions: false
+            )
+        )
     }
 
     func testSettingsPersistAcrossInstances() {

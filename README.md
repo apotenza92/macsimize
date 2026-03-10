@@ -2,7 +2,7 @@
 
 <img src="Macsimize/Assets.xcassets/AppIcon.appiconset/icon_256x256.png" alt="Macsimize icon" width="96" />
 
-Simple macOS menu bar app that remaps a click on the green window button from Full Screen to a simple maximize in the style of Windows / Linux.
+macOS menu bar app that remaps the green window button from Full Screen to Maximize.
 
 ## Install
 

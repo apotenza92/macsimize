@@ -6,6 +6,13 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [v0.2.12]
+
+- Removed the remaining “clean green-button clicks” marketing language and tightened the README, GitHub description, and in-app permission copy.
+- Simplified the Permissions section so healthy state stays quiet and only real permission or interception problems show a red warning.
+- Kept `Show settings on startup` and `Start Macsimize at login` off by default while preserving first-launch Settings presentation for new installs.
+- Narrowed the update frequency picker and fixed Sparkle status messaging so “Up to date.” is not overwritten by a misleading update-cycle failure message.
+
 ## [v0.2.11]
 
 - Moved the readiness icon and explanatory text into the Permissions section so setup status now appears alongside the permission controls instead of as a separate panel at the top of Settings.
