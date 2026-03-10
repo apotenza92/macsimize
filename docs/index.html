@@ -406,6 +406,22 @@
         color: var(--text);
       }
 
+      .support-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 2rem;
+        color: var(--accent-solid);
+        text-decoration: none;
+        font-size: 0.82rem;
+        font-weight: 600;
+        transition: opacity 0.2s ease;
+      }
+
+      .support-link:hover {
+        opacity: 0.78;
+      }
+
       .spinner {
         display: none;
         width: 20px;
@@ -562,6 +578,15 @@
         <span id="beta-app-name">Macsimize Beta.app</span> and track the newest
         beta-channel release.
       </div>
+
+      <a
+        class="support-link"
+        href="https://buymeacoffee.com/apotenza"
+        target="_blank"
+        rel="noreferrer"
+      >
+        Buy Me a Coffee
+      </a>
 
       <p class="support-notes">
         <strong>Requirements:</strong> macOS 14.0 or later, plus
