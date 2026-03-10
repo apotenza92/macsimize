@@ -4,7 +4,7 @@
 
 Turn the green window button into Maximize instead of Full Screen on macOS.
 
-[Download Page](https://apotenza92.github.io/macsimize/) · [GitHub Releases](https://github.com/apotenza92/macsimize/releases) · [Buy me a coffee](https://buymeacoffee.com/apotenza)
+[Download Macsimize](https://apotenza92.github.io/macsimize/) · [Buy Me a Coffee](https://buymeacoffee.com/apotenza)
 
 ## Install
 
