@@ -529,7 +529,13 @@
           </a>
 
           <div class="mac-homebrew-section" id="mac-homebrew-section">
-            <div class="command-box" id="mac-homebrew-box">
+            <div
+              class="command-box"
+              id="mac-homebrew-box"
+              role="button"
+              tabindex="0"
+              aria-label="Copy Homebrew install command"
+            >
               <div class="command-label" id="mac-homebrew-label">
                 Or install via Homebrew:
               </div>
@@ -959,6 +965,23 @@
         }
       }
 
+      function onHomebrewBoxClick(event) {
+        if (event.target.closest("#mac-homebrew-copy")) {
+          return;
+        }
+
+        copyHomebrewCommand();
+      }
+
+      function onHomebrewBoxKeyDown(event) {
+        if (event.key !== "Enter" && event.key !== " ") {
+          return;
+        }
+
+        event.preventDefault();
+        copyHomebrewCommand();
+      }
+
       async function initializePage() {
         const hasExplicitArchParam = getInitialState();
         if (!hasExplicitArchParam) {
@@ -984,7 +1007,16 @@
       });
       document
         .getElementById("mac-homebrew-copy")
-        .addEventListener("click", copyHomebrewCommand);
+        .addEventListener("click", (event) => {
+          event.stopPropagation();
+          copyHomebrewCommand();
+        });
+      document
+        .getElementById("mac-homebrew-box")
+        .addEventListener("click", onHomebrewBoxClick);
+      document
+        .getElementById("mac-homebrew-box")
+        .addEventListener("keydown", onHomebrewBoxKeyDown);
 
       initializePage();
     </script>
