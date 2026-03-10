@@ -5,17 +5,20 @@
     <description>Macsimize update feed (beta channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.2.11</title>
-      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.11</link>
-      <sparkle:version>201190000</sparkle:version>
-      <sparkle:shortVersionString>0.2.11</sparkle:shortVersionString>
+      <title>Version 0.2.12</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.12</link>
+      <sparkle:version>201290000</sparkle:version>
+      <sparkle:shortVersionString>0.2.12</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Moved the readiness icon and explanatory text into the Permissions section so setup status now appears alongside the permission controls instead of as a separate panel at the top of Settings.]]></description>
-      <pubDate>Tue, 10 Mar 2026 01:31:23 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.11/Macsimize-Beta-v0.2.11-macos-arm64.zip"
-                 sparkle:edSignature="DQQDimZXMu6WFO6wMtXYOl353n550ngZBbp6LdDf5k+a+alKRnQ+aIyqOXeUe25BEMCeU1ag4ffVr8eHosIjAw=="
-                 length="2573362"
+      <description sparkle:format="plain-text"><![CDATA[- Removed the remaining “clean green-button clicks” marketing language and tightened the README, GitHub description, and in-app permission copy.
+- Simplified the Permissions section so healthy state stays quiet and only real permission or interception problems show a red warning.
+- Kept `Show settings on startup` and `Start Macsimize at login` off by default while preserving first-launch Settings presentation for new installs.
+- Narrowed the update frequency picker and fixed Sparkle status messaging so “Up to date.” is not overwritten by a misleading update-cycle failure message.]]></description>
+      <pubDate>Tue, 10 Mar 2026 02:05:11 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.12/Macsimize-Beta-v0.2.12-macos-arm64.zip"
+                 sparkle:edSignature="ysM1jJ5j+CmwMFzywDhxj0iUEUv+sezSN49R2VdsQpGw9lsU8sQyoBwzPKeHIGJADeHwU+gW1d/uz4GPStmgAQ=="
+                 length="2572915"
                  type="application/octet-stream" />
     </item>
   </channel>
