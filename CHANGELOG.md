@@ -6,6 +6,13 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [v0.2.10]
+
+- Fixed a failure path where an intercepted Maximize click could fall back to native macOS full screen instead of staying contained.
+- Changed intercepted maximize failures and non-resizable window cases to swallow the click rather than replaying the original green-button press.
+- Added a first-run status panel and clearer readiness messaging so Macsimize now explains when permissions or the event tap are still preventing interception.
+- Automatically opens Settings whenever required permissions are missing so new installs do not appear active before green-button interception is actually ready.
+
 ## [v0.2.10-beta.1]
 
 - Made the app resolve its display name from bundle metadata so stable and beta builds label themselves consistently at runtime.

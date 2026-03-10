@@ -42,7 +42,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menuBarController = MenuBarController(appDelegate: self)
 
         let firstLaunch = !appState.settings.firstLaunchCompleted
-        let shouldShowSettings = firstLaunch || explicitSettingsRequest || appState.settings.showSettingsOnStartup
+        let needsPermissions = !appState.permissions.state.allRequiredPermissionsGranted
+        let shouldShowSettings = firstLaunch
+            || explicitSettingsRequest
+            || appState.settings.showSettingsOnStartup
+            || needsPermissions
 
         DispatchQueue.main.async {
             if shouldShowSettings {

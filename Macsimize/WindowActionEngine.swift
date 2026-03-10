@@ -5,10 +5,16 @@ enum WindowActionStep: String, Equatable {
     case maximize
 }
 
+enum WindowActionFailureDisposition: Equatable {
+    case replayOriginalClick
+    case dropInterceptedClick
+}
+
 struct WindowActionOutcome: Equatable {
     let handled: Bool
     let chosenPath: WindowActionStep?
     let notes: [String]
+    let failureDisposition: WindowActionFailureDisposition
 }
 
 final class WindowActionEngine {
@@ -31,23 +37,39 @@ final class WindowActionEngine {
             return WindowActionOutcome(
                 handled: false,
                 chosenPath: .fullScreen,
-                notes: ["Allowing standard macOS full-screen behavior."]
+                notes: ["Allowing standard macOS full-screen behavior."],
+                failureDisposition: .replayOriginalClick
             )
         case .maximize:
             guard context.isResizable else {
                 let notes = ["Window does not appear to be resizable."]
                 diagnostics.logClickContext(context, chosenPath: "safety-skip", notes: notes)
-                return WindowActionOutcome(handled: false, chosenPath: nil, notes: notes)
+                return WindowActionOutcome(
+                    handled: false,
+                    chosenPath: nil,
+                    notes: notes,
+                    failureDisposition: .dropInterceptedClick
+                )
             }
 
             let result = maximizeStrategy.perform(on: context)
             if result.succeeded {
                 diagnostics.logClickContext(context, chosenPath: WindowActionStep.maximize.rawValue, notes: result.notes)
-                return WindowActionOutcome(handled: true, chosenPath: .maximize, notes: result.notes)
+                return WindowActionOutcome(
+                    handled: true,
+                    chosenPath: .maximize,
+                    notes: result.notes,
+                    failureDisposition: .dropInterceptedClick
+                )
             }
 
             diagnostics.logClickContext(context, chosenPath: "failed", notes: result.notes)
-            return WindowActionOutcome(handled: false, chosenPath: .maximize, notes: result.notes)
+            return WindowActionOutcome(
+                handled: false,
+                chosenPath: .maximize,
+                notes: result.notes,
+                failureDisposition: .dropInterceptedClick
+            )
         }
     }
 

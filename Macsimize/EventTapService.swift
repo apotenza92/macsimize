@@ -359,8 +359,13 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
                 return
             }
 
-            self.diagnostics.logMessage("Window action failed after intercept; replaying the original mouse sequence.")
-            self.replayOriginalMouseSequence(fallbackEvents)
+            switch outcome.failureDisposition {
+            case .replayOriginalClick:
+                self.diagnostics.logMessage("Window action failed after intercept; replaying the original mouse sequence.")
+                self.replayOriginalMouseSequence(fallbackEvents)
+            case .dropInterceptedClick:
+                self.diagnostics.logMessage("Window action failed after intercept; swallowing the click to avoid unexpected native full-screen behavior.")
+            }
         }
     }
 

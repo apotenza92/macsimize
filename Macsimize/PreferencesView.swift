@@ -22,6 +22,7 @@ struct PreferencesView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
+            statusSection
             generalSection
             behaviorSection
             updatesSection
@@ -67,6 +68,34 @@ struct PreferencesView: View {
                 .buttonStyle(.bordered)
                 .help("Open \(appDisplayName) on GitHub")
             }
+        }
+    }
+
+    private var statusSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Status")
+                .font(sectionTitleFont)
+
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: statusIconName)
+                    .foregroundStyle(statusAccentColor)
+                    .frame(width: 16, height: 16)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(permissions.state.summary)
+                        .font(.system(size: 13, weight: .semibold))
+                    Text(statusDetailText)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(statusBackgroundColor)
+            )
         }
     }
 
@@ -188,5 +217,43 @@ struct PreferencesView: View {
             return
         }
         NSWorkspace.shared.open(url)
+    }
+
+    private var statusDetailText: String {
+        var detail = permissions.state.detail
+        if settings.selectedAction == .maximize && !permissions.state.eventTapRunning {
+            detail += " While this is inactive, clicking the green button may still trigger native macOS full screen."
+        }
+        return detail
+    }
+
+    private var statusIconName: String {
+        if permissions.state.eventTapRunning {
+            return "checkmark.circle.fill"
+        }
+        if permissions.state.allRequiredPermissionsGranted {
+            return "clock.badge.exclamationmark"
+        }
+        return "exclamationmark.triangle.fill"
+    }
+
+    private var statusAccentColor: Color {
+        if permissions.state.eventTapRunning {
+            return .green
+        }
+        if permissions.state.allRequiredPermissionsGranted {
+            return .orange
+        }
+        return .red
+    }
+
+    private var statusBackgroundColor: Color {
+        if permissions.state.eventTapRunning {
+            return Color.green.opacity(0.1)
+        }
+        if permissions.state.allRequiredPermissionsGranted {
+            return Color.orange.opacity(0.12)
+        }
+        return Color.red.opacity(0.1)
     }
 }

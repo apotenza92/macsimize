@@ -14,6 +14,7 @@ final class WindowActionEngineTests: XCTestCase {
 
         XCTAssertFalse(outcome.handled)
         XCTAssertEqual(outcome.chosenPath, .fullScreen)
+        XCTAssertEqual(outcome.failureDisposition, .replayOriginalClick)
         XCTAssertEqual(strategy.performCallCount, 0)
     }
 
@@ -27,6 +28,7 @@ final class WindowActionEngineTests: XCTestCase {
 
         XCTAssertTrue(outcome.handled)
         XCTAssertEqual(outcome.chosenPath, .maximize)
+        XCTAssertEqual(outcome.failureDisposition, .dropInterceptedClick)
         XCTAssertEqual(strategy.performCallCount, 1)
     }
 
@@ -38,6 +40,7 @@ final class WindowActionEngineTests: XCTestCase {
 
         XCTAssertFalse(outcome.handled)
         XCTAssertNil(outcome.chosenPath)
+        XCTAssertEqual(outcome.failureDisposition, .dropInterceptedClick)
         XCTAssertEqual(strategy.performCallCount, 0)
         XCTAssertTrue(outcome.notes.contains { $0.contains("not appear to be resizable") })
     }
@@ -57,6 +60,7 @@ final class WindowActionEngineTests: XCTestCase {
 
         XCTAssertFalse(outcome.handled)
         XCTAssertEqual(outcome.chosenPath, .maximize)
+        XCTAssertEqual(outcome.failureDisposition, .dropInterceptedClick)
         XCTAssertEqual(strategy.performCallCount, 1)
         XCTAssertEqual(outcome.notes, ["Window frame unavailable."])
     }
