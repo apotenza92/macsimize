@@ -5,19 +5,19 @@
     <description>Macsimize update feed (beta channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.2.15</title>
-      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.15</link>
-      <sparkle:version>201590000</sparkle:version>
-      <sparkle:shortVersionString>0.2.15</sparkle:shortVersionString>
+      <title>Version 0.3.0</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.3.0</link>
+      <sparkle:version>300090000</sparkle:version>
+      <sparkle:shortVersionString>0.3.0</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Fixed title-bar double-click interception so apps like Codex no longer maximize when you double-click ordinary content inside the window.
-- Tightened title-bar hit-area heuristics and added regression coverage for top-edge geometry and oversized AX group/tool-bar frames.
-- Added a public macOS download page, linked it from the README and GitHub Pages metadata, and aligned the stable/beta page visuals with the shipped app icons.]]></description>
-      <pubDate>Tue, 10 Mar 2026 11:44:30 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.15/Macsimize-Beta-v0.2.15-macos-x64.zip"
-                 sparkle:edSignature="+Ea3P7gC8eAVLOKSfm5NdMOkjRBMsPCCtEl6CigTjg9xo1qvDAzhLLJ3mCOQChgd4m+dygalJmjDCbPp753CDQ=="
-                 length="2633076"
+      <description sparkle:format="plain-text"><![CDATA[- Refreshed the download page and README with cleaner Macsimize product copy, badge-style top links, architecture-aware downloads, improved Homebrew copy interactions, and a support CTA that matches the site styling.
+- Tightened the Settings window so it fits the content better and improved manual update checks so the UI no longer sits on `Checking for updates...` indefinitely.
+- Fixed title-bar hit testing so Dock icon double-clicks and other off-window clicks no longer get misclassified as title-bar maximize actions.]]></description>
+      <pubDate>Tue, 10 Mar 2026 13:43:47 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.3.0/Macsimize-Beta-v0.3.0-macos-x64.zip"
+                 sparkle:edSignature="zlWf046egRh+JWtcRQqawsxyQwizUS+M9pLeJFse2NBhIX+9Uu6BbRC3CrS7I6wucSKvhkMZou0Om9xkYNudAQ=="
+                 length="2635121"
                  type="application/octet-stream" />
     </item>
   </channel>
