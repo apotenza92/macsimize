@@ -41,7 +41,7 @@ struct PermissionState: Equatable {
         if let lastFailureReason, !lastFailureReason.isEmpty {
             return lastFailureReason
         }
-        return "Macsimize is ready to start intercepting clean green-button clicks."
+        return "\(AppIdentity.displayName) is ready to start intercepting clean green-button clicks."
     }
 
     var allRequiredPermissionsGranted: Bool {

@@ -142,4 +142,40 @@ final class SettingsStoreTests: XCTestCase {
             )
         )
     }
+
+    func testAppIdentityPrefersBundleDisplayName() {
+        XCTAssertEqual(
+            AppIdentity.displayName(
+                bundleDisplayName: "Macsimize Beta",
+                bundleName: "Macsimize",
+                bundleURL: URL(fileURLWithPath: "/Applications/Macsimize.app"),
+                executableName: "Macsimize"
+            ),
+            "Macsimize Beta"
+        )
+    }
+
+    func testAppIdentityFallsBackToBundleURLName() {
+        XCTAssertEqual(
+            AppIdentity.displayName(
+                bundleDisplayName: nil,
+                bundleName: nil,
+                bundleURL: URL(fileURLWithPath: "/Applications/Macsimize Beta.app"),
+                executableName: "Macsimize"
+            ),
+            "Macsimize Beta"
+        )
+    }
+
+    func testAppIdentityFallsBackToDefaultName() {
+        XCTAssertEqual(
+            AppIdentity.displayName(
+                bundleDisplayName: "   ",
+                bundleName: nil,
+                bundleURL: nil,
+                executableName: ""
+            ),
+            "Macsimize"
+        )
+    }
 }

@@ -2,14 +2,18 @@ import AppKit
 
 @MainActor
 final class MenuBarController: NSObject {
+    private let appDisplayName: String
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private weak var appDelegate: AppDelegate?
     private let menu = NSMenu()
     private let settingsItem = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
-    private let quitItem = NSMenuItem(title: "Quit Macsimize", action: #selector(quitApp), keyEquivalent: "q")
+    private let quitItem: NSMenuItem
 
     init(appDelegate: AppDelegate) {
+        let appDisplayName = AppIdentity.displayName
+        self.appDisplayName = appDisplayName
         self.appDelegate = appDelegate
+        quitItem = NSMenuItem(title: "Quit \(appDisplayName)", action: #selector(quitApp), keyEquivalent: "q")
         super.init()
         configureStatusItem()
         configureMenu()
@@ -22,8 +26,8 @@ final class MenuBarController: NSObject {
 
         button.image = MacsimizeGlyphImage.make(size: NSSize(width: 18, height: 18))
         button.imagePosition = .imageOnly
-        button.setAccessibilityLabel("Macsimize")
-        button.toolTip = "Macsimize"
+        button.setAccessibilityLabel(appDisplayName)
+        button.toolTip = appDisplayName
     }
 
     private func configureMenu() {

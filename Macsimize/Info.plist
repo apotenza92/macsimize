@@ -27,7 +27,7 @@
     <key>LSUIElement</key>
     <true/>
     <key>NSAccessibilityUsageDescription</key>
-    <string>Macsimize needs Accessibility access to detect green-button clicks and resize windows.</string>
+    <string>$(PRODUCT_NAME) needs Accessibility access to detect green-button clicks and resize windows.</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
     <key>SUFeedURL</key>

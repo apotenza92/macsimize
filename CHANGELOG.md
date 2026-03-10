@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [v0.2.10-beta.1]
+
+- Made the app resolve its display name from bundle metadata so stable and beta builds label themselves consistently at runtime.
+- Updated the Settings window title, menu bar tooltip, quit menu item, and related visible strings to show `Macsimize Beta` for beta builds and `Macsimize` for stable builds.
+- Added coverage for runtime app-name resolution and parameterized the Accessibility usage description with `$(PRODUCT_NAME)`.
+
 ## [v0.2.9]
 
 - Fixed a maximize/restore CPU spike regression by removing unbounded AX fallback traversal from the event-tap click path and replacing it with bounded, fail-open lookup behavior.

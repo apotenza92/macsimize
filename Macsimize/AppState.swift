@@ -168,3 +168,38 @@ final class AppState: ObservableObject {
         }
     }
 }
+
+enum AppIdentity {
+    static var displayName: String {
+        displayName(bundle: .main)
+    }
+
+    static var settingsWindowTitle: String {
+        "\(displayName) Settings"
+    }
+
+    static func displayName(bundle: Bundle) -> String {
+        displayName(
+            bundleDisplayName: bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String,
+            bundleName: bundle.object(forInfoDictionaryKey: "CFBundleName") as? String,
+            bundleURL: bundle.bundleURL,
+            executableName: bundle.executableURL?.deletingPathExtension().lastPathComponent
+        )
+    }
+
+    static func displayName(
+        bundleDisplayName: String?,
+        bundleName: String?,
+        bundleURL: URL?,
+        executableName: String?
+    ) -> String {
+        for candidate in [bundleDisplayName, bundleName, bundleURL?.deletingPathExtension().lastPathComponent, executableName] {
+            let trimmed = candidate?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            if !trimmed.isEmpty {
+                return trimmed
+            }
+        }
+
+        return "Macsimize"
+    }
+}

@@ -11,6 +11,7 @@ struct PreferencesView: View {
     private let horizontalPadding: CGFloat = 20
     private let contentFont: Font = .system(size: 14)
     private let sectionTitleFont: Font = .system(size: 14, weight: .semibold)
+    private let appDisplayName = AppIdentity.displayName
 
     init(appState: AppState) {
         self.appState = appState
@@ -37,7 +38,7 @@ struct PreferencesView: View {
                 .font(sectionTitleFont)
 
             checkboxRow("Show settings on startup", isOn: $settings.showSettingsOnStartup)
-            checkboxRow("Start Macsimize at login", isOn: $settings.startAtLogin)
+            checkboxRow("Start \(appDisplayName) at login", isOn: $settings.startAtLogin)
 
             HStack(spacing: 12) {
                 Button("Restart") {
@@ -64,7 +65,7 @@ struct PreferencesView: View {
                         .foregroundStyle(.primary)
                 }
                 .buttonStyle(.bordered)
-                .help("Open Macsimize on GitHub")
+                .help("Open \(appDisplayName) on GitHub")
             }
         }
     }
@@ -87,7 +88,7 @@ struct PreferencesView: View {
                 )
             }
 
-            Text("Macsimize needs Accessibility and Input Monitoring to intercept the green button reliably.")
+            Text("\(appDisplayName) needs Accessibility and Input Monitoring to intercept the green button reliably.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

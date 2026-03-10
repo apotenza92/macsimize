@@ -13,7 +13,7 @@ final class SettingsWindowController: NSWindowController {
         let window = NSWindow(contentViewController: hostingController)
 
         window.styleMask = [.titled, .closable, .miniaturizable]
-        window.title = "Macsimize Settings"
+        window.title = AppIdentity.settingsWindowTitle
         window.isReleasedWhenClosed = false
         window.level = .normal
         window.collectionBehavior = [.moveToActiveSpace]
