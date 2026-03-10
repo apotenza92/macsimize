@@ -7,9 +7,11 @@
 </a>
 <br><br>
 
-Macsimize turns the green window button into Maximize instead of Full Screen, so windows stay in your current space.
+Macsimize turns the green window button into Maximize instead of Full Screen.
 
-It also overrides title-bar double-click to use the same maximize behavior and adds `Maximize All` and `Restore All` actions in the menu bar.
+It also overrides title-bar double-click to use the same maximize behavior.
+
+Click the Macsimize app icon in the menu bar to use `Maximize All` and `Restore All` for the windows in your current space.
 
 Enjoying Macsimize?
 
