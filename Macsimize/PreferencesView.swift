@@ -22,7 +22,6 @@ struct PreferencesView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            statusSection
             generalSection
             behaviorSection
             updatesSection
@@ -71,9 +70,9 @@ struct PreferencesView: View {
         }
     }
 
-    private var statusSection: some View {
+    private var permissionsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Status")
+            Text("Permissions")
                 .font(sectionTitleFont)
 
             HStack(alignment: .top, spacing: 10) {
@@ -96,13 +95,6 @@ struct PreferencesView: View {
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
                     .fill(statusBackgroundColor)
             )
-        }
-    }
-
-    private var permissionsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Permissions")
-                .font(sectionTitleFont)
 
             VStack(alignment: .leading, spacing: 8) {
                 permissionActionButton(

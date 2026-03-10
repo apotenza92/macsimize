@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [v0.2.11]
+
+- Moved the readiness icon and explanatory text into the Permissions section so setup status now appears alongside the permission controls instead of as a separate panel at the top of Settings.
+
 ## [v0.2.10]
 
 - Fixed a failure path where an intercepted Maximize click could fall back to native macOS full screen instead of staying contained.
