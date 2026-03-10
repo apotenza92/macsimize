@@ -5,20 +5,17 @@
     <description>Macsimize update feed (stable channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.2.12</title>
-      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.12</link>
-      <sparkle:version>201290000</sparkle:version>
-      <sparkle:shortVersionString>0.2.12</sparkle:shortVersionString>
+      <title>Version 0.2.13</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.13</link>
+      <sparkle:version>201390000</sparkle:version>
+      <sparkle:shortVersionString>0.2.13</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Removed the remaining “clean green-button clicks” marketing language and tightened the README, GitHub description, and in-app permission copy.
-- Simplified the Permissions section so healthy state stays quiet and only real permission or interception problems show a red warning.
-- Kept `Show settings on startup` and `Start Macsimize at login` off by default while preserving first-launch Settings presentation for new installs.
-- Narrowed the update frequency picker and fixed Sparkle status messaging so “Up to date.” is not overwritten by a misleading update-cycle failure message.]]></description>
-      <pubDate>Tue, 10 Mar 2026 02:05:11 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.12/Macsimize-v0.2.12-macos-x64.zip"
-                 sparkle:edSignature="fmQR/+87kfNlhpdE1dnM8qjS5E8eRCHHyTK3slNlOKzVa5LQk9oZDKnr4iyOmDPTOFJwolRSCjiqhbeHVjLsAw=="
-                 length="2694580"
+      <description sparkle:format="plain-text"><![CDATA[- Fixed Sparkle update-status handling so a normal “no update found” result no longer shows `Unable to check for updates.` in Settings.]]></description>
+      <pubDate>Tue, 10 Mar 2026 02:21:29 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.13/Macsimize-v0.2.13-macos-x64.zip"
+                 sparkle:edSignature="XZIdWiXkIzaLWSlDhvY0RLsi5mmcYPU3n5ECSAVxjfOfxM7f6vXzT5o0qwji5cqi2SuVlMYRRsQh3TvNeTiSAQ=="
+                 length="2694909"
                  type="application/octet-stream" />
     </item>
   </channel>
