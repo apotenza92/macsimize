@@ -9,18 +9,18 @@ enum WindowActionMode: String, CaseIterable, Codable, Identifiable {
     var displayName: String {
         switch self {
         case .maximize:
-            return "Maximize"
+            return AppStrings.maximizeModeTitle
         case .fullScreen:
-            return "Full Screen"
+            return AppStrings.fullScreenModeTitle
         }
     }
 
     var helpText: String {
         switch self {
         case .maximize:
-            return "Click again to restore the pre-maximized size."
+            return AppStrings.maximizeModeHelp
         case .fullScreen:
-            return "Pass the green-button click through to standard macOS full-screen behavior."
+            return AppStrings.fullScreenModeHelp
         }
     }
 

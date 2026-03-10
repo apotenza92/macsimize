@@ -4,9 +4,6 @@ import Sparkle
 
 @MainActor
 final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdaterDelegate {
-    nonisolated private static let checkingStatusMessage = "Checking for updates..."
-    nonisolated private static let upToDateStatusMessage = "Up to date."
-    nonisolated private static let updateCheckFailedStatusMessage = "Unable to check for updates."
     nonisolated private enum SparkleErrorCode {
         static let noUpdate = 1001
         static let installationCanceled = 4007
@@ -40,21 +37,21 @@ final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdate
 
         guard !isAutomatedMode else {
             RuntimeLogger.log("UpdateManager disabled in automated test mode")
-            updateStatus("Updates disabled in automated mode.")
+            updateStatus(AppStrings.updatesDisabledAutomatedMode)
             return
         }
 
         guard !Self.isDevelopmentBuild else {
             RuntimeLogger.log("UpdateManager disabled in development build")
             canCheckForUpdates = false
-            updateStatus("Updates disabled in development builds.")
+            updateStatus(AppStrings.updatesDisabledDevelopmentBuild)
             return
         }
 
         guard !Self.requiresSparkleInstallerLauncherService || Self.hasInstalledSparkleInstallerLauncherService else {
             RuntimeLogger.log("UpdateManager disabled because Sparkle launcher service is missing from app bundle")
             canCheckForUpdates = false
-            updateStatus("Updates unavailable: incomplete Sparkle runtime in app bundle.")
+            updateStatus(AppStrings.updatesUnavailableIncompleteRuntime)
             return
         }
 
@@ -71,7 +68,7 @@ final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdate
         guard updaterController.updater.canCheckForUpdates else { return }
         settings.markUpdateCheckNow()
         RuntimeLogger.log("User initiated update check (background mode)")
-        updateStatus(Self.checkingStatusMessage)
+        updateStatus(AppStrings.updateCheckingStatusMessage)
         // Avoid Sparkle's modal "up to date" alert path, which can stall LSUIElement
         // menu bar apps when invoked from the Settings window.
         updaterController.updater.checkForUpdatesInBackground()
@@ -136,17 +133,17 @@ final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdate
     func updater(_ updater: SPUUpdater, didFindValidUpdate item: SUAppcastItem) {
         let version = item.displayVersionString
         RuntimeLogger.log("Sparkle found update: \(version)")
-        updateStatus("Update available: \(version)")
+        updateStatus(AppStrings.updateAvailable(version: version))
     }
 
     func updaterDidNotFindUpdate(_ updater: SPUUpdater, error: Error) {
         RuntimeLogger.log("Sparkle did not find an update: \(error.localizedDescription)")
-        updateStatus(Self.upToDateStatusMessage)
+        updateStatus(AppStrings.updateUpToDateStatusMessage)
     }
 
     func updaterDidNotFindUpdate(_ updater: SPUUpdater) {
         RuntimeLogger.log("Sparkle did not find an update")
-        updateStatus(Self.upToDateStatusMessage)
+        updateStatus(AppStrings.updateUpToDateStatusMessage)
     }
 
     func updater(_ updater: SPUUpdater, didAbortWithError error: Error) {
@@ -230,7 +227,7 @@ final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdate
         if sparkleError.domain == SUSparkleErrorDomain {
             switch sparkleError.code {
             case SparkleErrorCode.noUpdate:
-                return upToDateStatusMessage
+                return AppStrings.updateUpToDateStatusMessage
             case SparkleErrorCode.installationCanceled, SparkleErrorCode.installationAuthorizeLater:
                 return nil
             default:
@@ -239,12 +236,12 @@ final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdate
         }
 
         switch currentStatusMessage {
-        case upToDateStatusMessage, nil:
+        case AppStrings.updateUpToDateStatusMessage, nil:
             return nil
-        case let message? where message.hasPrefix("Update available:"):
+        case let message? where message.hasPrefix(AppStrings.updateAvailable(version: "")):
             return nil
         default:
-            return updateCheckFailedStatusMessage
+            return AppStrings.updateCheckFailedStatusMessage
         }
     }
 

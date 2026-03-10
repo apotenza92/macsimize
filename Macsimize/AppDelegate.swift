@@ -84,6 +84,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsWindowController.show()
     }
 
+    func maximizeAllCurrentSpaceWindows() {
+        RuntimeLogger.log("Menu bar requested batch maximize for current Space windows")
+        appState.maximizeAllCurrentSpaceWindows()
+    }
+
+    func restoreAllCurrentSpaceWindows() {
+        RuntimeLogger.log("Menu bar requested batch restore for current Space windows")
+        appState.restoreAllCurrentSpaceWindows()
+    }
+
     private func handlePermissionsIfNeeded(allowPrompt: Bool) {
         cancelScheduledPermissionPrompts()
 

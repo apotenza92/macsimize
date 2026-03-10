@@ -1,4 +1,5 @@
 import XCTest
+import Sparkle
 @testable import Macsimize
 
 final class UpdateManagerTests: XCTestCase {
@@ -6,8 +7,8 @@ final class UpdateManagerTests: XCTestCase {
         let error = NSError(domain: SUSparkleErrorDomain, code: 1001)
 
         XCTAssertEqual(
-            UpdateManager.statusMessage(forSparkleError: error, currentStatusMessage: "Checking for updates..."),
-            "Up to date."
+            UpdateManager.statusMessage(forSparkleError: error, currentStatusMessage: AppStrings.updateCheckingStatusMessage),
+            AppStrings.updateUpToDateStatusMessage
         )
     }
 
@@ -15,7 +16,7 @@ final class UpdateManagerTests: XCTestCase {
         let error = NSError(domain: SUSparkleErrorDomain, code: 4007)
 
         XCTAssertNil(
-            UpdateManager.statusMessage(forSparkleError: error, currentStatusMessage: "Checking for updates...")
+            UpdateManager.statusMessage(forSparkleError: error, currentStatusMessage: AppStrings.updateCheckingStatusMessage)
         )
     }
 
@@ -23,7 +24,7 @@ final class UpdateManagerTests: XCTestCase {
         let error = NSError(domain: "com.example.failure", code: 1)
 
         XCTAssertNil(
-            UpdateManager.statusMessage(forSparkleError: error, currentStatusMessage: "Update available: 1.2.3")
+            UpdateManager.statusMessage(forSparkleError: error, currentStatusMessage: AppStrings.updateAvailable(version: "1.2.3"))
         )
     }
 
@@ -31,8 +32,8 @@ final class UpdateManagerTests: XCTestCase {
         let error = NSError(domain: "com.example.failure", code: 1)
 
         XCTAssertEqual(
-            UpdateManager.statusMessage(forSparkleError: error, currentStatusMessage: "Checking for updates..."),
-            "Unable to check for updates."
+            UpdateManager.statusMessage(forSparkleError: error, currentStatusMessage: AppStrings.updateCheckingStatusMessage),
+            AppStrings.updateCheckFailedStatusMessage
         )
     }
 }

@@ -91,7 +91,7 @@ final class GreenButtonInterceptionController {
         }
 
         self.pendingIntercept = nil
-        diagnostics.logMessage("Intercepted green-button press became a drag; flushing buffered native events.")
+        diagnostics.logMessage(AppStrings.greenButtonDragFlushMessage)
         return .flushBufferedEvents
     }
 
@@ -105,7 +105,7 @@ final class GreenButtonInterceptionController {
         }
 
         self.pendingIntercept = nil
-        diagnostics.logMessage("Intercepted green-button press became a hold; flushing buffered native events.")
+        diagnostics.logMessage(AppStrings.greenButtonHoldFlushMessage)
         return .flushBufferedEvents
     }
 
@@ -118,7 +118,7 @@ final class GreenButtonInterceptionController {
         let duration = timestamp - pending.timestamp
         let movedDistance = hypot(location.x - pending.location.x, location.y - pending.location.y)
         if duration > maxClickDuration || movedDistance > maxMovement {
-            diagnostics.logMessage("Intercepted green-button press exceeded clean-click thresholds; flushing buffered native events.")
+            diagnostics.logMessage(AppStrings.greenButtonThresholdFlushMessage)
             return .flushBufferedEvents
         }
 

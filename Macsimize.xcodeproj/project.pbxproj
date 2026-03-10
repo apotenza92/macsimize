@@ -11,8 +11,11 @@
 		0866F34659970F00A62F1AB6 /* GreenButtonInterceptionControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85477C08043CBA13C681FD8E /* GreenButtonInterceptionControllerTests.swift */; };
 		0C72948B6836D3F29DE95890 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B04EA2F430D809B32F21432 /* PreferencesView.swift */; };
 		0FA1A55B4B944A29A3A41531 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7EBA0D193235411C9188C66A /* Assets.xcassets */; };
+		13F814B4EC99459FB7A7B9E1 /* AccessibilityServiceCurrentSpaceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13F814B3EC99459FB7A7B9E1 /* AccessibilityServiceCurrentSpaceTests.swift */; };
 		21F092E0D2C54D0B178BF7E8 /* WindowFrameStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6D0D4D5F0829BF1A678276 /* WindowFrameStoreTests.swift */; };
 		2C39187DFC43A71F6A2A40D7 /* ScreenHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53DA8BF79D2F15C1A5208A6B /* ScreenHelpers.swift */; };
+		31D934A084A14A2D812F6E21 /* TitleBarInterceptionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31D934A084A14A2D812F6E20 /* TitleBarInterceptionController.swift */; };
+		35FE782A55EC4B039E2424A8 /* AppStringsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35FE782955EC4B039E2424A8 /* AppStringsTests.swift */; };
 		4AE4698E1DEAC6E5497527C1 /* AXHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5F7D6C0DEE11E07F975C689 /* AXHelpers.swift */; };
 		5005E746BCEEB488D7A5B0FD /* WindowActionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 592678B556CE4E12A200760F /* WindowActionEngine.swift */; };
 		529B03F012F6339FC7619FF8 /* MacsimizeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB8C7A9E5C3303B2FFBCE1B3 /* MacsimizeApp.swift */; };
@@ -26,6 +29,7 @@
 		83A36437A8F280351FBE8EFE /* MaximizeStrategyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47D37FC9D090345C6A471647 /* MaximizeStrategyTests.swift */; };
 		9223112092FD8BB0C970D527 /* GreenButtonInterceptionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49834A2AF06AABED0928E758 /* GreenButtonInterceptionController.swift */; };
 		9B8F8289BDEA816C53DB238E /* WindowActionMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45E45D5F1E037A744D6BA564 /* WindowActionMode.swift */; };
+		A04B5547F5A64D0E8E6BC282 /* AppStrings.swift in Sources */ = {isa = PBXBuildFile; fileRef = A04B5546F5A64D0E8E6BC282 /* AppStrings.swift */; };
 		A1B2C3D4E5F60718293A4B5C /* UpdateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B5F /* UpdateManager.swift */; };
 		A1B2C3D4E5F60718293A4B5D /* UpdateCheckFrequency.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A4B60 /* UpdateCheckFrequency.swift */; };
 		A1B2C3D4E5F60718293A4B5E /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D4E5F60718293A4B62 /* Sparkle */; };
@@ -41,6 +45,9 @@
 		F0213AF62E1A7E1182A32BB8 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 78E4CED87C9A622E1DF8399B /* Cocoa.framework */; };
 		F848FCF8E2EFDC21EB2509C9 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = C84A9F92F687B14DF66FC445 /* AppState.swift */; };
 		FE8371893A5540E249E7B826 /* SettingsStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56F75A96FF840A05E84CFA8F /* SettingsStoreTests.swift */; };
+		FF77DA6B101F4A3B88070490 /* WindowSpacePrivateApis.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFD4A935C94B4ED7A68990BE /* WindowSpacePrivateApis.swift */; };
+		FFD95A8D31944A3CAEB24C0D /* TitleBarInterceptionControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFD95A8C31944A3CAEB24C0D /* TitleBarInterceptionControllerTests.swift */; };
+		FFE01924441843D69D008D32 /* UpdateManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFE01923441843D69D008D32 /* UpdateManagerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,8 +63,10 @@
 /* Begin PBXFileReference section */
 		0773551F8EAFAE3E02E0E77A /* ManualTestPlan.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; path = ManualTestPlan.md; sourceTree = "<group>"; };
 		11AA67F3533BB389E21A0D8D /* Macsimize.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Macsimize.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13F814B3EC99459FB7A7B9E1 /* AccessibilityServiceCurrentSpaceTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AccessibilityServiceCurrentSpaceTests.swift; sourceTree = "<group>"; };
 		17FFABECFDAAF65E2540A85D /* ClickedWindowContext.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ClickedWindowContext.swift; sourceTree = "<group>"; };
 		305D85E6389B1DEBAD851B16 /* MacsimizeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MacsimizeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		35FE782955EC4B039E2424A8 /* AppStringsTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppStringsTests.swift; sourceTree = "<group>"; };
 		45C27532EEB4187EB32351B1 /* SettingsWindowController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsWindowController.swift; sourceTree = "<group>"; };
 		45E45D5F1E037A744D6BA564 /* WindowActionMode.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WindowActionMode.swift; sourceTree = "<group>"; };
 		47D37FC9D090345C6A471647 /* MaximizeStrategyTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MaximizeStrategyTests.swift; sourceTree = "<group>"; };
@@ -65,6 +74,7 @@
 		53DA8BF79D2F15C1A5208A6B /* ScreenHelpers.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ScreenHelpers.swift; sourceTree = "<group>"; };
 		56F75A96FF840A05E84CFA8F /* SettingsStoreTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsStoreTests.swift; sourceTree = "<group>"; };
 		592678B556CE4E12A200760F /* WindowActionEngine.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WindowActionEngine.swift; sourceTree = "<group>"; };
+		31D934A084A14A2D812F6E20 /* TitleBarInterceptionController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TitleBarInterceptionController.swift; sourceTree = "<group>"; };
 		5C288B7CC408B2FDFF17DE83 /* Macsimize.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = Macsimize.entitlements; sourceTree = "<group>"; };
 		62231D81BDCE9A2631E61186 /* AppDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		6B778E538ADF6995AD4900DD /* RuntimeLogger.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RuntimeLogger.swift; sourceTree = "<group>"; };
@@ -76,6 +86,7 @@
 		8A825EE6AF3223A8F3F1FFD1 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		93BEDCD66454CE9825F6CB01 /* MaximizeStrategy.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MaximizeStrategy.swift; sourceTree = "<group>"; };
 		9A6D0D4D5F0829BF1A678276 /* WindowFrameStoreTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WindowFrameStoreTests.swift; sourceTree = "<group>"; };
+		A04B5546F5A64D0E8E6BC282 /* AppStrings.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppStrings.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A4B5F /* UpdateManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UpdateManager.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A4B60 /* UpdateCheckFrequency.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UpdateCheckFrequency.swift; sourceTree = "<group>"; };
 		B7C76DBF48B91DAF0D7B0527 /* SecureEventInput.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SecureEventInput.swift; sourceTree = "<group>"; };
@@ -92,6 +103,9 @@
 		F05F341F856A19558AB88CD6 /* WindowActionEngineTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WindowActionEngineTests.swift; sourceTree = "<group>"; };
 		F44994B9169C68C9FF8B5260 /* PermissionStateTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PermissionStateTests.swift; sourceTree = "<group>"; };
 		FC3E30957BDF7F2C466AFF29 /* WindowFrameStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WindowFrameStore.swift; sourceTree = "<group>"; };
+		FFD4A935C94B4ED7A68990BE /* WindowSpacePrivateApis.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = WindowSpacePrivateApis.swift; sourceTree = "<group>"; };
+		FFD95A8C31944A3CAEB24C0D /* TitleBarInterceptionControllerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TitleBarInterceptionControllerTests.swift; sourceTree = "<group>"; };
+		FFE01923441843D69D008D32 /* UpdateManagerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = UpdateManagerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -141,6 +155,7 @@
 				D49364C02B10669742DA715E /* Info.plist */,
 				5C288B7CC408B2FDFF17DE83 /* Macsimize.entitlements */,
 				CB8C7A9E5C3303B2FFBCE1B3 /* MacsimizeApp.swift */,
+				A04B5546F5A64D0E8E6BC282 /* AppStrings.swift */,
 				62231D81BDCE9A2631E61186 /* AppDelegate.swift */,
 				C84A9F92F687B14DF66FC445 /* AppState.swift */,
 				77EFEEA6F298CB61FC79BB4C /* MenuBarController.swift */,
@@ -151,7 +166,9 @@
 				EA1B7A1EBB9D3930CBC69187 /* PermissionsCoordinator.swift */,
 				D7FCB5830085F5C4B999BE3C /* EventTapService.swift */,
 				49834A2AF06AABED0928E758 /* GreenButtonInterceptionController.swift */,
+				31D934A084A14A2D812F6E20 /* TitleBarInterceptionController.swift */,
 				DDC957E784C785E5E29DE4FD /* AccessibilityService.swift */,
+				FFD4A935C94B4ED7A68990BE /* WindowSpacePrivateApis.swift */,
 				592678B556CE4E12A200760F /* WindowActionEngine.swift */,
 				93BEDCD66454CE9825F6CB01 /* MaximizeStrategy.swift */,
 				FC3E30957BDF7F2C466AFF29 /* WindowFrameStore.swift */,
@@ -196,12 +213,16 @@
 		AC6ABC9059FEEE4E8D821F68 /* MacsimizeTests */ = {
 			isa = PBXGroup;
 			children = (
+				13F814B3EC99459FB7A7B9E1 /* AccessibilityServiceCurrentSpaceTests.swift */,
+				35FE782955EC4B039E2424A8 /* AppStringsTests.swift */,
 				56F75A96FF840A05E84CFA8F /* SettingsStoreTests.swift */,
 				47D37FC9D090345C6A471647 /* MaximizeStrategyTests.swift */,
 				9A6D0D4D5F0829BF1A678276 /* WindowFrameStoreTests.swift */,
 				F05F341F856A19558AB88CD6 /* WindowActionEngineTests.swift */,
 				85477C08043CBA13C681FD8E /* GreenButtonInterceptionControllerTests.swift */,
 				F44994B9169C68C9FF8B5260 /* PermissionStateTests.swift */,
+				FFD95A8C31944A3CAEB24C0D /* TitleBarInterceptionControllerTests.swift */,
+				FFE01923441843D69D008D32 /* UpdateManagerTests.swift */,
 			);
 			path = MacsimizeTests;
 			sourceTree = "<group>";
@@ -290,6 +311,8 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				"en-GB",
+				"en-AU",
 				Base,
 			);
 			mainGroup = 3C6670D3C87B80FE9F28F4E0;
@@ -333,6 +356,7 @@
 				529B03F012F6339FC7619FF8 /* MacsimizeApp.swift in Sources */,
 				E1D4171A60F9531CDFC396B2 /* AppDelegate.swift in Sources */,
 				F848FCF8E2EFDC21EB2509C9 /* AppState.swift in Sources */,
+				A04B5547F5A64D0E8E6BC282 /* AppStrings.swift in Sources */,
 				C1C1A083CDE1BA596C1273FA /* MenuBarController.swift in Sources */,
 				6CEDDCC383DFD1F96EB1B537 /* SettingsWindowController.swift in Sources */,
 				0C72948B6836D3F29DE95890 /* PreferencesView.swift in Sources */,
@@ -341,7 +365,9 @@
 				6480B4566F9330B7BF0D4A99 /* PermissionsCoordinator.swift in Sources */,
 				E5E6036DAD92596A39EF5ED2 /* EventTapService.swift in Sources */,
 				9223112092FD8BB0C970D527 /* GreenButtonInterceptionController.swift in Sources */,
+				31D934A084A14A2D812F6E21 /* TitleBarInterceptionController.swift in Sources */,
 				DC60CE739C57CA7000BE8199 /* AccessibilityService.swift in Sources */,
+				FF77DA6B101F4A3B88070490 /* WindowSpacePrivateApis.swift in Sources */,
 				5005E746BCEEB488D7A5B0FD /* WindowActionEngine.swift in Sources */,
 				5489456F5F4CA0F36C591AE8 /* MaximizeStrategy.swift in Sources */,
 				D3C556A58592F74861DDF993 /* WindowFrameStore.swift in Sources */,
@@ -361,12 +387,16 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				13F814B4EC99459FB7A7B9E1 /* AccessibilityServiceCurrentSpaceTests.swift in Sources */,
+				35FE782A55EC4B039E2424A8 /* AppStringsTests.swift in Sources */,
 				FE8371893A5540E249E7B826 /* SettingsStoreTests.swift in Sources */,
 				83A36437A8F280351FBE8EFE /* MaximizeStrategyTests.swift in Sources */,
 				21F092E0D2C54D0B178BF7E8 /* WindowFrameStoreTests.swift in Sources */,
 				ED44708BD3D00D3ACD5E6360 /* WindowActionEngineTests.swift in Sources */,
 				0866F34659970F00A62F1AB6 /* GreenButtonInterceptionControllerTests.swift in Sources */,
 				5F934AFAAFB875192BB52DA5 /* PermissionStateTests.swift in Sources */,
+				FFD95A8D31944A3CAEB24C0D /* TitleBarInterceptionControllerTests.swift in Sources */,
+				FFE01924441843D69D008D32 /* UpdateManagerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -425,7 +455,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS = "";
-				MARKETING_VERSION = 0.2.13;
+				MARKETING_VERSION = 0.2.14;
 				PRODUCT_BUNDLE_IDENTIFIER = pzc.Macsimize;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -456,7 +486,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS = "";
-				MARKETING_VERSION = 0.2.13;
+				MARKETING_VERSION = 0.2.14;
 				PRODUCT_BUNDLE_IDENTIFIER = pzc.Macsimize;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;

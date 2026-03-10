@@ -11,7 +11,7 @@ final class PermissionStateTests: XCTestCase {
             lastFailureReason: nil
         )
 
-        XCTAssertEqual(state.summary, "Accessibility required")
+        XCTAssertEqual(state.summary, AppStrings.permissionSummaryAccessibilityRequired)
         XCTAssertTrue(state.hasVisibleIssue)
     }
 
@@ -24,7 +24,7 @@ final class PermissionStateTests: XCTestCase {
             lastFailureReason: nil
         )
 
-        XCTAssertEqual(state.summary, "Input Monitoring required")
+        XCTAssertEqual(state.summary, AppStrings.permissionSummaryInputMonitoringRequired)
         XCTAssertTrue(state.hasVisibleIssue)
     }
 
@@ -51,7 +51,7 @@ final class PermissionStateTests: XCTestCase {
         )
 
         XCTAssertTrue(state.detail.contains("cannot intercept the green button"))
-        XCTAssertTrue(state.detail.contains("normal behavior"))
+        XCTAssertTrue(state.detail.contains(AppStrings.permissionDetailAccessibilityRequired))
         XCTAssertTrue(state.hasVisibleIssue)
     }
 

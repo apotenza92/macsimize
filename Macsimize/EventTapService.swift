@@ -10,7 +10,9 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
     private let permissions: PermissionsCoordinator
     private let diagnostics: DebugDiagnostics
     private let controller: GreenButtonInterceptionController
+    private let titleBarController: TitleBarInterceptionController
     private let actionPerformer: WindowActionPerforming
+    private let dragRestorePerformer: DragRestorePerforming
 
     private let callbackQueue = DispatchQueue(label: "Macsimize.EventTap.Callback")
     private let actionQueue = DispatchQueue(label: "Macsimize.EventTap.Action")
@@ -22,6 +24,7 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var postActionSuppressionUntilByPID: [pid_t: TimeInterval] = [:]
+    private let deferredReplayStore = DeferredReplayStore()
     private let postActionSuppressionDuration: TimeInterval = 0.6
 
     init(
@@ -29,6 +32,7 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
         permissions: PermissionsCoordinator,
         accessibilityService: AccessibilityService,
         actionEngine: WindowActionEngine,
+        maximizeStrategy: MaximizeStrategy,
         diagnostics: DebugDiagnostics
     ) {
         self.settings = settings
@@ -38,7 +42,12 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
             contextResolver: accessibilityService,
             diagnostics: diagnostics
         )
+        self.titleBarController = TitleBarInterceptionController(
+            contextResolver: accessibilityService,
+            diagnostics: diagnostics
+        )
         self.actionPerformer = actionEngine
+        self.dragRestorePerformer = maximizeStrategy
         self.configuration = InterceptionConfiguration(
             selectedAction: settings.selectedAction,
             diagnosticsEnabled: settings.diagnosticsEnabled
@@ -111,8 +120,8 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
             userInfo: UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
         ) else {
             RuntimeLogger.log("Failed to start event tap.")
-            updateRunningState(false, failure: "Unable to create the event tap. Input Monitoring may also be required when interception is enabled.")
-            diagnostics.logMessage("Failed to create the event tap.", forceVisible: true)
+            updateRunningState(false, failure: AppStrings.eventTapUnavailableFailureReason)
+            diagnostics.logMessage(AppStrings.eventTapCreationFailed, forceVisible: true)
             return
         }
 
@@ -152,7 +161,9 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
             cancelHoldTimer()
             bufferedEvents.removeAll()
             controller.reset()
+            titleBarController.reset()
             postActionSuppressionUntilByPID.removeAll()
+            deferredReplayStore.removeAll()
         }
 
         updateRunningState(false, failure: reason)
@@ -181,11 +192,13 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
                 cancelHoldTimer()
                 bufferedEvents.removeAll()
                 controller.reset()
+                titleBarController.reset()
+                deferredReplayStore.removeAll()
             }
             if let eventTap {
                 CGEvent.tapEnable(tap: eventTap, enable: true)
             }
-            diagnostics.logMessage("Event tap was temporarily disabled and then re-enabled.")
+            diagnostics.logMessage(AppStrings.eventTapReenabledMessage)
             return Unmanaged.passUnretained(event)
         }
 
@@ -218,15 +231,15 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
             return Unmanaged.passUnretained(event)
         }
 
-        let decision = controller.handleMouseDown(
+        let greenButtonDecision = controller.handleMouseDown(
             location: event.location,
             timestamp: timestamp,
             configuration: configuration
         )
 
-        switch decision {
+        switch greenButtonDecision {
         case .passThrough:
-            return Unmanaged.passUnretained(event)
+            break
         case .consume:
             guard let copiedEvent = event.copy() else {
                 return Unmanaged.passUnretained(event)
@@ -239,11 +252,38 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
         case .performAction:
             return Unmanaged.passUnretained(event)
         }
+
+        let titleBarDecision = titleBarController.handleMouseDown(
+            location: event.location,
+            clickCount: event.getIntegerValueField(.mouseEventClickState),
+            configuration: configuration
+        )
+
+        switch titleBarDecision {
+        case .passThrough:
+            return Unmanaged.passUnretained(event)
+        case .consume:
+            return nil
+        case .performAction(let context):
+            performTitleBarWindowActionAsync(context)
+            return nil
+        case .dragRestore:
+            return Unmanaged.passUnretained(event)
+        }
     }
 
     private func processMouseDragged(_ event: CGEvent) -> Unmanaged<CGEvent>? {
         guard !bufferedEvents.isEmpty else {
-            return Unmanaged.passUnretained(event)
+            switch titleBarController.handleMouseDragged(location: event.location) {
+            case .dragRestore(let context, let cursorLocation):
+                let result = dragRestorePerformer.performDragRestore(on: context, cursorLocation: cursorLocation)
+                if !result.restored {
+                    diagnostics.logMessage(result.notes.first ?? AppStrings.titleBarDragRestoreSkipped)
+                }
+                return Unmanaged.passUnretained(event)
+            case .passThrough, .consume, .performAction:
+                return Unmanaged.passUnretained(event)
+            }
         }
 
         if let copiedEvent = event.copy() {
@@ -267,7 +307,12 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
 
     private func processMouseUp(_ event: CGEvent) -> Unmanaged<CGEvent>? {
         guard !bufferedEvents.isEmpty else {
-            return Unmanaged.passUnretained(event)
+            switch titleBarController.handleMouseUp() {
+            case .consume:
+                return nil
+            case .passThrough, .dragRestore, .performAction:
+                return Unmanaged.passUnretained(event)
+            }
         }
 
         let decision = controller.handleMouseUp(
@@ -295,7 +340,8 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
                 originalSequence.append(copiedEvent)
             }
             bufferedEvents.removeAll()
-            performWindowActionAsync(pendingAction, fallbackEvents: originalSequence)
+            let replayToken = storeDeferredReplaySequence(originalSequence)
+            performWindowActionAsync(pendingAction, replayToken: replayToken)
             return nil
         }
     }
@@ -342,7 +388,7 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
         replayOriginalMouseSequence(eventsToReplay)
     }
 
-    private func performWindowActionAsync(_ pendingAction: PendingWindowAction, fallbackEvents: [CGEvent]) {
+    private func performWindowActionAsync(_ pendingAction: PendingWindowAction, replayToken: UUID) {
         let mode = pendingAction.mode
         let context = pendingAction.context
         let windowPID = pendingAction.context.pid
@@ -354,6 +400,7 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
             let outcome = self.actionPerformer.perform(mode: mode, context: context)
             if outcome.handled {
                 self.callbackQueue.async { [weak self] in
+                    self?.clearDeferredReplaySequence(for: replayToken)
                     self?.recordPostActionSuppression(for: windowPID, now: ProcessInfo.processInfo.systemUptime)
                 }
                 return
@@ -361,10 +408,30 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
 
             switch outcome.failureDisposition {
             case .replayOriginalClick:
-                self.diagnostics.logMessage("Window action failed after intercept; replaying the original mouse sequence.")
-                self.replayOriginalMouseSequence(fallbackEvents)
+                self.callbackQueue.async { [weak self] in
+                    self?.diagnostics.logMessage(AppStrings.eventTapReplayOriginalSequence)
+                    self?.replayDeferredReplaySequence(for: replayToken)
+                }
             case .dropInterceptedClick:
-                self.diagnostics.logMessage("Window action failed after intercept; swallowing the click to avoid unexpected native full-screen behavior.")
+                self.callbackQueue.async { [weak self] in
+                    self?.clearDeferredReplaySequence(for: replayToken)
+                    self?.diagnostics.logMessage(AppStrings.eventTapSwallowNativeSequence)
+                }
+            }
+        }
+    }
+
+    private func performTitleBarWindowActionAsync(_ context: ClickedWindowContext) {
+        actionQueue.async { [weak self] in
+            guard let self else {
+                return
+            }
+
+            let outcome = self.actionPerformer.perform(mode: .maximize, context: context)
+            if outcome.handled {
+                self.callbackQueue.async { [weak self] in
+                    self?.recordPostActionSuppression(for: context.pid, now: ProcessInfo.processInfo.systemUptime)
+                }
             }
         }
     }
@@ -377,6 +444,19 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
             copiedEvent.setIntegerValueField(.eventSourceUserData, value: WindowActionEngine.syntheticEventMarker)
             copiedEvent.post(tap: .cghidEventTap)
         }
+    }
+
+    private func storeDeferredReplaySequence(_ events: [CGEvent]) -> UUID {
+        deferredReplayStore.store(events)
+    }
+
+    private func replayDeferredReplaySequence(for token: UUID) {
+        let events = deferredReplayStore.take(token) ?? []
+        replayOriginalMouseSequence(events)
+    }
+
+    private func clearDeferredReplaySequence(for token: UUID) {
+        deferredReplayStore.remove(token)
     }
 
     private func shouldBypassInterception(for location: CGPoint) -> Bool {
@@ -417,7 +497,38 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
 }
 
 extension WindowActionEngine: WindowActionPerforming {}
+extension MaximizeStrategy: DragRestorePerforming {}
 
 protocol WindowActionPerforming {
     func perform(mode: WindowActionMode, context: ClickedWindowContext) -> WindowActionOutcome
+}
+
+protocol DragRestorePerforming {
+    func performDragRestore(on context: ClickedWindowContext, cursorLocation: CGPoint) -> DragRestoreResult
+}
+
+final class DeferredReplayStore {
+    private var eventsByToken: [UUID: [CGEvent]] = [:]
+
+    func store(_ events: [CGEvent]) -> UUID {
+        let token = UUID()
+        eventsByToken[token] = events
+        return token
+    }
+
+    func take(_ token: UUID) -> [CGEvent]? {
+        eventsByToken.removeValue(forKey: token)
+    }
+
+    func remove(_ token: UUID) {
+        eventsByToken.removeValue(forKey: token)
+    }
+
+    func removeAll() {
+        eventsByToken.removeAll()
+    }
+
+    var isEmpty: Bool {
+        eventsByToken.isEmpty
+    }
 }

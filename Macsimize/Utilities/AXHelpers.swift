@@ -192,6 +192,12 @@ enum AXHelpers {
         intAttribute("AXWindowNumber", on: window)
     }
 
+    static func pid(of element: AXUIElement) -> pid_t {
+        var pid: pid_t = 0
+        AXUIElementGetPid(element, &pid)
+        return pid
+    }
+
     static func elementsEqual(_ lhs: AXUIElement?, _ rhs: AXUIElement?) -> Bool {
         guard let lhs, let rhs else {
             return false

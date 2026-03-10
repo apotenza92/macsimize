@@ -2,14 +2,38 @@ import AppKit
 import ApplicationServices
 import Foundation
 
-final class AccessibilityService {
+struct WindowCandidate {
+    let axWindow: AXUIElement
+    let cgWindowID: CGWindowID?
+    let bounds: CGRect?
+    let layer: Int?
+    let alpha: Double?
+    let isOnScreen: Bool
+    let subrole: String?
+    let spaceIDs: Set<Int>
+    let isMinimized: Bool
+}
+
+struct CurrentSpaceWindowScan {
+    let contexts: [ClickedWindowContext]
+    let enumeratedAppCount: Int
+    let candidateCount: Int
+    let cgEntryCount: Int
+    let activeSpaceCount: Int
+    let resolvedWindowIDCount: Int
+    let spaceResolvedCandidateCount: Int
+}
+
+final class AccessibilityService: @unchecked Sendable {
     private let diagnostics: DebugDiagnostics
     private let supportedGreenButtonSubroles: Set<String> = ["AXZoomButton", "AXFullScreenButton"]
     private let greenButtonHitTolerance: CGFloat = 8
     private let trafficLightHotZoneWidth: CGFloat = 180
     private let trafficLightHotZoneHeight: CGFloat = 64
     private let trafficLightHotZoneInset: CGFloat = 10
+    private let fallbackTitleBarHeight: CGFloat = 56
     private let maxAncestorTraversalDepth = 10
+    private let minimumCandidateWindowSize = CGSize(width: 40, height: 40)
 
     init(diagnostics: DebugDiagnostics) {
         self.diagnostics = diagnostics
@@ -67,9 +91,146 @@ final class AccessibilityService {
         return nil
     }
 
+    func resolveTitleBarInteraction(at location: CGPoint) -> TitleBarInteractionContext? {
+        if isLikelyInMenuBar(location) {
+            return nil
+        }
+
+        if let hitResolvedContext = resolveTitleBarInteractionUsingHitTest(at: location) {
+            return hitResolvedContext
+        }
+
+        guard let app = NSWorkspace.shared.frontmostApplication else {
+            diagnostics.logMessage(AppStrings.titleBarDoubleClickIgnored)
+            return nil
+        }
+        guard app.processIdentifier != ProcessInfo.processInfo.processIdentifier else {
+            return nil
+        }
+
+        let appElement = AXUIElementCreateApplication(app.processIdentifier)
+        for window in focusedOrMainWindows(in: appElement) {
+            guard let draggableRect = draggableRect(for: window), draggableRect.contains(location) else {
+                continue
+            }
+            guard let context = windowContext(
+                for: window,
+                app: app,
+                clickLocation: location,
+                sourceElement: window,
+                role: kAXWindowRole as String,
+                subrole: AXHelpers.stringAttribute(kAXSubroleAttribute as String, on: window),
+                actions: AXHelpers.actions(for: window)
+            ) else {
+                continue
+            }
+            return TitleBarInteractionContext(draggableRect: draggableRect, windowContext: context)
+        }
+
+        return nil
+    }
+
+    func eligibleCurrentSpaceWindowsForMaximize() -> [ClickedWindowContext] {
+        scanCurrentSpaceWindowsForMaximize().contexts
+    }
+
+    @discardableResult
+    func enumerateCurrentSpaceWindowsForMaximize(
+        matchingIdentifiers: Set<String>? = nil,
+        onEligibleWindow: ((ClickedWindowContext) -> Void)? = nil
+    ) -> CurrentSpaceWindowScan {
+        let allCGEntries = Self.cgWindowEntries()
+        var cachedSpaceIDsByWindowID: [CGWindowID: Set<Int>] = [:]
+
+        func cachedSpaces(for windowID: CGWindowID) -> Set<Int> {
+            if let cached = cachedSpaceIDsByWindowID[windowID] {
+                return cached
+            }
+            let spaces = WindowSpacePrivateApis.spaces(for: windowID)
+            cachedSpaceIDsByWindowID[windowID] = spaces
+            return spaces
+        }
+
+        let activeSpaceIDs = Self.currentActiveSpaceIDs(entries: allCGEntries, spacesProvider: cachedSpaces)
+        let currentSpaceEntries = Self.currentSpaceCGEntries(
+            entries: allCGEntries,
+            activeSpaceIDs: activeSpaceIDs,
+            spacesProvider: cachedSpaces
+        )
+        let cgEntriesByPID = Dictionary(grouping: currentSpaceEntries) { entry in
+            (entry[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value ?? 0
+        }
+
+        var contexts: [ClickedWindowContext] = []
+        var enumeratedAppCount = 0
+        var candidateCount = 0
+        var resolvedWindowIDCount = 0
+        var spaceResolvedCandidateCount = 0
+
+        for processIdentifier in cgEntriesByPID.keys.sorted()
+        where processIdentifier != 0 {
+            guard let app = NSRunningApplication(processIdentifier: processIdentifier),
+                  shouldEnumerateWindows(for: app) else {
+                continue
+            }
+            enumeratedAppCount += 1
+
+            let appElement = AXUIElementCreateApplication(app.processIdentifier)
+            let candidates = windowCandidates(
+                windows: rawAppWindows(in: appElement),
+                cgEntries: cgEntriesByPID[app.processIdentifier] ?? [],
+                spacesProvider: cachedSpaces
+            )
+
+            candidateCount += candidates.count
+            resolvedWindowIDCount += candidates.reduce(into: 0) { count, candidate in
+                if candidate.cgWindowID != nil {
+                    count += 1
+                }
+            }
+            spaceResolvedCandidateCount += candidates.reduce(into: 0) { count, candidate in
+                if !candidate.spaceIDs.isEmpty {
+                    count += 1
+                }
+            }
+
+            for candidate in candidates {
+                guard Self.shouldIncludeCurrentSpaceStandardCandidate(candidate, activeSpaceIDs: activeSpaceIDs) else {
+                    continue
+                }
+
+                guard let context = batchWindowContext(for: candidate, app: app) else {
+                    continue
+                }
+                guard context.isResizable, context.canSetSize, context.windowFrame != nil else {
+                    continue
+                }
+                if !Self.matchesRequestedIdentifier(context.windowIdentifier, matchingIdentifiers: matchingIdentifiers) {
+                    continue
+                }
+                contexts.append(context)
+                onEligibleWindow?(context)
+            }
+        }
+
+        return CurrentSpaceWindowScan(
+            contexts: contexts,
+            enumeratedAppCount: enumeratedAppCount,
+            candidateCount: candidateCount,
+            cgEntryCount: allCGEntries.count,
+            activeSpaceCount: activeSpaceIDs.count,
+            resolvedWindowIDCount: resolvedWindowIDCount,
+            spaceResolvedCandidateCount: spaceResolvedCandidateCount
+        )
+    }
+
+    func scanCurrentSpaceWindowsForMaximize(matchingIdentifiers: Set<String>? = nil) -> CurrentSpaceWindowScan {
+        enumerateCurrentSpaceWindowsForMaximize(matchingIdentifiers: matchingIdentifiers)
+    }
+
     func captureFrontmostWindowSnapshot() {
         guard let app = NSWorkspace.shared.frontmostApplication else {
-            diagnostics.logMessage("Diagnostics snapshot skipped: no frontmost app.", forceVisible: true)
+            diagnostics.logMessage(AppStrings.diagnosticsSnapshotSkippedNoFrontmostApp, forceVisible: true)
             return
         }
 
@@ -78,11 +239,14 @@ final class AccessibilityService {
             ?? AXHelpers.elementAttribute(kAXMainWindowAttribute as String, on: appElement)
 
         guard let window = focusedWindow else {
-            diagnostics.logMessage("Diagnostics snapshot: no focused window for \(app.localizedName ?? "Unknown").", forceVisible: true)
+            diagnostics.logMessage(
+                AppStrings.diagnosticsSnapshotNoFocusedWindow(appName: app.localizedName ?? AppStrings.unknownLabel),
+                forceVisible: true
+            )
             return
         }
 
-        let title = AXHelpers.stringAttribute(kAXTitleAttribute as String, on: window) ?? "Untitled"
+        let title = AXHelpers.stringAttribute(kAXTitleAttribute as String, on: window) ?? AppStrings.untitledLabel
         let frame = AXHelpers.cgRect(of: window)
         let canSetPosition = AXHelpers.isAttributeSettable(kAXPositionAttribute as String, on: window)
         let canSetSize = AXHelpers.isAttributeSettable(kAXSizeAttribute as String, on: window)
@@ -90,7 +254,7 @@ final class AccessibilityService {
         let isMainWindow = AXHelpers.boolAttribute(kAXMainAttribute as String, on: window) ?? false
         let isFocusedWindow = AXHelpers.boolAttribute(kAXFocusedAttribute as String, on: window) ?? false
         diagnostics.logMessage(
-            "Frontmost window snapshot app=\(app.localizedName ?? "Unknown") bundle=\(app.bundleIdentifier ?? "-") title=\(title) frame=\(frame.map { NSStringFromRect($0) } ?? "-") resizable=\(resizable) focused=\(isFocusedWindow) main=\(isMainWindow) settable(position=\(canSetPosition), size=\(canSetSize))",
+            "Frontmost window snapshot app=\(app.localizedName ?? AppStrings.unknownLabel) bundle=\(app.bundleIdentifier ?? "-") title=\(title) frame=\(frame.map { NSStringFromRect($0) } ?? "-") resizable=\(resizable) focused=\(isFocusedWindow) main=\(isMainWindow) settable(position=\(canSetPosition), size=\(canSetSize))",
             forceVisible: true
         )
     }
@@ -120,6 +284,150 @@ final class AccessibilityService {
         )
     }
 
+    static func shouldIncludeCurrentSpaceStandardCandidate(_ candidate: WindowCandidate, activeSpaceIDs: Set<Int>) -> Bool {
+        guard isStandardSubrole(candidate.subrole) else {
+            return false
+        }
+        guard !candidate.isMinimized else {
+            return false
+        }
+        guard let layer = candidate.layer, layer == 0 else {
+            return false
+        }
+        if let alpha = candidate.alpha, alpha <= 0.01 {
+            return false
+        }
+        let size = candidate.bounds?.size ?? AXHelpers.sizeAttribute(kAXSizeAttribute as String, on: candidate.axWindow)
+        if let size, (size == .zero || size.width < 40 || size.height < 40) {
+            return false
+        }
+
+        if !candidate.spaceIDs.isEmpty {
+            return !candidate.spaceIDs.isDisjoint(with: activeSpaceIDs)
+        }
+
+        return candidate.isOnScreen
+    }
+
+    static func currentSpaceCGEntries(
+        entries: [[String: AnyObject]],
+        activeSpaceIDs: Set<Int>,
+        spacesProvider: (CGWindowID) -> Set<Int> = WindowSpacePrivateApis.spaces(for:)
+    ) -> [[String: AnyObject]] {
+        entries.filter { entry in
+            let layer = (entry[kCGWindowLayer as String] as? NSNumber)?.intValue ?? -1
+            let isOnScreen = (entry[kCGWindowIsOnscreen as String] as? NSNumber)?.boolValue ?? false
+            guard layer == 0, isOnScreen else {
+                return false
+            }
+
+            if let alpha = (entry[kCGWindowAlpha as String] as? NSNumber)?.doubleValue, alpha <= 0.01 {
+                return false
+            }
+
+            if let bounds = boundsFromCGEntry(entry),
+               (bounds.size == .zero ||
+                bounds.width < 40 ||
+                bounds.height < 40) {
+                return false
+            }
+
+            let windowID = CGWindowID((entry[kCGWindowNumber as String] as? NSNumber)?.uint32Value ?? 0)
+            guard windowID != 0 else {
+                return false
+            }
+
+            let spaceIDs = spacesProvider(windowID)
+            if !spaceIDs.isEmpty {
+                return !spaceIDs.isDisjoint(with: activeSpaceIDs)
+            }
+
+            return true
+        }
+    }
+
+    static func currentActiveSpaceIDs(
+        entries: [[String: AnyObject]]? = nil,
+        spacesProvider: (CGWindowID) -> Set<Int> = WindowSpacePrivateApis.spaces(for:)
+    ) -> Set<Int> {
+        let entries = entries ?? (CGWindowListCopyWindowInfo([.excludeDesktopElements], kCGNullWindowID) as? [[String: AnyObject]] ?? [])
+        var activeSpaceIDs = Set<Int>()
+
+        for entry in entries {
+            let layer = (entry[kCGWindowLayer as String] as? NSNumber)?.intValue ?? -1
+            let isOnScreen = (entry[kCGWindowIsOnscreen as String] as? NSNumber)?.boolValue ?? false
+            guard layer == 0, isOnScreen else {
+                continue
+            }
+            let windowID = CGWindowID((entry[kCGWindowNumber as String] as? NSNumber)?.uint32Value ?? 0)
+            guard windowID != 0 else {
+                continue
+            }
+            activeSpaceIDs.formUnion(spacesProvider(windowID))
+        }
+
+        return activeSpaceIDs
+    }
+
+    static func matchesRequestedIdentifier(_ identifier: String, matchingIdentifiers: Set<String>?) -> Bool {
+        guard let matchingIdentifiers else {
+            return true
+        }
+        return matchingIdentifiers.contains(identifier)
+    }
+
+    static func mapAXWindowToCGWindowID(
+        _ window: AXUIElement,
+        cgEntries: [[String: AnyObject]],
+        excluding usedWindowIDs: Set<CGWindowID>
+    ) -> CGWindowID? {
+        let axTitle = (AXHelpers.stringAttribute(kAXTitleAttribute as String, on: window) ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let axPosition = AXHelpers.pointAttribute(kAXPositionAttribute as String, on: window)
+        let axSize = AXHelpers.sizeAttribute(kAXSizeAttribute as String, on: window)
+        let tolerance: CGFloat = 2
+
+        if !axTitle.isEmpty,
+           let titleMatch = cgEntries.first(where: { entry in
+               let candidateTitle = ((entry[kCGWindowName as String] as? String) ?? "")
+                   .trimmingCharacters(in: .whitespacesAndNewlines)
+               let candidateID = CGWindowID((entry[kCGWindowNumber as String] as? NSNumber)?.uint32Value ?? 0)
+               return !usedWindowIDs.contains(candidateID) && candidateTitle == axTitle
+           }) {
+            return CGWindowID((titleMatch[kCGWindowNumber as String] as? NSNumber)?.uint32Value ?? 0)
+        }
+
+        if let axPosition, let axSize, axSize != .zero,
+           let boundsMatch = cgEntries.first(where: { entry in
+               let candidateID = CGWindowID((entry[kCGWindowNumber as String] as? NSNumber)?.uint32Value ?? 0)
+               guard !usedWindowIDs.contains(candidateID),
+                     let candidateBounds = boundsFromCGEntry(entry) else {
+                   return false
+               }
+               let positionMatch = abs(candidateBounds.origin.x - axPosition.x) <= tolerance &&
+                   abs(candidateBounds.origin.y - axPosition.y) <= tolerance
+               let sizeMatch = abs(candidateBounds.size.width - axSize.width) <= tolerance &&
+                   abs(candidateBounds.size.height - axSize.height) <= tolerance
+               return positionMatch && sizeMatch
+           }) {
+            return CGWindowID((boundsMatch[kCGWindowNumber as String] as? NSNumber)?.uint32Value ?? 0)
+        }
+
+        if !axTitle.isEmpty,
+           let fuzzyMatch = cgEntries.first(where: { entry in
+               let candidateID = CGWindowID((entry[kCGWindowNumber as String] as? NSNumber)?.uint32Value ?? 0)
+               guard !usedWindowIDs.contains(candidateID) else {
+                   return false
+               }
+               let candidateTitle = ((entry[kCGWindowName as String] as? String) ?? "").lowercased()
+               return candidateTitle.contains(axTitle.lowercased())
+           }) {
+            return CGWindowID((fuzzyMatch[kCGWindowNumber as String] as? NSNumber)?.uint32Value ?? 0)
+        }
+
+        return nil
+    }
+
     private func candidateHitTestPoints(for location: CGPoint) -> [CGPoint] {
         var candidates = [location]
         guard let screen = NSScreen.screens.first(where: { $0.frame.contains(location) }) else {
@@ -138,8 +446,6 @@ final class AccessibilityService {
         guard let screen = NSScreen.screens.first(where: { $0.frame.contains(location) }) else {
             return false
         }
-
-        // Menu bar area is above visibleFrame on macOS screens.
         return location.y > screen.visibleFrame.maxY
     }
 
@@ -168,6 +474,46 @@ final class AccessibilityService {
             }
 
             return context(for: buttonElement, app: app, clickLocation: originalLocation)
+        }
+
+        return nil
+    }
+
+    private func resolveTitleBarInteractionUsingHitTest(at location: CGPoint) -> TitleBarInteractionContext? {
+        let systemWideElement = AXUIElementCreateSystemWide()
+        let candidatePoints = candidateHitTestPoints(for: location)
+
+        for candidatePoint in candidatePoints {
+            var hitElement: AXUIElement?
+            let hitError = AXUIElementCopyElementAtPosition(systemWideElement, Float(candidatePoint.x), Float(candidatePoint.y), &hitElement)
+            guard hitError == .success,
+                  let hitElement,
+                  let windowElement = AXHelpers.window(of: hitElement) else {
+                continue
+            }
+
+            let pid = AXHelpers.pid(of: windowElement)
+            guard pid != 0,
+                  pid != ProcessInfo.processInfo.processIdentifier,
+                  let app = NSRunningApplication(processIdentifier: pid),
+                  let draggableRect = draggableRect(for: windowElement),
+                  draggableRect.contains(candidatePoint) else {
+                continue
+            }
+
+            guard let context = windowContext(
+                for: windowElement,
+                app: app,
+                clickLocation: location,
+                sourceElement: hitElement,
+                role: AXHelpers.stringAttribute(kAXRoleAttribute as String, on: hitElement),
+                subrole: AXHelpers.stringAttribute(kAXSubroleAttribute as String, on: hitElement),
+                actions: AXHelpers.actions(for: hitElement)
+            ) else {
+                continue
+            }
+
+            return TitleBarInteractionContext(draggableRect: draggableRect, windowContext: context)
         }
 
         return nil
@@ -235,8 +581,6 @@ final class AccessibilityService {
             }
         }
 
-        // Some apps do not expose AXZoomButton/AXFullScreenButton directly on the window.
-        // In that case, do a bounded tree walk instead of an unbounded traversal.
         if results.isEmpty {
             var queue: [(element: AXUIElement, depth: Int)] = [(window, 0)]
             var enqueued = Set([Int(CFHash(window))])
@@ -310,36 +654,280 @@ final class AccessibilityService {
         return nil
     }
 
+    private func draggableRect(for window: AXUIElement) -> CGRect? {
+        guard let windowFrame = AXHelpers.cgRect(of: window) else {
+            return nil
+        }
+
+        let draggableRect: CGRect
+        if let controlFrame = titleBarReferenceFrame(in: window) {
+            let gap = max(0, controlFrame.minY - windowFrame.minY)
+            let height = max(controlFrame.height + (2 * gap), controlFrame.height)
+            draggableRect = CGRect(origin: windowFrame.origin, size: CGSize(width: windowFrame.width, height: height))
+        } else if shouldUseFallbackTitleBarRect(for: window, windowFrame: windowFrame) {
+            draggableRect = CGRect(
+                x: windowFrame.minX,
+                y: windowFrame.minY,
+                width: windowFrame.width,
+                height: min(fallbackTitleBarHeight, windowFrame.height)
+            )
+        } else {
+            return nil
+        }
+
+        var resolvedRect = draggableRect
+        if let toolbarFrame = toolbarFrame(in: window) {
+            resolvedRect = resolvedRect.union(toolbarFrame)
+        }
+
+        return resolvedRect
+    }
+
+    private func titleBarReferenceFrame(in window: AXUIElement) -> CGRect? {
+        for attribute in [
+            kAXCloseButtonAttribute as String,
+            kAXZoomButtonAttribute as String,
+            kAXFullScreenButtonAttribute as String,
+            kAXMinimizeButtonAttribute as String
+        ] {
+            if let element = AXHelpers.elementAttribute(attribute, on: window),
+               let frame = AXHelpers.cgRect(of: element) {
+                return frame
+            }
+        }
+        return nil
+    }
+
+    private func toolbarFrame(in window: AXUIElement) -> CGRect? {
+        for child in AXHelpers.children(of: window) {
+            let role = AXHelpers.stringAttribute(kAXRoleAttribute as String, on: child)
+            if role == (kAXToolbarRole as String) || role == (kAXGroupRole as String),
+               let frame = AXHelpers.cgRect(of: child) {
+                return frame
+            }
+        }
+        return nil
+    }
+
+    private func shouldUseFallbackTitleBarRect(for window: AXUIElement, windowFrame: CGRect) -> Bool {
+        guard Self.roleIsWindow(window) else {
+            return false
+        }
+        let subrole = AXHelpers.stringAttribute(kAXSubroleAttribute as String, on: window)
+        guard Self.isStandardSubrole(subrole) else {
+            return false
+        }
+        guard windowFrame.width >= minimumCandidateWindowSize.width,
+              windowFrame.height >= minimumCandidateWindowSize.height else {
+            return false
+        }
+        let canSetSize = AXHelpers.isAttributeSettable(kAXSizeAttribute as String, on: window)
+        let resizable = AXHelpers.boolAttribute("AXResizable", on: window) ?? canSetSize
+        guard resizable, canSetSize else {
+            return false
+        }
+        let isMainWindow = AXHelpers.boolAttribute(kAXMainAttribute as String, on: window) ?? false
+        let isFocusedWindow = AXHelpers.boolAttribute(kAXFocusedAttribute as String, on: window) ?? false
+        return isMainWindow || isFocusedWindow
+    }
+
+    private func shouldEnumerateWindows(for app: NSRunningApplication) -> Bool {
+        if app.processIdentifier == ProcessInfo.processInfo.processIdentifier {
+            return false
+        }
+        if app.isTerminated {
+            return false
+        }
+        if app.activationPolicy == .prohibited {
+            return false
+        }
+        return true
+    }
+
+    private func rawAppWindows(in appElement: AXUIElement) -> [AXUIElement] {
+        guard let rawWindows = AXHelpers.value(of: kAXWindowsAttribute as String, on: appElement) as? [AXUIElement] else {
+            return []
+        }
+        return rawWindows
+    }
+
+    private func rawAppWindows(for app: NSRunningApplication) -> [AXUIElement] {
+        rawAppWindows(in: AXUIElementCreateApplication(app.processIdentifier))
+    }
+
+    private func windowCandidates(
+        windows: [AXUIElement],
+        cgEntries: [[String: AnyObject]],
+        spacesProvider: (CGWindowID) -> Set<Int>
+    ) -> [WindowCandidate] {
+        let cgEntriesByWindowID: [CGWindowID: [String: AnyObject]] = Dictionary(uniqueKeysWithValues: cgEntries.compactMap { entry in
+            let windowID = CGWindowID((entry[kCGWindowNumber as String] as? NSNumber)?.uint32Value ?? 0)
+            guard windowID != 0 else {
+                return nil
+            }
+            return (windowID, entry)
+        })
+        var usedWindowIDs = Set<CGWindowID>()
+
+        return windows.compactMap { window in
+            makeWindowCandidate(
+                window,
+                cgEntries: cgEntries,
+                cgEntriesByWindowID: cgEntriesByWindowID,
+                spacesProvider: spacesProvider,
+                usedWindowIDs: &usedWindowIDs
+            )
+        }
+    }
+
+    private func makeWindowCandidate(
+        _ window: AXUIElement,
+        cgEntries: [[String: AnyObject]],
+        cgEntriesByWindowID: [CGWindowID: [String: AnyObject]],
+        spacesProvider: (CGWindowID) -> Set<Int>,
+        usedWindowIDs: inout Set<CGWindowID>
+    ) -> WindowCandidate? {
+        let resolvedWindowID = resolveCGWindowID(for: window, cgEntries: cgEntries, usedWindowIDs: &usedWindowIDs)
+        let matchingEntry = resolvedWindowID.flatMap { cgEntriesByWindowID[$0] }
+        let bounds = matchingEntry.flatMap(Self.boundsFromCGEntry)
+        let layer = matchingEntry.flatMap { ($0[kCGWindowLayer as String] as? NSNumber)?.intValue }
+        let alpha = matchingEntry.flatMap { ($0[kCGWindowAlpha as String] as? NSNumber)?.doubleValue }
+        let isOnScreen = matchingEntry.flatMap { ($0[kCGWindowIsOnscreen as String] as? NSNumber)?.boolValue } ?? false
+        let subrole = AXHelpers.stringAttribute(kAXSubroleAttribute as String, on: window)
+        let isMinimized = AXHelpers.boolAttribute(kAXMinimizedAttribute as String, on: window) ?? false
+        let size = bounds?.size ?? AXHelpers.sizeAttribute(kAXSizeAttribute as String, on: window)
+        let shouldResolveSpaces = Self.shouldResolveSpaces(
+            subrole: subrole,
+            layer: layer,
+            alpha: alpha,
+            size: size,
+            isMinimized: isMinimized
+        )
+        let spaceIDs = shouldResolveSpaces ? (resolvedWindowID.map(spacesProvider) ?? []) : []
+
+        return WindowCandidate(
+            axWindow: window,
+            cgWindowID: resolvedWindowID,
+            bounds: bounds,
+            layer: layer,
+            alpha: alpha,
+            isOnScreen: isOnScreen,
+            subrole: subrole,
+            spaceIDs: spaceIDs,
+            isMinimized: isMinimized
+        )
+    }
+
+    private func resolveCGWindowID(
+        for window: AXUIElement,
+        cgEntries: [[String: AnyObject]],
+        usedWindowIDs: inout Set<CGWindowID>
+    ) -> CGWindowID? {
+        if let directWindowID = WindowSpacePrivateApis.windowID(for: window), directWindowID != 0 {
+            usedWindowIDs.insert(directWindowID)
+            return directWindowID
+        }
+
+        let fallbackWindowID = Self.mapAXWindowToCGWindowID(window, cgEntries: cgEntries, excluding: usedWindowIDs)
+        if let fallbackWindowID {
+            usedWindowIDs.insert(fallbackWindowID)
+        }
+        return fallbackWindowID
+    }
+
     private func context(for buttonElement: AXUIElement, app: NSRunningApplication, clickLocation: CGPoint) -> ClickedWindowContext? {
         guard let windowElement = AXHelpers.window(of: buttonElement) else {
             diagnostics.logMessage("AX hit-test found green button but no parent window for pid=\(app.processIdentifier).")
             return nil
         }
 
-        let appElement = AXUIElementCreateApplication(app.processIdentifier)
-        let focusedWindow = AXHelpers.elementAttribute(kAXFocusedWindowAttribute as String, on: appElement)
-        let mainWindow = AXHelpers.elementAttribute(kAXMainWindowAttribute as String, on: appElement)
+        return windowContext(
+            for: windowElement,
+            app: app,
+            clickLocation: clickLocation,
+            sourceElement: buttonElement,
+            role: AXHelpers.stringAttribute(kAXRoleAttribute as String, on: buttonElement),
+            subrole: AXHelpers.stringAttribute(kAXSubroleAttribute as String, on: buttonElement),
+            actions: AXHelpers.actions(for: buttonElement)
+        )
+    }
+
+    private func batchWindowContext(for candidate: WindowCandidate, app: NSRunningApplication) -> ClickedWindowContext? {
+        let windowElement = candidate.axWindow
+        let windowTitle = AXHelpers.stringAttribute(kAXTitleAttribute as String, on: windowElement)
+        let windowNumber = AXHelpers.windowNumber(of: windowElement)
+        let windowFrame = candidate.bounds ?? AXHelpers.cgRect(of: windowElement)
+        let canSetPosition = AXHelpers.isAttributeSettable(kAXPositionAttribute as String, on: windowElement)
+        let canSetSize = AXHelpers.isAttributeSettable(kAXSizeAttribute as String, on: windowElement)
+        let resizable = AXHelpers.boolAttribute("AXResizable", on: windowElement) ?? canSetSize
+        let identifier = resolvedWindowIdentifier(
+            for: windowElement,
+            pid: app.processIdentifier,
+            cgWindowID: candidate.cgWindowID,
+            windowNumber: windowNumber,
+            title: windowTitle
+        )
+
+        return ClickedWindowContext(
+            appName: app.localizedName ?? AppStrings.unknownAppLabel,
+            bundleIdentifier: app.bundleIdentifier,
+            pid: app.processIdentifier,
+            clickLocation: .zero,
+            buttonElement: windowElement,
+            windowElement: windowElement,
+            windowIdentifier: identifier,
+            windowNumber: windowNumber,
+            windowTitle: windowTitle,
+            elementRole: kAXWindowRole as String,
+            elementSubrole: candidate.subrole,
+            availableActions: [],
+            windowFrame: windowFrame,
+            canSetPosition: canSetPosition,
+            canSetSize: canSetSize,
+            isResizable: resizable,
+            isMainWindow: false,
+            isFocusedWindow: false
+        )
+    }
+
+    private func windowContext(
+        for windowElement: AXUIElement,
+        app: NSRunningApplication,
+        clickLocation: CGPoint,
+        sourceElement: AXUIElement,
+        role: String?,
+        subrole: String?,
+        actions: [String],
+        appElement: AXUIElement? = nil,
+        focusedWindow: AXUIElement? = nil,
+        mainWindow: AXUIElement? = nil
+    ) -> ClickedWindowContext? {
+        let appElement = appElement ?? AXUIElementCreateApplication(app.processIdentifier)
+        let focusedWindow = focusedWindow ?? AXHelpers.elementAttribute(kAXFocusedWindowAttribute as String, on: appElement)
+        let mainWindow = mainWindow ?? AXHelpers.elementAttribute(kAXMainWindowAttribute as String, on: appElement)
         let windowTitle = AXHelpers.stringAttribute(kAXTitleAttribute as String, on: windowElement)
         let windowFrame = AXHelpers.cgRect(of: windowElement)
         let canSetPosition = AXHelpers.isAttributeSettable(kAXPositionAttribute as String, on: windowElement)
         let canSetSize = AXHelpers.isAttributeSettable(kAXSizeAttribute as String, on: windowElement)
         let resizable = AXHelpers.boolAttribute("AXResizable", on: windowElement) ?? canSetSize
-        let actions = AXHelpers.actions(for: buttonElement)
-        let role = AXHelpers.stringAttribute(kAXRoleAttribute as String, on: buttonElement)
-        let subrole = AXHelpers.stringAttribute(kAXSubroleAttribute as String, on: buttonElement)
         let windowNumber = AXHelpers.windowNumber(of: windowElement)
-        let identifier = makeWindowIdentifier(pid: app.processIdentifier, windowNumber: windowNumber, title: windowTitle)
+        let identifier = resolvedWindowIdentifier(
+            for: windowElement,
+            pid: app.processIdentifier,
+            windowNumber: windowNumber,
+            title: windowTitle
+        )
         let isMainWindow = AXHelpers.boolAttribute(kAXMainAttribute as String, on: windowElement)
             ?? AXHelpers.elementsEqual(windowElement, mainWindow)
         let isFocusedWindow = AXHelpers.boolAttribute(kAXFocusedAttribute as String, on: windowElement)
             ?? AXHelpers.elementsEqual(windowElement, focusedWindow)
 
         return ClickedWindowContext(
-            appName: app.localizedName ?? "Unknown App",
+            appName: app.localizedName ?? AppStrings.unknownAppLabel,
             bundleIdentifier: app.bundleIdentifier,
             pid: app.processIdentifier,
             clickLocation: clickLocation,
-            buttonElement: buttonElement,
+            buttonElement: sourceElement,
             windowElement: windowElement,
             windowIdentifier: identifier,
             windowNumber: windowNumber,
@@ -356,7 +944,56 @@ final class AccessibilityService {
         )
     }
 
-    private func makeWindowIdentifier(pid: pid_t, windowNumber: Int?, title: String?) -> String {
+    private func resolvedWindowIdentifier(
+        for windowElement: AXUIElement,
+        pid: pid_t,
+        cgWindowID: CGWindowID? = nil,
+        windowNumber: Int?,
+        title: String?
+    ) -> String {
+        let resolvedCGWindowID = resolveStableCGWindowID(
+            for: windowElement,
+            pid: pid,
+            preferredWindowID: cgWindowID
+        )
+        return Self.makeWindowIdentifier(
+            pid: pid,
+            cgWindowID: resolvedCGWindowID,
+            windowNumber: windowNumber,
+            title: title
+        )
+    }
+
+    private func resolveStableCGWindowID(
+        for windowElement: AXUIElement,
+        pid: pid_t,
+        preferredWindowID: CGWindowID? = nil
+    ) -> CGWindowID? {
+        if let preferredWindowID, preferredWindowID != 0 {
+            return preferredWindowID
+        }
+
+        if let directWindowID = WindowSpacePrivateApis.windowID(for: windowElement), directWindowID != 0 {
+            return directWindowID
+        }
+
+        return Self.mapAXWindowToCGWindowID(
+            windowElement,
+            cgEntries: Self.cgWindowEntries(for: pid),
+            excluding: []
+        )
+    }
+
+    static func makeWindowIdentifier(
+        pid: pid_t,
+        cgWindowID: CGWindowID?,
+        windowNumber: Int?,
+        title: String?
+    ) -> String {
+        if let cgWindowID, cgWindowID != 0 {
+            return "pid:\(pid)-cgwindow:\(cgWindowID)"
+        }
+
         if let windowNumber {
             return "pid:\(pid)-window:\(windowNumber)"
         }
@@ -368,10 +1005,71 @@ final class AccessibilityService {
         return "pid:\(pid)-window:unknown"
     }
 
+    private static func cgWindowEntries(for pid: pid_t) -> [[String: AnyObject]] {
+        let rawEntries = CGWindowListCopyWindowInfo([.excludeDesktopElements], kCGNullWindowID) as? [[String: AnyObject]] ?? []
+        return rawEntries.filter { entry in
+            let ownerPID = (entry[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value ?? 0
+            return ownerPID == pid
+        }
+    }
+
+    private static func boundsFromCGEntry(_ entry: [String: AnyObject]) -> CGRect? {
+        guard let rawBounds = entry[kCGWindowBounds as String] as? [String: AnyObject] else {
+            return nil
+        }
+        return CGRect(dictionaryRepresentation: rawBounds as CFDictionary)
+    }
+
+    private static func roleIsWindow(_ window: AXUIElement) -> Bool {
+        guard let role = AXHelpers.stringAttribute(kAXRoleAttribute as String, on: window) else {
+            return true
+        }
+        return role == (kAXWindowRole as String)
+    }
+
+    private static func isStandardSubrole(_ subrole: String?) -> Bool {
+        guard let subrole else {
+            return true
+        }
+        if subrole.isEmpty {
+            return true
+        }
+        return subrole == (kAXStandardWindowSubrole as String)
+    }
+
+    private static func shouldResolveSpaces(
+        subrole: String?,
+        layer: Int?,
+        alpha: Double?,
+        size: CGSize?,
+        isMinimized: Bool
+    ) -> Bool {
+        guard isStandardSubrole(subrole) else {
+            return false
+        }
+        guard !isMinimized else {
+            return false
+        }
+        guard let layer, layer == 0 else {
+            return false
+        }
+        if let alpha, alpha <= 0.01 {
+            return false
+        }
+        if let size, (size == .zero || size.width < 40 || size.height < 40) {
+            return false
+        }
+        return true
+    }
+
     private static func squaredDistance(from point: CGPoint, to rect: CGRect) -> CGFloat {
         let center = CGPoint(x: rect.midX, y: rect.midY)
         let dx = point.x - center.x
         let dy = point.y - center.y
         return (dx * dx) + (dy * dy)
+    }
+
+    private static func cgWindowEntries() -> [[String: AnyObject]] {
+        CGWindowListCopyWindowInfo([.excludeDesktopElements], kCGNullWindowID) as? [[String: AnyObject]] ?? []
     }
 }

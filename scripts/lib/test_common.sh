@@ -4,6 +4,8 @@
 : "${APP_NAME:=Macsimize}"
 : "${MACSIMIZE_START_TIMEOUT_SECONDS:=12}"
 : "${MACSIMIZE_READY_LOG_MARKER:=Event tap started.}"
+: "${TEST_ARTIFACT_ROOT:=/tmp/macsimize-artifacts}"
+: "${MULTI_SPACE_SWITCH_SETTLE_SECONDS:=0.9}"
 
 APP_BIN="${APP_BIN:-}"
 APP_BUNDLE="${APP_BUNDLE:-}"
@@ -11,6 +13,7 @@ CLICLICK_BIN="${CLICLICK_BIN:-}"
 
 APP_PID=""
 START_MACSIMIZE_LAST_ERROR=""
+TEST_ARTIFACT_DIR=""
 
 log_contains() {
   local needle="$1"
@@ -140,7 +143,9 @@ run_test_preflight() {
   require_tool grep
   require_tool awk
   require_tool sed
+  require_tool plutil
   require_tool open
+  require_tool screencapture
   resolve_app_paths
 
   if [[ "$needs_cliclick" == "true" ]]; then
@@ -298,9 +303,302 @@ frontmost_process() {
   osascript -e 'tell application "System Events" to get name of first process whose frontmost is true' 2>/dev/null || echo "unknown"
 }
 
+frontmost_bundle_id() {
+  osascript -e 'tell application "System Events" to get bundle identifier of first process whose frontmost is true' 2>/dev/null || echo "unknown"
+}
+
+process_visible() {
+  local process_name="$1"
+  osascript -e "tell application \"System Events\" to get visible of process \"$process_name\"" 2>/dev/null || echo "missing"
+}
+
+process_name_for_bundle() {
+  local bundle_identifier="$1"
+  osascript -e "tell application \"System Events\" to get name of first process whose bundle identifier is \"$bundle_identifier\"" 2>/dev/null || true
+}
+
+process_bundle_id() {
+  local process_name="$1"
+  osascript -e "tell application \"System Events\" to get bundle identifier of process \"$process_name\"" 2>/dev/null || true
+}
+
+process_running_by_bundle() {
+  local bundle_identifier="$1"
+  local count
+  count="$(osascript -e "tell application \"System Events\" to count (every process whose bundle identifier is \"$bundle_identifier\")" 2>/dev/null || echo 0)"
+  [[ "$count" =~ ^[0-9]+$ ]] || count=0
+  (( count > 0 ))
+}
+
+activate_finder() {
+  osascript -e 'tell application "Finder" to activate' >/dev/null 2>&1 || true
+  sleep 0.25
+}
+
 process_window_count() {
   local process_name="$1"
   osascript -e "tell application \"System Events\" to tell process \"$process_name\" to get count of windows" 2>/dev/null || echo 0
+}
+
+space_key_code() {
+  local space_number="$1"
+  case "$space_number" in
+    1) printf '18\n' ;;
+    2) printf '19\n' ;;
+    3) printf '20\n' ;;
+    4) printf '21\n' ;;
+    5) printf '23\n' ;;
+    6) printf '22\n' ;;
+    7) printf '26\n' ;;
+    8) printf '28\n' ;;
+    9) printf '25\n' ;;
+    *) echo "error: unsupported space number '$space_number' (expected 1-9)" >&2; return 1 ;;
+  esac
+}
+
+space_symbolic_hotkey_id() {
+  local space_number="$1"
+  if [[ ! "$space_number" =~ ^[1-9]$ ]]; then
+    echo "error: unsupported space number '$space_number' (expected 1-9)" >&2
+    return 1
+  fi
+  printf '%s\n' "$((117 + space_number))"
+}
+
+space_shortcut_enabled() {
+  local space_number="$1"
+  local hotkey_id
+  hotkey_id="$(space_symbolic_hotkey_id "$space_number")" || return 1
+  local plist="$HOME/Library/Preferences/com.apple.symbolichotkeys.plist"
+  if [[ ! -f "$plist" ]]; then
+    return 1
+  fi
+  local enabled
+  enabled="$(plutil -extract "AppleSymbolicHotKeys.$hotkey_id.enabled" raw -o - "$plist" 2>/dev/null || true)"
+  [[ "$enabled" == "1" || "$enabled" == "true" ]]
+}
+
+switch_to_space() {
+  local space_number="$1"
+  local settle_seconds="${2:-$MULTI_SPACE_SWITCH_SETTLE_SECONDS}"
+  local key_code
+  key_code="$(space_key_code "$space_number")" || return 1
+  osascript -e "tell application \"System Events\" to key code $key_code using control down" >/dev/null 2>&1 || return 1
+  sleep "$settle_seconds"
+}
+
+init_artifact_dir() {
+  local prefix="${1:-macsimize-artifacts}"
+  local stamp
+  stamp="$(date +%Y%m%d-%H%M%S)"
+  TEST_ARTIFACT_DIR="${TEST_ARTIFACT_ROOT%/}/${prefix}-${stamp}"
+  mkdir -p "$TEST_ARTIFACT_DIR"
+  printf '%s\n' "$TEST_ARTIFACT_DIR"
+}
+
+artifact_path() {
+  local label="$1"
+  local extension="${2:-txt}"
+  if [[ -z "${TEST_ARTIFACT_DIR:-}" ]]; then
+    echo "error: TEST_ARTIFACT_DIR is not initialized" >&2
+    return 1
+  fi
+  printf '%s/%s.%s\n' "$TEST_ARTIFACT_DIR" "$label" "$extension"
+}
+
+capture_artifact_screenshot() {
+  local label="$1"
+  local output
+  output="$(artifact_path "$label" "png")" || return 1
+  screencapture -x "$output"
+  printf '%s\n' "$output"
+}
+
+record_frontmost_snapshot() {
+  local label="$1"
+  local output
+  output="$(artifact_path "$label" "txt")" || return 1
+  {
+    printf 'timestamp=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    printf 'frontmost=%s\n' "$(frontmost_process)"
+    printf 'frontmostBundle=%s\n' "$(frontmost_bundle_id)"
+  } >"$output"
+  printf '%s\n' "$output"
+}
+
+capture_process_ax_window_summary() {
+  local process_name="$1"
+  local label="$2"
+  local output
+  output="$(artifact_path "$label" "txt")" || return 1
+  local bundle
+  bundle="$(process_bundle_id "$process_name")"
+  if [[ -z "$bundle" ]]; then
+    {
+      printf 'process=%s\n' "$process_name"
+      printf 'missing=true\n'
+    } >"$output"
+    printf '%s\n' "$output"
+    return 0
+  fi
+
+  local visible
+  visible="$(process_visible "$process_name")"
+  local window_count
+  window_count="$(process_window_count "$process_name")"
+  [[ "$window_count" =~ ^[0-9]+$ ]] || window_count=0
+
+  local raw_titles raw_minimized raw_subroles
+  raw_titles="$(osascript -e "tell application \"System Events\" to tell process \"$process_name\" to get name of every window" 2>/dev/null || true)"
+  raw_minimized="$(osascript -e "tell application \"System Events\" to tell process \"$process_name\" to get value of attribute \"AXMinimized\" of every window" 2>/dev/null || true)"
+  raw_subroles="$(osascript -e "tell application \"System Events\" to tell process \"$process_name\" to get value of attribute \"AXSubrole\" of every window" 2>/dev/null || true)"
+
+  local -a title_items=()
+  local -a minimized_items=()
+  local -a subrole_items=()
+
+  if [[ -n "$raw_titles" ]]; then
+    IFS=',' read -r -a title_items <<<"$raw_titles"
+  fi
+  if [[ -n "$raw_minimized" ]]; then
+    IFS=',' read -r -a minimized_items <<<"$raw_minimized"
+  fi
+  if [[ -n "$raw_subroles" ]]; then
+    IFS=',' read -r -a subrole_items <<<"$raw_subroles"
+  fi
+
+  {
+    printf 'process=%s\n' "$process_name"
+    printf 'bundle=%s\n' "$bundle"
+    printf 'visible=%s\n' "$visible"
+    printf 'windowCount=%s\n' "$window_count"
+
+    local index
+    for ((index = 0; index < window_count; index++)); do
+      local title="${title_items[$index]:-}"
+      local minimized="${minimized_items[$index]:-missing}"
+      local subrole="${subrole_items[$index]:-missing}"
+      title="$(printf '%s' "$title" | sed 's/^ *//; s/ *$//')"
+      minimized="$(printf '%s' "$minimized" | sed 's/^ *//; s/ *$//')"
+      subrole="$(printf '%s' "$subrole" | sed 's/^ *//; s/ *$//')"
+      printf 'window[%d].title=%s\n' "$((index + 1))" "$title"
+      printf 'window[%d].minimized=%s\n' "$((index + 1))" "$minimized"
+      printf 'window[%d].subrole=%s\n' "$((index + 1))" "$subrole"
+    done
+  } >"$output"
+  printf '%s\n' "$output"
+}
+
+capture_bundle_state_summary() {
+  local bundle_identifier="$1"
+  local process_name_hint="$2"
+  local label="$3"
+  local output
+  output="$(artifact_path "$label" "txt")" || return 1
+
+  local running=false
+  local process_name="$process_name_hint"
+  local visible="missing"
+  if process_running_by_bundle "$bundle_identifier"; then
+    running=true
+    if [[ -z "$process_name" ]]; then
+      process_name="$(process_name_for_bundle "$bundle_identifier")"
+    fi
+    if [[ -n "$process_name" ]]; then
+      visible="$(process_visible "$process_name")"
+    fi
+  fi
+
+  local frontmost_bundle
+  frontmost_bundle="$(frontmost_bundle_id)"
+  local frontmost_name
+  frontmost_name="$(frontmost_process)"
+  local frontmost_matches=false
+  if [[ "$frontmost_bundle" == "$bundle_identifier" ]]; then
+    frontmost_matches=true
+  fi
+
+  {
+    printf 'bundle=%s\n' "$bundle_identifier"
+    printf 'process=%s\n' "$process_name"
+    printf 'running=%s\n' "$running"
+    printf 'visible=%s\n' "$visible"
+    printf 'frontmostBundle=%s\n' "$frontmost_bundle"
+    printf 'frontmostProcess=%s\n' "$frontmost_name"
+    printf 'frontmostMatchesBundle=%s\n' "$frontmost_matches"
+  } >"$output"
+
+  printf '%s\n' "$output"
+}
+
+summary_state_value() {
+  local file="$1"
+  local key="$2"
+  awk -F= -v target="$key" '$1 == target { print substr($0, index($0, "=") + 1); exit }' "$file"
+}
+
+summary_standard_window_count() {
+  local file="$1"
+  awk -F= '
+    /^window\[[0-9]+\]\.subrole=AXStandardWindow$/ {
+      count += 1
+    }
+    END {
+      print count + 0
+    }
+  ' "$file"
+}
+
+summary_standard_window_minimized_count() {
+  local file="$1"
+  awk -F= '
+    /^window\[[0-9]+\]\.subrole=/ {
+      key = $1
+      sub(/^window\[/, "", key)
+      split(key, parts, /\]\./)
+      subrole[parts[1]] = $2
+    }
+    /^window\[[0-9]+\]\.minimized=/ {
+      key = $1
+      sub(/^window\[/, "", key)
+      split(key, parts, /\]\./)
+      minimized[parts[1]] = $2
+    }
+    END {
+      for (idx in subrole) {
+        if (subrole[idx] == "AXStandardWindow" && minimized[idx] == "true") {
+          count += 1
+        }
+      }
+      print count + 0
+    }
+  ' "$file"
+}
+
+summary_standard_window_unminimized_count() {
+  local file="$1"
+  awk -F= '
+    /^window\[[0-9]+\]\.subrole=/ {
+      key = $1
+      sub(/^window\[/, "", key)
+      split(key, parts, /\]\./)
+      subrole[parts[1]] = $2
+    }
+    /^window\[[0-9]+\]\.minimized=/ {
+      key = $1
+      sub(/^window\[/, "", key)
+      split(key, parts, /\]\./)
+      minimized[parts[1]] = $2
+    }
+    END {
+      for (idx in subrole) {
+        if (subrole[idx] == "AXStandardWindow" && minimized[idx] == "false") {
+          count += 1
+        }
+      }
+      print count + 0
+    }
+  ' "$file"
 }
 
 wait_for_process_window_min_count() {

@@ -37,12 +37,12 @@ final class WindowActionEngine {
             return WindowActionOutcome(
                 handled: false,
                 chosenPath: .fullScreen,
-                notes: ["Allowing standard macOS full-screen behavior."],
+                notes: [AppStrings.actionEngineFullScreenPassThrough],
                 failureDisposition: .replayOriginalClick
             )
         case .maximize:
             guard context.isResizable else {
-                let notes = ["Window does not appear to be resizable."]
+                let notes = [AppStrings.actionEngineWindowNotResizable]
                 diagnostics.logClickContext(context, chosenPath: "safety-skip", notes: notes)
                 return WindowActionOutcome(
                     handled: false,

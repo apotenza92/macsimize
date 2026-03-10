@@ -1,100 +1,137 @@
 # Macsimize Manual Test Plan
 
-## 1. Launch and settings window
+## 1. Launch and menu bar basics
 
 - Launch `Macsimize.app` directly.
-- Confirm the app appears in the menu bar with no Dock icon.
-- Confirm a dedicated **Macsimize Settings** window opens on first launch or Finder launch.
-- Close and reopen settings from the menu bar.
-- Confirm the window frame persists across relaunches.
+- Confirm the app appears only in the menu bar and does not keep a Dock icon.
+- Confirm the Settings window opens on first launch or Finder launch.
+- Reopen Settings from the menu bar.
+- Confirm the menu contains:
+  - `Maximize All` or `Maximise All`, depending on system English
+  - `Settings…`
+  - `Quit Macsimize`
 
-## 2. Permissions
+## 2. Permissions and interception readiness
 
-- In the settings window, confirm the **Permissions** section reflects current state.
-- Click **Open Accessibility** and confirm System Settings opens correctly.
-- Click **Open Input Monitoring** and confirm System Settings opens correctly.
-- After granting permissions, click **Refresh**.
-- Confirm status changes to **Interception Running** once the event tap starts.
+- Confirm the Permissions section reflects current Accessibility and Input Monitoring state.
+- Use `Open Accessibility` and `Open Input Monitoring` to verify the correct System Settings panes open.
+- Grant both permissions, click `Refresh`, and confirm the status moves to `Ready`.
+- With diagnostics enabled, confirm the recent diagnostics list updates while interactions are exercised.
 
-## 3. Menu bar and settings behavior
+## 3. Green button maximize and restore
 
-- Open the menu bar item.
-- Confirm it shows only:
-  - **Settings…**
-  - **Quit Macsimize**
-- Choose **Settings…** and confirm the settings window becomes frontmost.
-- Relaunch Macsimize from Finder and confirm the existing instance brings Settings forward.
-
-## 4. Maximize behavior
-
-Use these apps first:
+Use these apps:
 
 - TextEdit
-- Finder windows
+- Finder
 - Safari
 
-Test on the primary display and at least one secondary display when available.
+For each app and at least one window on each connected display:
 
-For each app/window combination:
-
-1. Record the original bounds.
-2. Set Macsimize to **Maximize**.
-3. Single-click the green button.
-4. Record the resulting bounds.
+1. Set Macsimize to `Maximize` / `Maximise`.
+2. Record the original bounds.
+3. Click the green button once.
+4. Confirm the window fills the visible frame of the chosen display.
 5. Click the green button again.
-6. Confirm the original bounds are restored or very closely approximated.
+6. Confirm the original bounds are restored or closely approximated.
 
-Expected:
-
-- The first click should expand the window to the display’s visible usable frame.
-- The second click should restore the prior bounds.
-- Diagnostics should clearly mention deterministic maximize behavior.
-
-## 5. Full Screen pass-through behavior
+## 4. Titlebar double-click override
 
 For TextEdit, Finder, and Safari:
 
-1. Set Macsimize to **Full Screen**.
-2. Single-click the green button.
-3. Confirm standard macOS full-screen behavior occurs.
-4. Exit full screen and repeat once more.
+1. Keep Macsimize in `Maximize` / `Maximise` mode.
+2. Double-click the titlebar or unified toolbar.
+3. Confirm Macsimize toggles its maximize/restore behavior instead of native macOS zoom/fill.
+4. Double-click again.
+5. Confirm the prior frame restores.
 
 Expected:
 
-- Macsimize should not remap the click in this mode.
-- Native app/macOS full-screen animation and behavior should remain intact.
+- Native titlebar double-click zoom/fill should not occur in maximize mode.
+- Diagnostics should mention titlebar double-click capture.
 
-## 6. Click-threshold behavior
+## 5. Drag-restore from managed maximize
 
-- In **Maximize** mode, press and hold the green button longer than a normal click.
-- Confirm Macsimize replays the original click instead of maximizing.
-- In **Maximize** mode, click the green button and drag before release.
-- Confirm Macsimize flushes the buffered native events and does not perform deterministic maximize.
+For TextEdit, Finder, and Safari:
 
-## 7. Non-resizable and excluded-app cases
+1. Maximize the window with Macsimize.
+2. Click and drag from the titlebar or toolbar.
+3. Confirm the window restores to its prior size as the drag begins.
+4. Confirm the drag continues naturally with the restored window under the pointer.
+5. Release and maximize again.
+6. Resize or move the window manually, then drag again to confirm stale maximize state does not restore incorrectly.
 
-- Find or create a non-resizable window.
-- In **Maximize** mode, click the green button.
-- Confirm Macsimize does not resize it.
-- Add the frontmost app from the settings window to exclusions.
-- Click the green button in that app.
-- Confirm Macsimize no longer remaps the click.
-- Remove the bundle ID manually and confirm remapping resumes.
+Expected:
 
-## 8. Diagnostics
+- Drag-restore should only trigger for a Macsimize-managed maximized window.
+- Diagnostics should distinguish drag-restore triggered vs skipped.
+
+## 6. Full Screen pass-through
+
+For TextEdit, Finder, and Safari:
+
+1. Set Macsimize to `Full Screen`.
+2. Click the green button.
+3. Confirm native macOS full-screen behavior occurs.
+4. Double-click the titlebar.
+5. Confirm native macOS titlebar behavior remains unchanged in this mode.
+
+## 7. Maximize All in the current Space
+
+Prepare:
+
+- Desktop 1 as a control Space
+- Desktop 2 with at least one eligible app window
+- Desktop 3 with the same app and another eligible window
+
+Validate:
+
+1. Switch to Desktop 2.
+2. Trigger `Maximize All` / `Maximise All` from the menu bar.
+3. Confirm eligible Desktop 2 windows maximize.
+4. Switch to Desktop 3.
+5. Confirm Desktop 3 windows remain unchanged.
+6. Trigger `Maximize All` / `Maximise All` from Desktop 3.
+7. Confirm only Desktop 3 windows now maximize.
+
+Also verify:
+
+- Macsimize skips its own windows.
+- Sheets, panels, minimized windows, and non-resizable windows are not processed.
+- Diagnostics mention skipped reasons for ineligible windows.
+
+## 8. Multi-display behavior
+
+- Repeat maximize, titlebar double-click, and drag-restore on windows positioned:
+  - fully on the primary display
+  - fully on a secondary display
+  - straddling two displays
+- Confirm maximize selects the expected target display.
+- Confirm drag-restore keeps the restored window under the pointer.
+
+## 9. Localization
+
+Repeat the core menu and settings checks with system English set to:
+
+- `en`
+- `en-GB`
+- `en-AU`
+
+Confirm:
+
+- `Maximize` vs `Maximise` is used consistently in the menu, settings, and help text.
+- `Behavior` vs `Behaviour` follows the system English variant.
+- Permission, update, and diagnostics-facing status copy remains coherent across variants.
+
+## 10. Diagnostics
 
 - Enable diagnostics.
-- Trigger several green-button clicks in both modes.
-- Confirm recent log lines appear in the settings window.
-- Use **Snapshot Frontmost Window** and confirm AX details are logged.
-- Confirm logs make it clear whether the action used:
+- Exercise green-button maximize/restore, titlebar double-click, drag-restore, and `Maximize All`.
+- Confirm recent diagnostics/logs clearly distinguish:
   - deterministic maximize
   - restore toggle
-  - pass-through/full screen
-  - replay because click thresholds were exceeded
-
-## 9. Multi-display sampling
-
-- Place windows mostly on the primary display, mostly on a secondary display, and straddling both.
-- In **Maximize** mode, confirm the chosen target is the visible frame of the best-matching display.
-- Confirm restore returns to the original display/frame.
+  - titlebar double-click capture
+  - drag-restore triggered
+  - drag-restore skipped
+  - batch maximize
+  - current-Space skip or filter reasons

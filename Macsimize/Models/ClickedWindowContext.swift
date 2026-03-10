@@ -2,7 +2,7 @@ import ApplicationServices
 import CoreGraphics
 import Foundation
 
-struct ClickedWindowContext {
+struct ClickedWindowContext: @unchecked Sendable {
     let appName: String
     let bundleIdentifier: String?
     let pid: pid_t
@@ -28,4 +28,9 @@ struct ClickedWindowContext {
         }
         return appName
     }
+}
+
+struct TitleBarInteractionContext: @unchecked Sendable {
+    let draggableRect: CGRect
+    let windowContext: ClickedWindowContext
 }

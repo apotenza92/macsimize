@@ -6,6 +6,14 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [v0.2.14]
+
+- Fixed batch maximize and restore so Brave and similar multi-window apps restore each window to its own original bounds instead of colliding on title-based state.
+- Added current-Space `Maximise All` and `Restore All` polish with earlier action start, store-driven batch restore, aggregate timing diagnostics, and localized menu labels.
+- Hardened maximize restore behavior by clamping offscreen or oversized restore frames into the visible display area and reusing the same restore logic for drag-restore.
+- Added titlebar interaction fallback handling, expanded regression coverage, and new multi-Space and Brave batch verification harnesses.
+- Removed the remaining Swift 6 event-tap replay sendability warning by moving deferred click replay state onto a tokenized callback-queue store.
+
 ## [v0.2.13]
 
 - Fixed Sparkle update-status handling so a normal “no update found” result no longer shows `Unable to check for updates.` in Settings.

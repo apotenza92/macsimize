@@ -14,19 +14,19 @@ enum UpdateCheckFrequency: String, CaseIterable, Codable, Identifiable {
     var displayName: String {
         switch self {
         case .never:
-            return "Never"
+            return AppStrings.updateFrequencyNever
         case .startup:
-            return "On Startup"
+            return AppStrings.updateFrequencyStartup
         case .hourly:
-            return "Every Hour"
+            return AppStrings.updateFrequencyHourly
         case .sixHours:
-            return "Every 6 Hours"
+            return AppStrings.updateFrequencySixHours
         case .twelveHours:
-            return "Every 12 Hours"
+            return AppStrings.updateFrequencyTwelveHours
         case .daily:
-            return "Daily"
+            return AppStrings.updateFrequencyDaily
         case .weekly:
-            return "Weekly"
+            return AppStrings.updateFrequencyWeekly
         }
     }
 

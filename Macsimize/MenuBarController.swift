@@ -6,14 +6,16 @@ final class MenuBarController: NSObject {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private weak var appDelegate: AppDelegate?
     private let menu = NSMenu()
-    private let settingsItem = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
+    private let maximizeAllItem = NSMenuItem(title: AppStrings.maximizeAllMenuTitle, action: #selector(maximizeAllWindows), keyEquivalent: "")
+    private let restoreAllItem = NSMenuItem(title: AppStrings.restoreAllMenuTitle, action: #selector(restoreAllWindows), keyEquivalent: "")
+    private let settingsItem = NSMenuItem(title: AppStrings.settingsMenuTitle, action: #selector(openSettings), keyEquivalent: ",")
     private let quitItem: NSMenuItem
 
     init(appDelegate: AppDelegate) {
         let appDisplayName = AppIdentity.displayName
         self.appDisplayName = appDisplayName
         self.appDelegate = appDelegate
-        quitItem = NSMenuItem(title: "Quit \(appDisplayName)", action: #selector(quitApp), keyEquivalent: "q")
+        quitItem = NSMenuItem(title: AppStrings.quitMenuTitle(appName: appDisplayName), action: #selector(quitApp), keyEquivalent: "q")
         super.init()
         configureStatusItem()
         configureMenu()
@@ -31,12 +33,17 @@ final class MenuBarController: NSObject {
     }
 
     private func configureMenu() {
+        maximizeAllItem.target = self
+        restoreAllItem.target = self
         settingsItem.target = self
         settingsItem.keyEquivalentModifierMask = [.command]
         quitItem.target = self
         quitItem.keyEquivalentModifierMask = [.command]
 
         menu.removeAllItems()
+        menu.addItem(maximizeAllItem)
+        menu.addItem(restoreAllItem)
+        menu.addItem(.separator())
         menu.addItem(settingsItem)
         menu.addItem(.separator())
         menu.addItem(quitItem)
@@ -47,6 +54,16 @@ final class MenuBarController: NSObject {
     @objc
     private func openSettings() {
         appDelegate?.showSettingsWindow()
+    }
+
+    @objc
+    private func maximizeAllWindows() {
+        appDelegate?.maximizeAllCurrentSpaceWindows()
+    }
+
+    @objc
+    private func restoreAllWindows() {
+        appDelegate?.restoreAllCurrentSpaceWindows()
     }
 
     @objc
@@ -65,7 +82,7 @@ private enum MacsimizeGlyphImage {
 
     private static func makeSymbolImage() -> NSImage {
         let configuration = NSImage.SymbolConfiguration(pointSize: 15, weight: .regular, scale: .medium)
-        guard let image = NSImage(systemSymbolName: "plus.circle.fill", accessibilityDescription: "Macsimize")?
+        guard let image = NSImage(systemSymbolName: "plus.circle.fill", accessibilityDescription: AppStrings.appAccessibilityLabel)?
             .withSymbolConfiguration(configuration) else {
             let fallback = NSImage(size: NSSize(width: 18, height: 18))
             fallback.isTemplate = true

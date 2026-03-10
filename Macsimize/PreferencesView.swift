@@ -34,24 +34,24 @@ struct PreferencesView: View {
 
     private var generalSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("General")
+            Text(AppStrings.generalSectionTitle)
                 .font(sectionTitleFont)
 
-            checkboxRow("Show settings on startup", isOn: $settings.showSettingsOnStartup)
-            checkboxRow("Start \(appDisplayName) at login", isOn: $settings.startAtLogin)
+            checkboxRow(AppStrings.showSettingsOnStartup, isOn: $settings.showSettingsOnStartup)
+            checkboxRow(AppStrings.startAtLogin(appName: appDisplayName), isOn: $settings.startAtLogin)
 
             HStack(spacing: 12) {
-                Button("Restart") {
+                Button(AppStrings.restartButtonTitle) {
                     appState.restartApp()
                 }
                 .buttonStyle(.bordered)
 
-                Button("Quit") {
+                Button(AppStrings.quitButtonTitle) {
                     NSApp.terminate(nil)
                 }
                 .buttonStyle(.bordered)
 
-                Button("About") {
+                Button(AppStrings.aboutButtonTitle) {
                     appState.showAboutPanel()
                 }
                 .buttonStyle(.bordered)
@@ -65,14 +65,14 @@ struct PreferencesView: View {
                         .foregroundStyle(.primary)
                 }
                 .buttonStyle(.bordered)
-                .help("Open \(appDisplayName) on GitHub")
+                .help(AppStrings.openGitHubHelp(appName: appDisplayName))
             }
         }
     }
 
     private var permissionsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Permissions")
+            Text(AppStrings.permissionsSectionTitle)
                 .font(sectionTitleFont)
 
             if permissions.state.hasVisibleIssue {
@@ -100,12 +100,12 @@ struct PreferencesView: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 permissionActionButton(
-                    title: "Accessibility",
+                    title: AppStrings.accessibilityButtonTitle,
                     granted: permissions.state.accessibilityTrusted,
                     action: appState.openAccessibilitySettings
                 )
                 permissionActionButton(
-                    title: "Input Monitoring",
+                    title: AppStrings.inputMonitoringButtonTitle,
                     granted: permissions.state.inputMonitoringGranted,
                     action: appState.openInputMonitoringSettings
                 )
@@ -115,15 +115,15 @@ struct PreferencesView: View {
 
     private var updatesSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Updates")
+            Text(AppStrings.updatesSectionTitle)
                 .font(sectionTitleFont)
 
             HStack(alignment: .center, spacing: 12) {
-                Button("Check for Updates", action: updateManager.checkForUpdates)
+                Button(AppStrings.checkForUpdatesButtonTitle, action: updateManager.checkForUpdates)
                     .buttonStyle(.borderedProminent)
                     .disabled(!updateManager.canCheckForUpdates)
 
-                Picker("Check frequency", selection: $settings.updateCheckFrequency) {
+                Picker(AppStrings.checkFrequencyLabel, selection: $settings.updateCheckFrequency) {
                     ForEach(UpdateCheckFrequency.allCases) { frequency in
                         Text(frequency.displayName).tag(frequency)
                     }
@@ -143,10 +143,10 @@ struct PreferencesView: View {
 
     private var behaviorSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Behaviour")
+            Text(AppStrings.behaviorSectionTitle)
                 .font(sectionTitleFont)
 
-            Text("Green button click")
+            Text(AppStrings.greenButtonClickLabel)
                 .lineLimit(1)
                 .fixedSize(horizontal: true, vertical: false)
 
@@ -213,7 +213,7 @@ struct PreferencesView: View {
     private var statusDetailText: String {
         var detail = permissions.state.detail
         if settings.selectedAction == .maximize && !permissions.state.eventTapRunning {
-            detail += " While this is inactive, clicking the green button may still trigger native macOS full screen."
+            detail += " \(AppStrings.inactiveInterceptionWarning)"
         }
         return detail
     }
