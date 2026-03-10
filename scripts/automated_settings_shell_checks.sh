@@ -60,6 +60,19 @@ read_selected_action() {
   defaults read "$BUNDLE_ID" selectedAction 2>/dev/null || echo ""
 }
 
+preferred_maximize_label() {
+  local locale
+  locale="$(defaults read -g AppleLocale 2>/dev/null || echo "")"
+  case "$locale" in
+    en_GB*|en_AU*)
+      echo "Maximise"
+      ;;
+    *)
+      echo "Maximize"
+      ;;
+  esac
+}
+
 wait_for_selected_action() {
   local expected="$1"
   local timeout_seconds="${2:-6}"
@@ -85,6 +98,21 @@ click_action_mode_button() {
     /usr/bin/swiftc "$SCRIPT_DIR/ax_press_control.swift" -o "$AX_PRESS_CONTROL_BIN"
   fi
   "$AX_PRESS_CONTROL_BIN" "$APP_NAME" AXButton "$label" >/dev/null
+}
+
+click_maximize_mode_button() {
+  local preferred
+  preferred="$(preferred_maximize_label)"
+  local alternate="Maximize"
+  if [[ "$preferred" == "Maximize" ]]; then
+    alternate="Maximise"
+  fi
+
+  if click_action_mode_button "$preferred"; then
+    return 0
+  fi
+
+  click_action_mode_button "$alternate"
 }
 
 defaults delete "$BUNDLE_ID" selectedAction >/dev/null 2>&1 || true
@@ -120,9 +148,9 @@ if [[ "$(wait_for_selected_action fullScreen 4 || true)" != "fullScreen" ]]; the
   print_log_tail "$LOG_FILE" 80
   exit 1
 fi
-click_action_mode_button "Maximize"
+click_maximize_mode_button
 if [[ "$(wait_for_selected_action maximize 4 || true)" != "maximize" ]]; then
-  echo "FAIL: expected clicking Maximize to persist maximize"
+  echo "FAIL: expected clicking Maximize/Maximise to persist maximize"
   print_log_tail "$LOG_FILE" 80
   exit 1
 fi
