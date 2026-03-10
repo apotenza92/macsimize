@@ -6,6 +6,13 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [v0.2.9]
+
+- Fixed a maximize/restore CPU spike regression by removing unbounded AX fallback traversal from the event-tap click path and replacing it with bounded, fail-open lookup behavior.
+- Added strict traffic-light hit-zone gating for focused/main window button lookup so non-titlebar clicks avoid expensive accessibility resolution.
+- Added a short post-action interception suppression window to prevent rapid re-entry during maximize/restore animation transitions.
+- Expanded interception tests with titlebar hot-zone coverage checks and validated behavior with repeated automated maximize/restore stress runs.
+
 ## [v0.2.8]
 
 - Hardened Sparkle integration for menu bar safety by making manual update checks non-blocking, adding updater state diagnostics, and gating launcher-service-dependent startup paths.

@@ -6,6 +6,10 @@ final class AccessibilityService {
     private let diagnostics: DebugDiagnostics
     private let supportedGreenButtonSubroles: Set<String> = ["AXZoomButton", "AXFullScreenButton"]
     private let greenButtonHitTolerance: CGFloat = 8
+    private let trafficLightHotZoneWidth: CGFloat = 180
+    private let trafficLightHotZoneHeight: CGFloat = 64
+    private let trafficLightHotZoneInset: CGFloat = 10
+    private let maxAncestorTraversalDepth = 10
 
     init(diagnostics: DebugDiagnostics) {
         self.diagnostics = diagnostics
@@ -27,7 +31,8 @@ final class AccessibilityService {
         }
 
         let appElement = AXUIElementCreateApplication(app.processIdentifier)
-        for candidatePoint in candidateHitTestPoints(for: location) {
+        let candidatePoints = candidateHitTestPoints(for: location)
+        for candidatePoint in candidatePoints {
             var hitElement: AXUIElement?
             let hitError = AXUIElementCopyElementAtPosition(appElement, Float(candidatePoint.x), Float(candidatePoint.y), &hitElement)
             guard hitError == .success, let hitElement else {
@@ -42,23 +47,18 @@ final class AccessibilityService {
             }
         }
 
-        for candidatePoint in candidateHitTestPoints(for: location) {
-            if let resolved = resolveUsingWindowButtonLookup(app: app, candidatePoint: candidatePoint, originalLocation: location) {
+        for candidatePoint in candidatePoints {
+            if let resolved = resolveUsingFocusedWindowButtonLookup(
+                app: app,
+                appElement: appElement,
+                candidatePoint: candidatePoint,
+                originalLocation: location
+            ) {
                 if candidatePoint != location {
                     diagnostics.logMessage("AX window-button lookup succeeded using flipped screen coordinates.")
                 } else {
                     diagnostics.logMessage("AX window-button lookup succeeded after hit-test fallback.")
                 }
-                return resolved
-            }
-        }
-
-        for candidatePoint in candidateHitTestPoints(for: location) {
-            if let resolved = resolveUsingSystemWideHitTest(at: candidatePoint, originalLocation: location) {
-                let message = candidatePoint != location
-                    ? "AX system-wide hit-test fallback succeeded using flipped screen coordinates."
-                    : "AX system-wide hit-test fallback succeeded after app-scoped lookup failure."
-                diagnostics.logMessage(message)
                 return resolved
             }
         }
@@ -106,6 +106,20 @@ final class AccessibilityService {
             .offset
     }
 
+    static func trafficLightHotZone(
+        for windowFrame: CGRect,
+        width: CGFloat = 180,
+        height: CGFloat = 64,
+        inset: CGFloat = 10
+    ) -> CGRect {
+        CGRect(
+            x: windowFrame.minX - inset,
+            y: windowFrame.maxY - height - inset,
+            width: width + (inset * 2),
+            height: height + (inset * 2)
+        )
+    }
+
     private func candidateHitTestPoints(for location: CGPoint) -> [CGPoint] {
         var candidates = [location]
         guard let screen = NSScreen.screens.first(where: { $0.frame.contains(location) }) else {
@@ -129,36 +143,23 @@ final class AccessibilityService {
         return location.y > screen.visibleFrame.maxY
     }
 
-    private func resolveUsingSystemWideHitTest(at location: CGPoint, originalLocation: CGPoint) -> ClickedWindowContext? {
-        let systemWide = AXUIElementCreateSystemWide()
-        var hitElement: AXUIElement?
-        let hitError = AXUIElementCopyElementAtPosition(systemWide, Float(location.x), Float(location.y), &hitElement)
-        guard hitError == .success, let hitElement else {
-            return nil
-        }
-
-        guard let pid = pid(of: hitElement),
-              let app = NSRunningApplication(processIdentifier: pid) else {
-            return nil
-        }
-
-        if app.processIdentifier == ProcessInfo.processInfo.processIdentifier {
-            diagnostics.logMessage("AX system-wide hit-test skipped for Macsimize itself.")
-            return nil
-        }
-
-        guard let buttonElement = resolveGreenButton(from: hitElement, clickLocation: location) else {
-            return nil
-        }
-
-        return context(for: buttonElement, app: app, clickLocation: originalLocation)
-    }
-
-    private func resolveUsingWindowButtonLookup(app: NSRunningApplication, candidatePoint: CGPoint, originalLocation: CGPoint) -> ClickedWindowContext? {
-        let appElement = AXUIElementCreateApplication(app.processIdentifier)
-        for window in candidateWindows(in: appElement) {
-            if let windowFrame = AXHelpers.cgRect(of: window),
-               !windowFrame.insetBy(dx: -greenButtonHitTolerance, dy: -greenButtonHitTolerance).contains(candidatePoint) {
+    private func resolveUsingFocusedWindowButtonLookup(
+        app: NSRunningApplication,
+        appElement: AXUIElement,
+        candidatePoint: CGPoint,
+        originalLocation: CGPoint
+    ) -> ClickedWindowContext? {
+        for window in focusedOrMainWindows(in: appElement) {
+            guard let windowFrame = AXHelpers.cgRect(of: window) else {
+                continue
+            }
+            let hotZone = Self.trafficLightHotZone(
+                for: windowFrame,
+                width: trafficLightHotZoneWidth,
+                height: trafficLightHotZoneHeight,
+                inset: trafficLightHotZoneInset
+            )
+            if !hotZone.contains(candidatePoint) {
                 continue
             }
 
@@ -179,6 +180,18 @@ final class AccessibilityService {
 
         guard let window = AXHelpers.window(of: hitElement) else {
             return nil
+        }
+
+        if let windowFrame = AXHelpers.cgRect(of: window) {
+            let hotZone = Self.trafficLightHotZone(
+                for: windowFrame,
+                width: trafficLightHotZoneWidth,
+                height: trafficLightHotZoneHeight,
+                inset: trafficLightHotZoneInset
+            )
+            if !hotZone.contains(clickLocation) {
+                return nil
+            }
         }
 
         return matchingGreenButton(in: window, clickLocation: clickLocation)
@@ -222,24 +235,46 @@ final class AccessibilityService {
             }
         }
 
-        var stack = [window]
-        while let element = stack.popLast() {
-            let role = AXHelpers.stringAttribute(kAXRoleAttribute as String, on: element)
-            let subrole = AXHelpers.stringAttribute(kAXSubroleAttribute as String, on: element)
-            if role == (kAXButtonRole as String), supportedGreenButtonSubroles.contains(subrole ?? "") {
-                appendCandidate(element)
-            }
+        // Some apps do not expose AXZoomButton/AXFullScreenButton directly on the window.
+        // In that case, do a bounded tree walk instead of an unbounded traversal.
+        if results.isEmpty {
+            var queue: [(element: AXUIElement, depth: Int)] = [(window, 0)]
+            var enqueued = Set([Int(CFHash(window))])
+            var visited = 0
+            let maxDepth = 4
+            let maxVisitedNodes = 120
 
-            let children = AXHelpers.children(of: element)
-            let visibleChildren = AXHelpers.children(of: element, attribute: kAXVisibleChildrenAttribute as String)
-            stack.append(contentsOf: visibleChildren.reversed())
-            stack.append(contentsOf: children.reversed())
+            while !queue.isEmpty, visited < maxVisitedNodes {
+                let current = queue.removeFirst()
+                visited += 1
+
+                let role = AXHelpers.stringAttribute(kAXRoleAttribute as String, on: current.element)
+                let subrole = AXHelpers.stringAttribute(kAXSubroleAttribute as String, on: current.element)
+                if role == (kAXButtonRole as String), supportedGreenButtonSubroles.contains(subrole ?? "") {
+                    appendCandidate(current.element)
+                }
+
+                guard current.depth < maxDepth else {
+                    continue
+                }
+
+                let children = AXHelpers.children(of: current.element)
+                let visibleChildren = AXHelpers.children(of: current.element, attribute: kAXVisibleChildrenAttribute as String)
+                for child in visibleChildren + children {
+                    let identifier = Int(CFHash(child))
+                    if enqueued.contains(identifier) {
+                        continue
+                    }
+                    enqueued.insert(identifier)
+                    queue.append((child, current.depth + 1))
+                }
+            }
         }
 
         return results
     }
 
-    private func candidateWindows(in appElement: AXUIElement) -> [AXUIElement] {
+    private func focusedOrMainWindows(in appElement: AXUIElement) -> [AXUIElement] {
         var windows: [AXUIElement] = []
         var seen = Set<Int>()
 
@@ -256,33 +291,23 @@ final class AccessibilityService {
 
         appendWindow(AXHelpers.elementAttribute(kAXFocusedWindowAttribute as String, on: appElement))
         appendWindow(AXHelpers.elementAttribute(kAXMainWindowAttribute as String, on: appElement))
-        for window in AXHelpers.children(of: appElement, attribute: kAXWindowsAttribute as String) {
-            appendWindow(window)
-        }
 
         return windows
     }
 
     private func nearestGreenButton(from element: AXUIElement) -> AXUIElement? {
         var current: AXUIElement? = element
-        while let candidate = current {
+        var remainingDepth = maxAncestorTraversalDepth
+        while let candidate = current, remainingDepth > 0 {
             let role = AXHelpers.stringAttribute(kAXRoleAttribute as String, on: candidate)
             let subrole = AXHelpers.stringAttribute(kAXSubroleAttribute as String, on: candidate)
             if role == (kAXButtonRole as String), supportedGreenButtonSubroles.contains(subrole ?? "") {
                 return candidate
             }
             current = AXHelpers.parent(of: candidate)
+            remainingDepth -= 1
         }
         return nil
-    }
-
-    private func pid(of element: AXUIElement) -> pid_t? {
-        var pid: pid_t = 0
-        let result = AXUIElementGetPid(element, &pid)
-        guard result == .success else {
-            return nil
-        }
-        return pid
     }
 
     private func context(for buttonElement: AXUIElement, app: NSRunningApplication, clickLocation: CGPoint) -> ClickedWindowContext? {

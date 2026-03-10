@@ -21,6 +21,8 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
     private var holdTimer: DispatchSourceTimer?
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
+    private var postActionSuppressionUntilByPID: [pid_t: TimeInterval] = [:]
+    private let postActionSuppressionDuration: TimeInterval = 0.6
 
     init(
         settings: SettingsStore,
@@ -150,6 +152,7 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
             cancelHoldTimer()
             bufferedEvents.removeAll()
             controller.reset()
+            postActionSuppressionUntilByPID.removeAll()
         }
 
         updateRunningState(false, failure: reason)
@@ -210,9 +213,14 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
             return Unmanaged.passUnretained(event)
         }
 
+        let timestamp = ProcessInfo.processInfo.systemUptime
+        if shouldSuppressInterception(now: timestamp) {
+            return Unmanaged.passUnretained(event)
+        }
+
         let decision = controller.handleMouseDown(
             location: event.location,
-            timestamp: ProcessInfo.processInfo.systemUptime,
+            timestamp: timestamp,
             configuration: configuration
         )
 
@@ -335,13 +343,19 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
     }
 
     private func performWindowActionAsync(_ pendingAction: PendingWindowAction, fallbackEvents: [CGEvent]) {
+        let mode = pendingAction.mode
+        let context = pendingAction.context
+        let windowPID = pendingAction.context.pid
         actionQueue.async { [weak self] in
             guard let self else {
                 return
             }
 
-            let outcome = self.actionPerformer.perform(mode: pendingAction.mode, context: pendingAction.context)
-            guard !outcome.handled else {
+            let outcome = self.actionPerformer.perform(mode: mode, context: context)
+            if outcome.handled {
+                self.callbackQueue.async { [weak self] in
+                    self?.recordPostActionSuppression(for: windowPID, now: ProcessInfo.processInfo.systemUptime)
+                }
                 return
             }
 
@@ -365,6 +379,31 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
             return false
         }
         return location.y > screen.visibleFrame.maxY
+    }
+
+    private func shouldSuppressInterception(now: TimeInterval) -> Bool {
+        pruneExpiredSuppressions(now: now)
+        guard let frontmostPID = NSWorkspace.shared.frontmostApplication?.processIdentifier else {
+            return false
+        }
+        guard let suppressedUntil = postActionSuppressionUntilByPID[frontmostPID] else {
+            return false
+        }
+        if now < suppressedUntil {
+            return true
+        }
+        postActionSuppressionUntilByPID.removeValue(forKey: frontmostPID)
+        return false
+    }
+
+    private func recordPostActionSuppression(for pid: pid_t, now: TimeInterval) {
+        postActionSuppressionUntilByPID[pid] = now + postActionSuppressionDuration
+    }
+
+    private func pruneExpiredSuppressions(now: TimeInterval) {
+        for (pid, deadline) in Array(postActionSuppressionUntilByPID) where deadline <= now {
+            postActionSuppressionUntilByPID.removeValue(forKey: pid)
+        }
     }
 
     deinit {
