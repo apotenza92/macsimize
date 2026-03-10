@@ -2,7 +2,7 @@
 
 <img src="Macsimize/Assets.xcassets/AppIcon.appiconset/icon_256x256.png" alt="Macsimize icon" width="96" />
 
-Customise Dock icon click, double-click, and scroll actions on macOS.
+Turn the green window button into Maximize instead of Full Screen on macOS.
 
 [Download Page](https://apotenza92.github.io/macsimize/) · [GitHub Releases](https://github.com/apotenza92/macsimize/releases) · [Buy me a coffee](https://buymeacoffee.com/apotenza)
 
