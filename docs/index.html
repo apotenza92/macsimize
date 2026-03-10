@@ -723,13 +723,13 @@
 
         const homebrewCode = document.getElementById("mac-homebrew-code");
         const homebrewLabel = document.getElementById("mac-homebrew-label");
-        const appNameInline = document.getElementById("app-name-inline");
+        const betaAppName = document.getElementById("beta-app-name");
         const installAppName = document.getElementById("install-app-name");
 
         homebrewCode.textContent = BREW_COMMANDS[currentChannel];
         homebrewLabel.textContent =
           currentChannel === "beta" ? "Or install via Homebrew (Beta):" : "Or install via Homebrew:";
-        appNameInline.textContent = DISPLAY_NAMES.beta;
+        betaAppName.textContent = APP_NAMES.beta;
         installAppName.textContent = APP_NAMES[currentChannel];
 
         const versionDisplay = document.getElementById("version-display");
@@ -794,15 +794,40 @@
         updateDownloadDisplay();
       }
 
+      async function writeToClipboard(text) {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(text);
+          return;
+        }
+
+        const helper = document.createElement("textarea");
+        helper.value = text;
+        helper.setAttribute("readonly", "");
+        helper.style.position = "absolute";
+        helper.style.left = "-9999px";
+        document.body.appendChild(helper);
+        helper.select();
+
+        const copied = document.execCommand("copy");
+        document.body.removeChild(helper);
+
+        if (!copied) {
+          throw new Error("Clipboard copy failed");
+        }
+      }
+
       async function copyHomebrewCommand() {
         const copyBtn = document.getElementById("mac-homebrew-copy");
         try {
-          await navigator.clipboard.writeText(BREW_COMMANDS[currentChannel]);
+          await writeToClipboard(BREW_COMMANDS[currentChannel]);
           copyBtn.innerHTML =
             '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 6L9 17l-5-5"/></svg><span>Copied</span>';
           copyBtn.classList.add("copied");
         } catch (error) {
           console.error(error);
+          copyBtn.innerHTML =
+            '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg><span>Copy failed</span>';
+          copyBtn.classList.remove("copied");
         }
       }
 
