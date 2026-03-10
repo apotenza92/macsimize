@@ -5,19 +5,20 @@
     <description>Macsimize update feed (beta channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.2.10-beta.1</title>
-      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.10-beta.1</link>
-      <sparkle:version>201000001</sparkle:version>
-      <sparkle:shortVersionString>0.2.10-beta.1</sparkle:shortVersionString>
+      <title>Version 0.2.10</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.10</link>
+      <sparkle:version>201090000</sparkle:version>
+      <sparkle:shortVersionString>0.2.10</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Made the app resolve its display name from bundle metadata so stable and beta builds label themselves consistently at runtime.
-- Updated the Settings window title, menu bar tooltip, quit menu item, and related visible strings to show `Macsimize Beta` for beta builds and `Macsimize` for stable builds.
-- Added coverage for runtime app-name resolution and parameterized the Accessibility usage description with `$(PRODUCT_NAME)`.]]></description>
-      <pubDate>Tue, 10 Mar 2026 00:53:28 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.10-beta.1/Macsimize-Beta-v0.2.10-beta.1-macos-x64.zip"
-                 sparkle:edSignature="cUPeL9MbarOms0QKMxrLlD6MI4QQxpxWV3uTIfPqBSymKANixX5hha7pCeW8FY1KTve0R1cpbLAqMZebU6yTCw=="
-                 length="2576969"
+      <description sparkle:format="plain-text"><![CDATA[- Fixed a failure path where an intercepted Maximize click could fall back to native macOS full screen instead of staying contained.
+- Changed intercepted maximize failures and non-resizable window cases to swallow the click rather than replaying the original green-button press.
+- Added a first-run status panel and clearer readiness messaging so Macsimize now explains when permissions or the event tap are still preventing interception.
+- Automatically opens Settings whenever required permissions are missing so new installs do not appear active before green-button interception is actually ready.]]></description>
+      <pubDate>Tue, 10 Mar 2026 01:12:57 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.10/Macsimize-Beta-v0.2.10-macos-x64.zip"
+                 sparkle:edSignature="hYiUBirek9kK5zzuXqbL/HaFIZpqi5d5Y4JnTTnGp7qreMdLYC7IPHIt8gvYD5QioMgksGDI0Q8EXqtlRhtdBg=="
+                 length="2582036"
                  type="application/octet-stream" />
     </item>
   </channel>
