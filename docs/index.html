@@ -48,7 +48,6 @@
         --accent-soft-border: rgba(73, 201, 106, 0.28);
         --btn-shadow: rgba(73, 201, 106, 0.12);
         --btn-shadow-hover: rgba(73, 201, 106, 0.18);
-        --copied: #dff9e7;
       }
 
       body.beta-mode {
@@ -61,7 +60,6 @@
         --accent-soft-border: rgba(127, 137, 229, 0.3);
         --btn-shadow: rgba(127, 137, 229, 0.14);
         --btn-shadow-hover: rgba(127, 137, 229, 0.2);
-        --copied: #edf0ff;
       }
 
       @media (prefers-color-scheme: dark) {
@@ -366,10 +364,8 @@
         color: white;
       }
 
-      .copy-btn.copied,
-      .copy-btn.copied svg,
-      .copy-btn.copied span {
-        color: var(--copied);
+      .copy-btn.copied {
+        opacity: 0.92;
       }
 
       .beta-notice {
@@ -980,7 +976,7 @@
         try {
           await writeToClipboard(BREW_COMMANDS[currentChannel]);
           copyBtn.innerHTML =
-            '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 6L9 17l-5-5"/></svg><span>Copied</span>';
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4 4L19 7.5"/></svg><span>Copied</span>';
           copyBtn.classList.add("copied");
         } catch (error) {
           console.error(error);
