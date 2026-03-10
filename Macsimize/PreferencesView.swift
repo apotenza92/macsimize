@@ -7,8 +7,8 @@ struct PreferencesView: View {
     @ObservedObject private var updateManager: UpdateManager
 
     private let appState: AppState
-    private let preferredContentWidth: CGFloat = 420
-    private let horizontalPadding: CGFloat = 20
+    private let preferredContentWidth: CGFloat = 360
+    private let horizontalPadding: CGFloat = 18
     private let contentFont: Font = .system(size: 14)
     private let sectionTitleFont: Font = .system(size: 14, weight: .semibold)
     private let appDisplayName = AppIdentity.displayName
@@ -119,7 +119,12 @@ struct PreferencesView: View {
                 .font(sectionTitleFont)
 
             HStack(alignment: .center, spacing: 12) {
-                Button(AppStrings.checkForUpdatesButtonTitle, action: updateManager.checkForUpdates)
+                Button(
+                    updateManager.hasAvailableUpdate
+                        ? AppStrings.installUpdateButtonTitle
+                        : AppStrings.checkForUpdatesButtonTitle,
+                    action: updateManager.checkForUpdates
+                )
                     .buttonStyle(.borderedProminent)
                     .disabled(!updateManager.canCheckForUpdates || updateManager.isCheckingForUpdates)
 

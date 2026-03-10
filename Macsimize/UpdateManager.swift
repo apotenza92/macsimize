@@ -1,3 +1,4 @@
+import AppKit
 import Combine
 import Foundation
 import Sparkle
@@ -17,6 +18,10 @@ final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdate
     @Published private(set) var canCheckForUpdates = false
     @Published private(set) var isCheckingForUpdates = false
     @Published private(set) var updateStatusMessage: String?
+
+    var hasAvailableUpdate: Bool {
+        Self.hasAvailableUpdateStatusMessage(updateStatusMessage)
+    }
 
     private let settings: SettingsStore
     private let diagnostics: DebugDiagnostics
@@ -73,12 +78,11 @@ final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdate
         guard didConfigure else { return }
         guard updaterController.updater.canCheckForUpdates else { return }
         settings.markUpdateCheckNow()
-        RuntimeLogger.log("User initiated update check (background mode)")
+        RuntimeLogger.log("User initiated update check (interactive mode)")
         beginManualUpdateCheck()
         updateStatus(AppStrings.updateCheckingStatusMessage)
-        // Avoid Sparkle's modal "up to date" alert path, which can stall LSUIElement
-        // menu bar apps when invoked from the Settings window.
-        updaterController.updater.checkForUpdatesInBackground()
+        NSApp.activate(ignoringOtherApps: true)
+        updaterController.checkForUpdates(nil)
     }
 
     private func bindUpdaterState() {
@@ -270,6 +274,10 @@ final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdate
         default:
             return nil
         }
+    }
+
+    nonisolated static func hasAvailableUpdateStatusMessage(_ message: String?) -> Bool {
+        message?.hasPrefix(AppStrings.updateAvailable(version: "")) == true
     }
 
     private func beginManualUpdateCheck() {

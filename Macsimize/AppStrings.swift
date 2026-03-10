@@ -47,6 +47,7 @@ enum AppStrings {
     static var inputMonitoringButtonTitle: String { "Input Monitoring" }
 
     static var checkForUpdatesButtonTitle: String { "Check for Updates" }
+    static var installUpdateButtonTitle: String { "Install Update…" }
     static var checkFrequencyLabel: String { "Check frequency" }
     static var greenButtonClickLabel: String { "Green button click" }
 

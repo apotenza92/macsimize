@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [v0.3.1]
+
+- Fixed manual Sparkle checks so available updates now open the installer flow instead of only showing a status line in Settings.
+- Added an explicit `Install Update…` button state when an update has already been detected.
+- Narrowed the Settings window so it fits the current controls better.
+
 ## [v0.3.0]
 
 - Refreshed the download page and README with cleaner Macsimize product copy, badge-style top links, architecture-aware downloads, improved Homebrew copy interactions, and a support CTA that matches the site styling.

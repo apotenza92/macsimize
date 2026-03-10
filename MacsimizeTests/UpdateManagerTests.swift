@@ -3,6 +3,22 @@ import Sparkle
 @testable import Macsimize
 
 final class UpdateManagerTests: XCTestCase {
+    func testHasAvailableUpdateStatusMessageReturnsTrueForAvailableStatus() {
+        XCTAssertTrue(
+            UpdateManager.hasAvailableUpdateStatusMessage(
+                AppStrings.updateAvailable(version: "1.2.3")
+            )
+        )
+    }
+
+    func testHasAvailableUpdateStatusMessageReturnsFalseForOtherStatuses() {
+        XCTAssertFalse(
+            UpdateManager.hasAvailableUpdateStatusMessage(
+                AppStrings.updateUpToDateStatusMessage
+            )
+        )
+    }
+
     func testStatusMessageReturnsUpToDateForNoUpdateSparkleError() {
         let error = NSError(domain: SUSparkleErrorDomain, code: 1001)
 
