@@ -649,6 +649,7 @@
         const activeChannel = document.querySelector(".channel-btn.active");
         const activeArch = document.querySelector(".mac-arch-toggle .arch-btn.active");
         const downloadBtn = document.getElementById("download-btn");
+        const homebrewBox = document.getElementById("mac-homebrew-box");
 
         if (!svg || !flow || !activeChannel || !activeArch || !downloadBtn) {
           return;
@@ -688,6 +689,27 @@
         );
         pathTwo.setAttribute("class", "connector-path");
         svg.appendChild(pathTwo);
+
+        if (homebrewBox && homebrewBox.offsetParent !== null) {
+          const homebrewRect = homebrewBox.getBoundingClientRect();
+          const homebrewCenterX =
+            homebrewRect.left + homebrewRect.width / 2 - flowRect.left;
+          const homebrewTopY = homebrewRect.top - flowRect.top;
+          const downloadBottomY = downloadRect.bottom - flowRect.top;
+
+          const pathThree = document.createElementNS("http://www.w3.org/2000/svg", "path");
+          pathThree.setAttribute(
+            "d",
+            createCurvedPath(
+              downloadCenterX,
+              downloadBottomY,
+              homebrewCenterX,
+              homebrewTopY,
+            ),
+          );
+          pathThree.setAttribute("class", "connector-path");
+          svg.appendChild(pathThree);
+        }
       }
 
       function syncUrl() {
