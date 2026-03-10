@@ -7,7 +7,7 @@ struct PreferencesView: View {
     @ObservedObject private var updateManager: UpdateManager
 
     private let appState: AppState
-    private let preferredContentWidth: CGFloat = 500
+    private let preferredContentWidth: CGFloat = 420
     private let horizontalPadding: CGFloat = 20
     private let contentFont: Font = .system(size: 14)
     private let sectionTitleFont: Font = .system(size: 14, weight: .semibold)
@@ -121,7 +121,7 @@ struct PreferencesView: View {
             HStack(alignment: .center, spacing: 12) {
                 Button(AppStrings.checkForUpdatesButtonTitle, action: updateManager.checkForUpdates)
                     .buttonStyle(.borderedProminent)
-                    .disabled(!updateManager.canCheckForUpdates)
+                    .disabled(!updateManager.canCheckForUpdates || updateManager.isCheckingForUpdates)
 
                 Picker(AppStrings.checkFrequencyLabel, selection: $settings.updateCheckFrequency) {
                     ForEach(UpdateCheckFrequency.allCases) { frequency in
@@ -129,7 +129,7 @@ struct PreferencesView: View {
                     }
                 }
                 .labelsHidden()
-                .frame(width: 140, alignment: .leading)
+                .frame(width: 130, alignment: .leading)
             }
 
             if let updateStatusMessage = updateManager.updateStatusMessage {

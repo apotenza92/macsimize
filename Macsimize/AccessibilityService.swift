@@ -496,8 +496,13 @@ final class AccessibilityService: @unchecked Sendable {
             guard pid != 0,
                   pid != ProcessInfo.processInfo.processIdentifier,
                   let app = NSRunningApplication(processIdentifier: pid),
+                  let windowFrame = AXHelpers.cgRect(of: windowElement),
                   let draggableRect = draggableRect(for: windowElement),
-                  draggableRect.contains(candidatePoint) else {
+                  Self.shouldAcceptHitTestResolvedTitleBarInteraction(
+                      originalLocation: location,
+                      windowFrame: windowFrame,
+                      draggableRect: draggableRect
+                  ) else {
                 continue
             }
 
@@ -760,6 +765,14 @@ final class AccessibilityService: @unchecked Sendable {
             width: windowFrame.width,
             height: height
         )
+    }
+
+    static func shouldAcceptHitTestResolvedTitleBarInteraction(
+        originalLocation: CGPoint,
+        windowFrame: CGRect,
+        draggableRect: CGRect
+    ) -> Bool {
+        windowFrame.contains(originalLocation) && draggableRect.contains(originalLocation)
     }
 
     private func shouldUseFallbackTitleBarRect(for window: AXUIElement, windowFrame: CGRect) -> Bool {

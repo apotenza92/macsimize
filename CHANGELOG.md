@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [v0.3.0]
+
+- Refreshed the download page and README with cleaner Macsimize product copy, badge-style top links, architecture-aware downloads, improved Homebrew copy interactions, and a support CTA that matches the site styling.
+- Tightened the Settings window so it fits the content better and improved manual update checks so the UI no longer sits on `Checking for updates...` indefinitely.
+- Fixed title-bar hit testing so Dock icon double-clicks and other off-window clicks no longer get misclassified as title-bar maximize actions.
+
 ## [v0.2.15]
 
 - Fixed title-bar double-click interception so apps like Codex no longer maximize when you double-click ordinary content inside the window.

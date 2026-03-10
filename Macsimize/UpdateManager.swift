@@ -10,12 +10,18 @@ final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdate
         static let installationAuthorizeLater = 4008
     }
 
+    nonisolated private enum Timing {
+        static let manualCheckStatusTimeoutNanoseconds: UInt64 = 12_000_000_000
+    }
+
     @Published private(set) var canCheckForUpdates = false
+    @Published private(set) var isCheckingForUpdates = false
     @Published private(set) var updateStatusMessage: String?
 
     private let settings: SettingsStore
     private let diagnostics: DebugDiagnostics
     private var updateCheckTimer: Timer?
+    private var manualCheckStatusTimeoutTask: Task<Void, Never>?
     private var cancellables: Set<AnyCancellable> = []
     private var didConfigure = false
 
@@ -68,6 +74,7 @@ final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdate
         guard updaterController.updater.canCheckForUpdates else { return }
         settings.markUpdateCheckNow()
         RuntimeLogger.log("User initiated update check (background mode)")
+        beginManualUpdateCheck()
         updateStatus(AppStrings.updateCheckingStatusMessage)
         // Avoid Sparkle's modal "up to date" alert path, which can stall LSUIElement
         // menu bar apps when invoked from the Settings window.
@@ -131,39 +138,50 @@ final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdate
     }
 
     func updater(_ updater: SPUUpdater, didFindValidUpdate item: SUAppcastItem) {
+        finishManualUpdateCheck()
         let version = item.displayVersionString
         RuntimeLogger.log("Sparkle found update: \(version)")
         updateStatus(AppStrings.updateAvailable(version: version))
     }
 
     func updaterDidNotFindUpdate(_ updater: SPUUpdater, error: Error) {
+        finishManualUpdateCheck()
         RuntimeLogger.log("Sparkle did not find an update: \(error.localizedDescription)")
         updateStatus(AppStrings.updateUpToDateStatusMessage)
     }
 
     func updaterDidNotFindUpdate(_ updater: SPUUpdater) {
+        finishManualUpdateCheck()
         RuntimeLogger.log("Sparkle did not find an update")
         updateStatus(AppStrings.updateUpToDateStatusMessage)
     }
 
     func updater(_ updater: SPUUpdater, didAbortWithError error: Error) {
+        let priorStatusMessage = updateStatusMessage
+        finishManualUpdateCheck()
         RuntimeLogger.log("Sparkle aborted update cycle: \(error.localizedDescription)")
-        if let message = Self.statusMessage(forSparkleError: error, currentStatusMessage: updateStatusMessage) {
+        if let message = Self.statusMessage(forSparkleError: error, currentStatusMessage: priorStatusMessage) {
             updateStatus(message)
         }
     }
 
     func updater(_ updater: SPUUpdater, didFinishUpdateCycleFor updateCheck: SPUUpdateCheck, error: Error?) {
+        let priorStatusMessage = updateStatusMessage
+        finishManualUpdateCheck()
+
         if let error {
             RuntimeLogger.log("Sparkle finished update cycle with error: \(error.localizedDescription)")
             if let message = Self.statusMessage(
                 forSparkleError: error,
-                currentStatusMessage: updateStatusMessage
+                currentStatusMessage: priorStatusMessage
             ) {
                 updateStatus(message)
             }
         } else {
             RuntimeLogger.log("Sparkle finished update cycle (\(String(describing: updateCheck)))")
+            if let message = Self.statusMessageForCompletedUpdateCycle(currentStatusMessage: priorStatusMessage) {
+                updateStatus(message)
+            }
         }
     }
 
@@ -243,6 +261,42 @@ final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdate
         default:
             return AppStrings.updateCheckFailedStatusMessage
         }
+    }
+
+    nonisolated static func statusMessageForCompletedUpdateCycle(currentStatusMessage: String?) -> String? {
+        switch currentStatusMessage {
+        case AppStrings.updateCheckingStatusMessage, AppStrings.updateCheckSlowStatusMessage:
+            return AppStrings.updateUpToDateStatusMessage
+        default:
+            return nil
+        }
+    }
+
+    private func beginManualUpdateCheck() {
+        isCheckingForUpdates = true
+        manualCheckStatusTimeoutTask?.cancel()
+        manualCheckStatusTimeoutTask = Task { @MainActor [weak self] in
+            do {
+                try await Task.sleep(nanoseconds: Timing.manualCheckStatusTimeoutNanoseconds)
+            } catch {
+                return
+            }
+
+            guard let self, self.isCheckingForUpdates else { return }
+
+            RuntimeLogger.log("Manual update check is taking longer than expected")
+            self.isCheckingForUpdates = false
+            if self.updateStatusMessage == AppStrings.updateCheckingStatusMessage {
+                self.updateStatus(AppStrings.updateCheckSlowStatusMessage)
+            }
+            self.manualCheckStatusTimeoutTask = nil
+        }
+    }
+
+    private func finishManualUpdateCheck() {
+        isCheckingForUpdates = false
+        manualCheckStatusTimeoutTask?.cancel()
+        manualCheckStatusTimeoutTask = nil
     }
 
     private func updateStatus(_ message: String) {

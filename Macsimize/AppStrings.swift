@@ -95,6 +95,7 @@ enum AppStrings {
     static func settingsWindowTitle(appName: String) -> String { "\(appName) Settings" }
 
     static var updateCheckingStatusMessage: String { "Checking for updates..." }
+    static var updateCheckSlowStatusMessage: String { "Update check is taking longer than expected." }
     static var updateUpToDateStatusMessage: String { "Up to date." }
     static var updateCheckFailedStatusMessage: String { "Unable to check for updates." }
     static var updatesDisabledAutomatedMode: String { "Updates disabled in automated mode." }

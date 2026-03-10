@@ -36,4 +36,30 @@ final class UpdateManagerTests: XCTestCase {
             AppStrings.updateCheckFailedStatusMessage
         )
     }
+
+    func testCompletedUpdateCycleReturnsUpToDateWhenStatusWasStillChecking() {
+        XCTAssertEqual(
+            UpdateManager.statusMessageForCompletedUpdateCycle(
+                currentStatusMessage: AppStrings.updateCheckingStatusMessage
+            ),
+            AppStrings.updateUpToDateStatusMessage
+        )
+    }
+
+    func testCompletedUpdateCycleReturnsUpToDateWhenStatusWasSlowCheck() {
+        XCTAssertEqual(
+            UpdateManager.statusMessageForCompletedUpdateCycle(
+                currentStatusMessage: AppStrings.updateCheckSlowStatusMessage
+            ),
+            AppStrings.updateUpToDateStatusMessage
+        )
+    }
+
+    func testCompletedUpdateCycleDoesNotOverrideAvailableUpdateMessage() {
+        XCTAssertNil(
+            UpdateManager.statusMessageForCompletedUpdateCycle(
+                currentStatusMessage: AppStrings.updateAvailable(version: "1.2.3")
+            )
+        )
+    }
 }

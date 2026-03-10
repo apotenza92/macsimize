@@ -232,6 +232,32 @@ final class AccessibilityServiceCurrentSpaceTests: XCTestCase {
         )
     }
 
+    func testHitTestResolvedTitleBarInteractionAcceptsOriginalLocationInsideTitleBar() {
+        let windowFrame = CGRect(x: 100, y: 100, width: 800, height: 600)
+        let draggableRect = CGRect(x: 100, y: 100, width: 800, height: 48)
+
+        XCTAssertTrue(
+            AccessibilityService.shouldAcceptHitTestResolvedTitleBarInteraction(
+                originalLocation: CGPoint(x: 220, y: 120),
+                windowFrame: windowFrame,
+                draggableRect: draggableRect
+            )
+        )
+    }
+
+    func testHitTestResolvedTitleBarInteractionRejectsOriginalLocationOutsideWindow() {
+        let windowFrame = CGRect(x: 100, y: 100, width: 800, height: 600)
+        let draggableRect = CGRect(x: 100, y: 100, width: 800, height: 48)
+
+        XCTAssertFalse(
+            AccessibilityService.shouldAcceptHitTestResolvedTitleBarInteraction(
+                originalLocation: CGPoint(x: 220, y: 760),
+                windowFrame: windowFrame,
+                draggableRect: draggableRect
+            )
+        )
+    }
+
     private static func makeCandidate(
         spaceIDs: Set<Int>,
         isOnScreen: Bool,
