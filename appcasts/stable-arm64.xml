@@ -5,21 +5,19 @@
     <description>Macsimize update feed (stable channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.2.14</title>
-      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.14</link>
-      <sparkle:version>201490000</sparkle:version>
-      <sparkle:shortVersionString>0.2.14</sparkle:shortVersionString>
+      <title>Version 0.2.15</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.15</link>
+      <sparkle:version>201590000</sparkle:version>
+      <sparkle:shortVersionString>0.2.15</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Fixed batch maximize and restore so Brave and similar multi-window apps restore each window to its own original bounds instead of colliding on title-based state.
-- Added current-Space `Maximise All` and `Restore All` polish with earlier action start, store-driven batch restore, aggregate timing diagnostics, and localized menu labels.
-- Hardened maximize restore behavior by clamping offscreen or oversized restore frames into the visible display area and reusing the same restore logic for drag-restore.
-- Added titlebar interaction fallback handling, expanded regression coverage, and new multi-Space and Brave batch verification harnesses.
-- Removed the remaining Swift 6 event-tap replay sendability warning by moving deferred click replay state onto a tokenized callback-queue store.]]></description>
-      <pubDate>Tue, 10 Mar 2026 10:28:39 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.14/Macsimize-v0.2.14-macos-arm64.zip"
-                 sparkle:edSignature="mzUzGXa9NDpFFy2ah2WWeypfpEhnJ0h0B7IIy1KjedHMdt4f4noSZCBRfZ8xCs+GnLtWEYVn8qlzWZty3sYtBA=="
-                 length="2735047"
+      <description sparkle:format="plain-text"><![CDATA[- Fixed title-bar double-click interception so apps like Codex no longer maximize when you double-click ordinary content inside the window.
+- Tightened title-bar hit-area heuristics and added regression coverage for top-edge geometry and oversized AX group/tool-bar frames.
+- Added a public macOS download page, linked it from the README and GitHub Pages metadata, and aligned the stable/beta page visuals with the shipped app icons.]]></description>
+      <pubDate>Tue, 10 Mar 2026 11:44:30 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.15/Macsimize-v0.2.15-macos-arm64.zip"
+                 sparkle:edSignature="sFa7tNMctIE01D32cnPczDa5Lb79/ovB1tVzryYLIQYRmLObtQdCJgzL3MO+i+2F4QQDZ0cfN2TlzIbf4gTfAg=="
+                 length="2735394"
                  type="application/octet-stream" />
     </item>
   </channel>
