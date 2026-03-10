@@ -4,6 +4,8 @@
 
 macOS menu bar app that remaps the green window button from Full Screen to Maximize.
 
+[Download Page](https://apotenza92.github.io/macsimize/) · [GitHub Releases](https://github.com/apotenza92/macsimize/releases) · [Buy me a coffee](https://buymeacoffee.com/apotenza)
+
 ## Install
 
 ### Homebrew
@@ -22,7 +24,7 @@ brew install --cask apotenza92/tap/macsimize@beta
 
 ### Manual install
 
-1. Download the latest zip from GitHub Releases.
+1. Download the latest zip from the [download page](https://apotenza92.github.io/macsimize/) or [GitHub Releases](https://github.com/apotenza92/macsimize/releases).
 2. Move `Macsimize.app` (or `Macsimize Beta.app`) to `/Applications`.
 3. Launch once and grant permissions.
 
@@ -47,3 +49,9 @@ xcodebuild -project Macsimize.xcodeproj -scheme Macsimize -configuration Debug b
 ```bash
 xcodebuild test -project Macsimize.xcodeproj -scheme Macsimize -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO
 ```
+
+## Support
+
+If Macsimize is useful to you, you can support the project here:
+
+[Buy me a coffee](https://buymeacoffee.com/apotenza)

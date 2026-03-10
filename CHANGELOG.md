@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [v0.2.15]
+
+- Fixed title-bar double-click interception so apps like Codex no longer maximize when you double-click ordinary content inside the window.
+- Tightened title-bar hit-area heuristics and added regression coverage for top-edge geometry and oversized AX group/tool-bar frames.
+- Added a public macOS download page, linked it from the README and GitHub Pages metadata, and aligned the stable/beta page visuals with the shipped app icons.
+
 ## [v0.2.14]
 
 - Fixed batch maximize and restore so Brave and similar multi-window apps restore each window to its own original bounds instead of colliding on title-based state.

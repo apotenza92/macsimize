@@ -177,6 +177,61 @@ final class AccessibilityServiceCurrentSpaceTests: XCTestCase {
         )
     }
 
+    func testTitleBarRectAnchorsToTopOfWindow() {
+        let windowFrame = CGRect(x: 100, y: 200, width: 900, height: 700)
+        let controlFrame = CGRect(x: 112, y: 215, width: 14, height: 14)
+
+        let rect = AccessibilityService.titleBarRect(
+            forWindowFrame: windowFrame,
+            controlFrame: controlFrame
+        )
+
+        XCTAssertEqual(rect.minX, windowFrame.minX)
+        XCTAssertEqual(rect.width, windowFrame.width)
+        XCTAssertEqual(rect.minY, windowFrame.minY, accuracy: 0.001)
+        XCTAssertEqual(rect.height, 44, accuracy: 0.001)
+        XCTAssertEqual(rect.maxY, 244, accuracy: 0.001)
+    }
+
+    func testFallbackTitleBarRectAnchorsToTopOfWindow() {
+        let windowFrame = CGRect(x: 50, y: 75, width: 600, height: 400)
+
+        let rect = AccessibilityService.fallbackTitleBarRect(
+            forWindowFrame: windowFrame,
+            fallbackTitleBarHeight: 56
+        )
+
+        XCTAssertEqual(rect.minX, windowFrame.minX)
+        XCTAssertEqual(rect.width, windowFrame.width)
+        XCTAssertEqual(rect.minY, windowFrame.minY)
+        XCTAssertEqual(rect.height, 56, accuracy: 0.001)
+        XCTAssertEqual(rect.maxY, 131, accuracy: 0.001)
+    }
+
+    func testTitleBarSupplementaryFrameRejectsFullWindowSizedGroup() {
+        let windowFrame = CGRect(x: 50, y: 75, width: 600, height: 400)
+        let frame = windowFrame
+
+        XCTAssertFalse(
+            AccessibilityService.isLikelyTitleBarSupplementaryFrame(
+                frame,
+                in: windowFrame
+            )
+        )
+    }
+
+    func testTitleBarSupplementaryFrameAcceptsTopAttachedToolbar() {
+        let windowFrame = CGRect(x: 50, y: 75, width: 600, height: 400)
+        let frame = CGRect(x: 50, y: 75, width: 600, height: 44)
+
+        XCTAssertTrue(
+            AccessibilityService.isLikelyTitleBarSupplementaryFrame(
+                frame,
+                in: windowFrame
+            )
+        )
+    }
+
     private static func makeCandidate(
         spaceIDs: Set<Int>,
         isOnScreen: Bool,

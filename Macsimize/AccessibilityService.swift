@@ -661,22 +661,18 @@ final class AccessibilityService: @unchecked Sendable {
 
         let draggableRect: CGRect
         if let controlFrame = titleBarReferenceFrame(in: window) {
-            let gap = max(0, controlFrame.minY - windowFrame.minY)
-            let height = max(controlFrame.height + (2 * gap), controlFrame.height)
-            draggableRect = CGRect(origin: windowFrame.origin, size: CGSize(width: windowFrame.width, height: height))
+            draggableRect = Self.titleBarRect(forWindowFrame: windowFrame, controlFrame: controlFrame)
         } else if shouldUseFallbackTitleBarRect(for: window, windowFrame: windowFrame) {
-            draggableRect = CGRect(
-                x: windowFrame.minX,
-                y: windowFrame.minY,
-                width: windowFrame.width,
-                height: min(fallbackTitleBarHeight, windowFrame.height)
+            draggableRect = Self.fallbackTitleBarRect(
+                forWindowFrame: windowFrame,
+                fallbackTitleBarHeight: fallbackTitleBarHeight
             )
         } else {
             return nil
         }
 
         var resolvedRect = draggableRect
-        if let toolbarFrame = toolbarFrame(in: window) {
+        if let toolbarFrame = toolbarFrame(in: window, windowFrame: windowFrame) {
             resolvedRect = resolvedRect.union(toolbarFrame)
         }
 
@@ -698,15 +694,72 @@ final class AccessibilityService: @unchecked Sendable {
         return nil
     }
 
-    private func toolbarFrame(in window: AXUIElement) -> CGRect? {
+    private func toolbarFrame(in window: AXUIElement, windowFrame: CGRect) -> CGRect? {
         for child in AXHelpers.children(of: window) {
             let role = AXHelpers.stringAttribute(kAXRoleAttribute as String, on: child)
             if role == (kAXToolbarRole as String) || role == (kAXGroupRole as String),
-               let frame = AXHelpers.cgRect(of: child) {
+               let frame = AXHelpers.cgRect(of: child),
+               Self.isLikelyTitleBarSupplementaryFrame(frame, in: windowFrame, fallbackTitleBarHeight: fallbackTitleBarHeight) {
                 return frame
             }
         }
         return nil
+    }
+
+    static func isLikelyTitleBarSupplementaryFrame(
+        _ frame: CGRect,
+        in windowFrame: CGRect,
+        fallbackTitleBarHeight: CGFloat = 56
+    ) -> Bool {
+        guard !frame.isNull,
+              !frame.isInfinite,
+              frame.width > 0,
+              frame.height > 0 else {
+            return false
+        }
+
+        let topInset = frame.minY - windowFrame.minY
+        guard topInset >= -4, topInset <= 24 else {
+            return false
+        }
+
+        let maxReasonableHeight = min(
+            max(fallbackTitleBarHeight * 1.75, 96),
+            max(windowFrame.height * 0.35, fallbackTitleBarHeight)
+        )
+        guard frame.height <= maxReasonableHeight else {
+            return false
+        }
+
+        let bottomExtent = frame.maxY - windowFrame.minY
+        return bottomExtent <= maxReasonableHeight + 24
+    }
+
+    static func titleBarRect(forWindowFrame windowFrame: CGRect, controlFrame: CGRect) -> CGRect {
+        let topInset = max(0, controlFrame.minY - windowFrame.minY)
+        let height = min(
+            max(controlFrame.height + (2 * topInset), controlFrame.height),
+            windowFrame.height
+        )
+        return CGRect(
+            x: windowFrame.minX,
+            y: windowFrame.minY,
+            width: windowFrame.width,
+            height: height
+        )
+    }
+
+    static func fallbackTitleBarRect(
+        forWindowFrame windowFrame: CGRect,
+        fallbackTitleBarHeight: CGFloat
+    ) -> CGRect {
+        let height = min(fallbackTitleBarHeight, windowFrame.height)
+        return CGRect(
+            x: windowFrame.minX,
+            y: windowFrame.minY,
+            width: windowFrame.width,
+            height: height
+        )
     }
 
     private func shouldUseFallbackTitleBarRect(for window: AXUIElement, windowFrame: CGRect) -> Bool {
