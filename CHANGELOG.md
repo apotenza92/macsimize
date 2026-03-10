@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [v0.2.13]
+
+- Fixed Sparkle update-status handling so a normal “no update found” result no longer shows `Unable to check for updates.` in Settings.
+
 ## [v0.2.12]
 
 - Removed the remaining “clean green-button clicks” marketing language and tightened the README, GitHub description, and in-app permission copy.

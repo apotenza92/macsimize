@@ -7,6 +7,11 @@ final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdate
     nonisolated private static let checkingStatusMessage = "Checking for updates..."
     nonisolated private static let upToDateStatusMessage = "Up to date."
     nonisolated private static let updateCheckFailedStatusMessage = "Unable to check for updates."
+    nonisolated private enum SparkleErrorCode {
+        static let noUpdate = 1001
+        static let installationCanceled = 4007
+        static let installationAuthorizeLater = 4008
+    }
 
     @Published private(set) var canCheckForUpdates = false
     @Published private(set) var updateStatusMessage: String?
@@ -146,13 +151,16 @@ final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdate
 
     func updater(_ updater: SPUUpdater, didAbortWithError error: Error) {
         RuntimeLogger.log("Sparkle aborted update cycle: \(error.localizedDescription)")
-        updateStatus(Self.updateCheckFailedStatusMessage)
+        if let message = Self.statusMessage(forSparkleError: error, currentStatusMessage: updateStatusMessage) {
+            updateStatus(message)
+        }
     }
 
     func updater(_ updater: SPUUpdater, didFinishUpdateCycleFor updateCheck: SPUUpdateCheck, error: Error?) {
         if let error {
             RuntimeLogger.log("Sparkle finished update cycle with error: \(error.localizedDescription)")
-            if let message = Self.finalCycleStatusMessage(
+            if let message = Self.statusMessage(
+                forSparkleError: error,
                 currentStatusMessage: updateStatusMessage
             ) {
                 updateStatus(message)
@@ -216,7 +224,20 @@ final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdate
         )
     }
 
-    nonisolated static func finalCycleStatusMessage(currentStatusMessage: String?) -> String? {
+    nonisolated static func statusMessage(forSparkleError error: Error, currentStatusMessage: String?) -> String? {
+        let sparkleError = error as NSError
+
+        if sparkleError.domain == SUSparkleErrorDomain {
+            switch sparkleError.code {
+            case SparkleErrorCode.noUpdate:
+                return upToDateStatusMessage
+            case SparkleErrorCode.installationCanceled, SparkleErrorCode.installationAuthorizeLater:
+                return nil
+            default:
+                break
+            }
+        }
+
         switch currentStatusMessage {
         case upToDateStatusMessage, nil:
             return nil
