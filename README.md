@@ -9,6 +9,10 @@
 
 Turn the green window button into Maximize instead of Full Screen on macOS.
 
+Enjoying Macsimize?
+
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=000000)](https://buymeacoffee.com/apotenza)
+
 ## Install
 
 ### Homebrew
@@ -52,9 +56,3 @@ xcodebuild -project Macsimize.xcodeproj -scheme Macsimize -configuration Debug b
 ```bash
 xcodebuild test -project Macsimize.xcodeproj -scheme Macsimize -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO
 ```
-
-## Support
-
-If Macsimize is useful to you, you can support the project here:
-
-[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=000000)](https://buymeacoffee.com/apotenza)
