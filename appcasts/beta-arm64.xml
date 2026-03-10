@@ -5,20 +5,17 @@
     <description>Macsimize update feed (beta channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.2.10</title>
-      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.10</link>
-      <sparkle:version>201090000</sparkle:version>
-      <sparkle:shortVersionString>0.2.10</sparkle:shortVersionString>
+      <title>Version 0.2.11</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.11</link>
+      <sparkle:version>201190000</sparkle:version>
+      <sparkle:shortVersionString>0.2.11</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Fixed a failure path where an intercepted Maximize click could fall back to native macOS full screen instead of staying contained.
-- Changed intercepted maximize failures and non-resizable window cases to swallow the click rather than replaying the original green-button press.
-- Added a first-run status panel and clearer readiness messaging so Macsimize now explains when permissions or the event tap are still preventing interception.
-- Automatically opens Settings whenever required permissions are missing so new installs do not appear active before green-button interception is actually ready.]]></description>
-      <pubDate>Tue, 10 Mar 2026 01:12:57 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.10/Macsimize-Beta-v0.2.10-macos-arm64.zip"
-                 sparkle:edSignature="3+wpyL5QWrQ9Kl+OvsBDt9yM1Ml9f5ddxid0eePMI/aQpBX/KAaVWGsM7Tod5J7H4ylrQIsQ0Op7QL/ApP6CAA=="
-                 length="2573671"
+      <description sparkle:format="plain-text"><![CDATA[- Moved the readiness icon and explanatory text into the Permissions section so setup status now appears alongside the permission controls instead of as a separate panel at the top of Settings.]]></description>
+      <pubDate>Tue, 10 Mar 2026 01:31:23 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.11/Macsimize-Beta-v0.2.11-macos-arm64.zip"
+                 sparkle:edSignature="DQQDimZXMu6WFO6wMtXYOl353n550ngZBbp6LdDf5k+a+alKRnQ+aIyqOXeUe25BEMCeU1ag4ffVr8eHosIjAw=="
+                 length="2573362"
                  type="application/octet-stream" />
     </item>
   </channel>
