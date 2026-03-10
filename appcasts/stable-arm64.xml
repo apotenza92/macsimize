@@ -5,19 +5,20 @@
     <description>Macsimize update feed (stable channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.2.8</title>
-      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.8</link>
-      <sparkle:version>200890000</sparkle:version>
-      <sparkle:shortVersionString>0.2.8</sparkle:shortVersionString>
+      <title>Version 0.2.9</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.9</link>
+      <sparkle:version>200990000</sparkle:version>
+      <sparkle:shortVersionString>0.2.9</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Hardened Sparkle integration for menu bar safety by making manual update checks non-blocking, adding updater state diagnostics, and gating launcher-service-dependent startup paths.
-- Reduced menu bar interaction stalls by bypassing event-tap accessibility resolution for menu bar region clicks before expensive AX traversal.
-- Added release and CI Sparkle bundle validation plus release workflow resilience for transient Apple timestamp service outages during signing/export.]]></description>
-      <pubDate>Mon, 09 Mar 2026 13:06:01 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.8/Macsimize-v0.2.8-macos-arm64.zip"
-                 sparkle:edSignature="bbALTJYSbvG2WFHJnpjHv3eWHLQUp0lvBZk4hb5xnOq9aDAob6O3rLZRTmvOBYWHT4nndgXfmNIgYN3QPUOuAg=="
-                 length="2679137"
+      <description sparkle:format="plain-text"><![CDATA[- Fixed a maximize/restore CPU spike regression by removing unbounded AX fallback traversal from the event-tap click path and replacing it with bounded, fail-open lookup behavior.
+- Added strict traffic-light hit-zone gating for focused/main window button lookup so non-titlebar clicks avoid expensive accessibility resolution.
+- Added a short post-action interception suppression window to prevent rapid re-entry during maximize/restore animation transitions.
+- Expanded interception tests with titlebar hot-zone coverage checks and validated behavior with repeated automated maximize/restore stress runs.]]></description>
+      <pubDate>Tue, 10 Mar 2026 00:35:06 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.9/Macsimize-v0.2.9-macos-arm64.zip"
+                 sparkle:edSignature="ZItuEeDc5sVLYHdl1iXekKTOh54Du3J8Vhrk8r1dLhzY0Q5utBp0PTDrymhHW5Re/k+GBzglCWwDcDfMhQfuBw=="
+                 length="2681927"
                  type="application/octet-stream" />
     </item>
   </channel>
