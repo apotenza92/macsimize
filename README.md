@@ -2,9 +2,12 @@
 
 <img src="Macsimize/Assets.xcassets/AppIcon.appiconset/icon_256x256.png" alt="Macsimize icon" width="96" />
 
-Turn the green window button into Maximize instead of Full Screen on macOS.
+<a href="https://apotenza92.github.io/macsimize/">
+  <img src="https://img.shields.io/badge/Download-Macsimize-49c96a?style=for-the-badge&logo=apple&logoColor=white" alt="Download Macsimize" height="40">
+</a>
+<br><br>
 
-[Download Macsimize](https://apotenza92.github.io/macsimize/) · [Buy Me a Coffee](https://buymeacoffee.com/apotenza)
+Turn the green window button into Maximize instead of Full Screen on macOS.
 
 ## Install
 
@@ -54,4 +57,4 @@ xcodebuild test -project Macsimize.xcodeproj -scheme Macsimize -destination 'pla
 
 If Macsimize is useful to you, you can support the project here:
 
-[Buy me a coffee](https://buymeacoffee.com/apotenza)
+[![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=000000)](https://buymeacoffee.com/apotenza)
