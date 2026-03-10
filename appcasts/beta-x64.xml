@@ -5,20 +5,19 @@
     <description>Macsimize update feed (beta channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.2.9</title>
-      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.9</link>
-      <sparkle:version>200990000</sparkle:version>
-      <sparkle:shortVersionString>0.2.9</sparkle:shortVersionString>
+      <title>Version 0.2.10-beta.1</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.10-beta.1</link>
+      <sparkle:version>201000001</sparkle:version>
+      <sparkle:shortVersionString>0.2.10-beta.1</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Fixed a maximize/restore CPU spike regression by removing unbounded AX fallback traversal from the event-tap click path and replacing it with bounded, fail-open lookup behavior.
-- Added strict traffic-light hit-zone gating for focused/main window button lookup so non-titlebar clicks avoid expensive accessibility resolution.
-- Added a short post-action interception suppression window to prevent rapid re-entry during maximize/restore animation transitions.
-- Expanded interception tests with titlebar hot-zone coverage checks and validated behavior with repeated automated maximize/restore stress runs.]]></description>
-      <pubDate>Tue, 10 Mar 2026 00:35:06 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.9/Macsimize-Beta-v0.2.9-macos-x64.zip"
-                 sparkle:edSignature="hqzdE1X/VSrEaZyrkGLjNc3JoXIAdaKoQvymX2JVVStSqry22o5BtepryTIZxsthWMjVGtbHnzR40JhmRJriAA=="
-                 length="2574762"
+      <description sparkle:format="plain-text"><![CDATA[- Made the app resolve its display name from bundle metadata so stable and beta builds label themselves consistently at runtime.
+- Updated the Settings window title, menu bar tooltip, quit menu item, and related visible strings to show `Macsimize Beta` for beta builds and `Macsimize` for stable builds.
+- Added coverage for runtime app-name resolution and parameterized the Accessibility usage description with `$(PRODUCT_NAME)`.]]></description>
+      <pubDate>Tue, 10 Mar 2026 00:53:28 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.10-beta.1/Macsimize-Beta-v0.2.10-beta.1-macos-x64.zip"
+                 sparkle:edSignature="cUPeL9MbarOms0QKMxrLlD6MI4QQxpxWV3uTIfPqBSymKANixX5hha7pCeW8FY1KTve0R1cpbLAqMZebU6yTCw=="
+                 length="2576969"
                  type="application/octet-stream" />
     </item>
   </channel>
