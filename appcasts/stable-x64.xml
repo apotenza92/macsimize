@@ -5,17 +5,21 @@
     <description>Macsimize update feed (stable channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.2.13</title>
-      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.13</link>
-      <sparkle:version>201390000</sparkle:version>
-      <sparkle:shortVersionString>0.2.13</sparkle:shortVersionString>
+      <title>Version 0.2.14</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.2.14</link>
+      <sparkle:version>201490000</sparkle:version>
+      <sparkle:shortVersionString>0.2.14</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Fixed Sparkle update-status handling so a normal “no update found” result no longer shows `Unable to check for updates.` in Settings.]]></description>
-      <pubDate>Tue, 10 Mar 2026 02:21:29 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.13/Macsimize-v0.2.13-macos-x64.zip"
-                 sparkle:edSignature="XZIdWiXkIzaLWSlDhvY0RLsi5mmcYPU3n5ECSAVxjfOfxM7f6vXzT5o0qwji5cqi2SuVlMYRRsQh3TvNeTiSAQ=="
-                 length="2694909"
+      <description sparkle:format="plain-text"><![CDATA[- Fixed batch maximize and restore so Brave and similar multi-window apps restore each window to its own original bounds instead of colliding on title-based state.
+- Added current-Space `Maximise All` and `Restore All` polish with earlier action start, store-driven batch restore, aggregate timing diagnostics, and localized menu labels.
+- Hardened maximize restore behavior by clamping offscreen or oversized restore frames into the visible display area and reusing the same restore logic for drag-restore.
+- Added titlebar interaction fallback handling, expanded regression coverage, and new multi-Space and Brave batch verification harnesses.
+- Removed the remaining Swift 6 event-tap replay sendability warning by moving deferred click replay state onto a tokenized callback-queue store.]]></description>
+      <pubDate>Tue, 10 Mar 2026 10:28:39 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.2.14/Macsimize-v0.2.14-macos-x64.zip"
+                 sparkle:edSignature="XE7MeSCA4UxKOJuG32WJCavinhRi4Qd1tpPN6O89zbW4lCJYexIscDQxtyoaWO2vejXJcLJ6GX8jo448FWOZDw=="
+                 length="2746389"
                  type="application/octet-stream" />
     </item>
   </channel>
