@@ -591,7 +591,107 @@
       function getInitialState() {
         const params = new URLSearchParams(window.location.search);
         currentChannel = params.get("channel") === "beta" ? "beta" : "stable";
-        currentArch = params.get("arch") === "x64" ? "x64" : "arm64";
+        const archParam = params.get("arch");
+        if (archParam === "x64" || archParam === "arm64") {
+          currentArch = archParam;
+          return true;
+        }
+
+        return false;
+      }
+
+      function getWebGLArchitectureHints() {
+        try {
+          const canvas = document.createElement("canvas");
+          const context =
+            canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+          if (!context) {
+            return { renderer: "", vendor: "" };
+          }
+
+          const debugInfo = context.getExtension("WEBGL_debug_renderer_info");
+          if (!debugInfo) {
+            return { renderer: "", vendor: "" };
+          }
+
+          return {
+            renderer:
+              context.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || "",
+            vendor: context.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) || "",
+          };
+        } catch (error) {
+          return { renderer: "", vendor: "" };
+        }
+      }
+
+      function resolveMacArchitecture({
+        userAgentDataArchitecture = "",
+        platform = "",
+        userAgent = "",
+        webGLRenderer = "",
+        webGLVendor = "",
+      } = {}) {
+        const uaArch = userAgentDataArchitecture.toLowerCase();
+        if (uaArch.includes("arm")) {
+          return "arm64";
+        }
+        if (
+          uaArch.includes("x86") ||
+          uaArch.includes("x64") ||
+          uaArch.includes("amd64")
+        ) {
+          return "x64";
+        }
+
+        const platformValue = platform.toLowerCase();
+        if (platformValue.includes("arm")) {
+          return "arm64";
+        }
+        if (platformValue.includes("x86_64")) {
+          return "x64";
+        }
+
+        const userAgentValue = userAgent.toLowerCase();
+        if (/(arm64|aarch64)/.test(userAgentValue)) {
+          return "arm64";
+        }
+        if (/(x86_64|wow64|win64|amd64)/.test(userAgentValue)) {
+          return "x64";
+        }
+
+        const graphicsHints = `${webGLRenderer} ${webGLVendor}`.toLowerCase();
+        if (/(intel|amd|radeon|nvidia|geforce)/.test(graphicsHints)) {
+          return "x64";
+        }
+        if (graphicsHints.includes("apple")) {
+          return "arm64";
+        }
+
+        return "arm64";
+      }
+
+      async function detectPreferredArch() {
+        let userAgentDataArchitecture = "";
+
+        try {
+          if (navigator.userAgentData?.getHighEntropyValues) {
+            const values = await navigator.userAgentData.getHighEntropyValues([
+              "architecture",
+            ]);
+            userAgentDataArchitecture = values.architecture || "";
+          }
+        } catch (error) {
+          console.warn("Falling back to legacy architecture detection", error);
+        }
+
+        const graphicsHints = getWebGLArchitectureHints();
+        return resolveMacArchitecture({
+          userAgentDataArchitecture,
+          platform: navigator.platform || "",
+          userAgent: navigator.userAgent || "",
+          webGLRenderer: graphicsHints.renderer,
+          webGLVendor: graphicsHints.vendor,
+        });
       }
 
       function appcastUrl(channel, arch) {
@@ -856,7 +956,16 @@
         }
       }
 
-      getInitialState();
+      async function initializePage() {
+        const hasExplicitArchParam = getInitialState();
+        if (!hasExplicitArchParam) {
+          currentArch = await detectPreferredArch();
+        }
+
+        applyChannelStyling();
+        setMacArch(currentArch);
+        window.addEventListener("resize", updateConnectors);
+      }
 
       document.getElementById("channel-stable").addEventListener("click", () => {
         switchChannel("stable");
@@ -874,9 +983,7 @@
         .getElementById("mac-homebrew-copy")
         .addEventListener("click", copyHomebrewCommand);
 
-      applyChannelStyling();
-      setMacArch(currentArch);
-      window.addEventListener("resize", updateConnectors);
+      initializePage();
     </script>
   </body>
 </html>
