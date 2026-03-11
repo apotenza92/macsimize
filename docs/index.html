@@ -119,8 +119,15 @@
         font-size: 0.9rem;
         color: var(--text-muted);
         margin-top: 1rem;
-        margin-bottom: 0.75rem;
         line-height: 1.6;
+      }
+
+      .subtitle + .subtitle {
+        margin-top: 0.75rem;
+      }
+
+      .subtitle-final {
+        margin-bottom: 0.75rem;
       }
 
       .github-button-row {
@@ -323,22 +330,6 @@
         color: white;
         position: relative;
         z-index: 1;
-      }
-
-      .version-display {
-        font-size: 0.8rem;
-        font-weight: 500;
-        text-align: center;
-        display: none;
-      }
-
-      .version-display.visible {
-        display: block;
-      }
-
-      .version-display.stable,
-      .version-display.beta {
-        color: var(--accent-solid);
       }
 
       .mac-homebrew-section {
@@ -563,16 +554,19 @@
       <h1>Macsimize</h1>
       <p class="subtitle">
         Macsimize is a free open source macOS app to turn the green window
-        button into Maximize instead of Full Screen. It also overrides title-bar
-        double-click to use the same maximize behavior. Click the Macsimize app
-        icon in the menu bar to use Maximize All and Restore All for the windows
-        in your current space.
+        button into Maximize instead of Full Screen.
+      </p>
+      <p class="subtitle">
+        It also overrides title-bar double-click to use the same maximize
+        behavior.
+      </p>
+      <p class="subtitle subtitle-final">
+        Click the Macsimize app icon in the menu bar to use Maximize All and
+        Restore All for the windows in your current space.
       </p>
 
       <div class="selection-flow" id="selection-flow">
         <svg class="connector-svg" id="connector-svg"></svg>
-
-        <div class="version-display" id="version-display"></div>
 
         <div class="channel-toggle" id="channel-toggle">
           <button class="channel-btn active" id="channel-stable">Stable</button>
@@ -994,9 +988,6 @@
             ? "Latest beta release"
             : "Latest stable release";
 
-        const versionDisplay = document.getElementById("version-display");
-        versionDisplay.classList.remove("stable", "beta");
-        versionDisplay.classList.add(currentChannel === "beta" ? "beta" : "stable");
       }
 
       function setMacArch(arch) {
@@ -1019,19 +1010,15 @@
 
         const downloadBtn = document.getElementById("download-btn");
         const btnText = document.getElementById("btn-text");
-        const versionDisplay = document.getElementById("version-display");
         const githubReleaseMeta = document.getElementById("github-release-meta");
 
         btnText.textContent =
           currentArch === "x64" ? "Download for Intel" : "Download for Apple Silicon";
         downloadBtn.href = RELEASES_URL;
         downloadBtn.classList.add("downloading");
-        versionDisplay.textContent = "Loading release...";
-        versionDisplay.classList.add("visible");
 
         try {
           const appcast = await fetchAppcast(currentChannel, currentArch);
-          versionDisplay.textContent = `v${appcast.version}`;
           const formattedDate = formatReleaseDate(appcast.pubDate);
           githubReleaseMeta.textContent = formattedDate
             ? `v${appcast.version} • ${formattedDate}`
@@ -1043,7 +1030,6 @@
           downloadBtn.href = appcast.downloadUrl;
         } catch (error) {
           console.error(error);
-          versionDisplay.textContent = "Latest release";
           githubReleaseMeta.textContent = "Latest release on GitHub";
           btnText.textContent = "Open GitHub Releases";
           downloadBtn.href = RELEASES_URL;

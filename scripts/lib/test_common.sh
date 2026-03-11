@@ -678,9 +678,93 @@ APPLESCRIPT
 }
 
 textedit_front_window_bounds() {
-  osascript -e 'tell application "TextEdit" to get bounds of front window' \
-    | tr -d '{}' \
-    | awk -F',' '{gsub(/ /, ""); printf "%s,%s,%s,%s", $1, $2, $3, $4}'
+  local ax_bounds=""
+  ax_bounds="$(
+    /usr/bin/swift - <<'SWIFT' 2>/dev/null
+import ApplicationServices
+import AppKit
+import Foundation
+
+func pointAttr(_ element: AXUIElement, _ key: String) -> CGPoint? {
+    var value: CFTypeRef?
+    guard AXUIElementCopyAttributeValue(element, key as CFString, &value) == .success,
+          let value else {
+        return nil
+    }
+
+    let axValue = unsafeBitCast(value, to: AXValue.self)
+    guard AXValueGetType(axValue) == .cgPoint else {
+        return nil
+    }
+
+    var point = CGPoint.zero
+    guard AXValueGetValue(axValue, .cgPoint, &point) else {
+        return nil
+    }
+    return point
+}
+
+func sizeAttr(_ element: AXUIElement, _ key: String) -> CGSize? {
+    var value: CFTypeRef?
+    guard AXUIElementCopyAttributeValue(element, key as CFString, &value) == .success,
+          let value else {
+        return nil
+    }
+
+    let axValue = unsafeBitCast(value, to: AXValue.self)
+    guard AXValueGetType(axValue) == .cgSize else {
+        return nil
+    }
+
+    var size = CGSize.zero
+    guard AXValueGetValue(axValue, .cgSize, &size) else {
+        return nil
+    }
+    return size
+}
+
+guard let app = NSWorkspace.shared.runningApplications.first(where: { $0.localizedName == "TextEdit" }) else {
+    exit(1)
+}
+
+let appElement = AXUIElementCreateApplication(app.processIdentifier)
+var focusedValue: CFTypeRef?
+guard AXUIElementCopyAttributeValue(appElement, kAXFocusedWindowAttribute as CFString, &focusedValue) == .success,
+      let focusedValue else {
+    exit(1)
+}
+
+let window = unsafeBitCast(focusedValue, to: AXUIElement.self)
+guard let point = pointAttr(window, kAXPositionAttribute),
+      let size = sizeAttr(window, kAXSizeAttribute) else {
+    exit(1)
+}
+
+let left = Int(point.x.rounded())
+let top = Int(point.y.rounded())
+let right = Int((point.x + size.width).rounded())
+let bottom = Int((point.y + size.height).rounded())
+print("\(left),\(top),\(right),\(bottom)")
+SWIFT
+  )" || true
+
+  if [[ -n "$ax_bounds" ]]; then
+    printf '%s' "$ax_bounds"
+    return 0
+  fi
+
+  local attempt
+  for attempt in 1 2 3 4 5 6 7 8 9 10; do
+    local bounds_raw
+    bounds_raw="$(osascript -e 'tell application "TextEdit" to get bounds of front window' 2>/dev/null || true)"
+    if [[ -n "$bounds_raw" ]]; then
+      printf '%s' "$bounds_raw" | tr -d '{}' | awk -F',' '{gsub(/ /, ""); printf "%s,%s,%s,%s", $1, $2, $3, $4}'
+      return 0
+    fi
+    sleep 0.2
+  done
+
+  return 1
 }
 
 textedit_green_button_center() {

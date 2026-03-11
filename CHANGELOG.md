@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [v0.3.2]
+
+- Added direct native macOS full-screen handling for green-button interception, including `Option`-click inverse behavior and regression coverage for replayed click modifiers.
+- Refined the Settings window with a narrower native layout, clearer Full Screen and permission copy, stable update-status sizing, and GUI automation coverage for popup-driven settings changes.
+- Updated the download page copy and release validation scripts to match the current product behavior and native settings controls.
+
 ## [v0.3.1]
 
 - Fixed manual Sparkle checks so available updates now open the installer flow instead of only showing a status line in Settings.

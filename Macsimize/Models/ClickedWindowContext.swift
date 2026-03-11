@@ -19,6 +19,7 @@ struct ClickedWindowContext: @unchecked Sendable {
     let canSetPosition: Bool
     let canSetSize: Bool
     let isResizable: Bool
+    let isFullScreen: Bool
     let isMainWindow: Bool
     let isFocusedWindow: Bool
 

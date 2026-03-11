@@ -7,11 +7,10 @@ struct PreferencesView: View {
     @ObservedObject private var updateManager: UpdateManager
 
     private let appState: AppState
-    private let preferredContentWidth: CGFloat = 360
-    private let horizontalPadding: CGFloat = 18
-    private let contentFont: Font = .system(size: 14)
-    private let sectionTitleFont: Font = .system(size: 14, weight: .semibold)
     private let appDisplayName = AppIdentity.displayName
+    private let contentWidth: CGFloat = 360
+    private let sectionSpacing: CGFloat = 24
+    private let rowSpacing: CGFloat = 12
 
     init(appState: AppState) {
         self.appState = appState
@@ -21,103 +20,74 @@ struct PreferencesView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 0) {
             generalSection
+            Divider()
             behaviorSection
+            Divider()
             updatesSection
+            Divider()
             permissionsSection
         }
-        .padding(horizontalPadding)
-        .font(contentFont)
-        .frame(width: preferredContentWidth, alignment: .topLeading)
+        .padding(20)
+        .frame(width: contentWidth, alignment: .topLeading)
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private var generalSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(AppStrings.generalSectionTitle)
-                .font(sectionTitleFont)
+        settingsSection(AppStrings.generalSectionTitle) {
+            Toggle(AppStrings.showSettingsOnStartup, isOn: $settings.showSettingsOnStartup)
+            Toggle(AppStrings.startAtLogin(appName: appDisplayName), isOn: $settings.startAtLogin)
 
-            checkboxRow(AppStrings.showSettingsOnStartup, isOn: $settings.showSettingsOnStartup)
-            checkboxRow(AppStrings.startAtLogin(appName: appDisplayName), isOn: $settings.startAtLogin)
-
-            HStack(spacing: 12) {
+            HStack(spacing: 8) {
                 Button(AppStrings.restartButtonTitle) {
                     appState.restartApp()
                 }
-                .buttonStyle(.bordered)
 
                 Button(AppStrings.quitButtonTitle) {
                     NSApp.terminate(nil)
                 }
-                .buttonStyle(.bordered)
 
                 Button(AppStrings.aboutButtonTitle) {
                     appState.showAboutPanel()
                 }
-                .buttonStyle(.bordered)
 
-                Button(action: openGitHubPage) {
-                    Image("GitHubMark")
-                        .renderingMode(.template)
-                        .resizable()
-                        .interpolation(.high)
-                        .frame(width: 14, height: 14)
-                        .foregroundStyle(.primary)
+                Button("GitHub") {
+                    openGitHubPage()
                 }
-                .buttonStyle(.bordered)
                 .help(AppStrings.openGitHubHelp(appName: appDisplayName))
             }
         }
     }
 
     private var permissionsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(AppStrings.permissionsSectionTitle)
-                .font(sectionTitleFont)
-
+        settingsSection(AppStrings.permissionsSectionTitle) {
             if permissions.state.hasVisibleIssue {
-                HStack(alignment: .top, spacing: 10) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.red)
-                        .frame(width: 16, height: 16)
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(permissions.state.summary)
-                            .font(.system(size: 13, weight: .semibold))
-                        Text(statusDetailText)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+                VStack(alignment: .leading, spacing: 6) {
+                    Label(permissions.state.summary, systemImage: "exclamationmark.triangle.fill")
+                    Text(statusDetailText)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                .padding(12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(Color.red.opacity(0.1))
-                )
             }
 
-            VStack(alignment: .leading, spacing: 8) {
-                permissionActionButton(
-                    title: AppStrings.accessibilityButtonTitle,
-                    granted: permissions.state.accessibilityTrusted,
-                    action: appState.openAccessibilitySettings
-                )
-                permissionActionButton(
-                    title: AppStrings.inputMonitoringButtonTitle,
-                    granted: permissions.state.inputMonitoringGranted,
-                    action: appState.openInputMonitoringSettings
-                )
-            }
+            permissionActionButton(
+                title: AppStrings.accessibilityButtonTitle,
+                description: AppStrings.permissionAccessibilityWhyNeeded,
+                granted: permissions.state.accessibilityTrusted,
+                action: appState.openAccessibilitySettings
+            )
+            permissionActionButton(
+                title: AppStrings.inputMonitoringButtonTitle,
+                description: AppStrings.permissionInputMonitoringWhyNeeded,
+                granted: permissions.state.inputMonitoringGranted,
+                action: appState.openInputMonitoringSettings
+            )
         }
     }
 
     private var updatesSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(AppStrings.updatesSectionTitle)
-                .font(sectionTitleFont)
-
+        settingsSection(AppStrings.updatesSectionTitle) {
             HStack(alignment: .center, spacing: 12) {
                 Button(
                     updateManager.hasAvailableUpdate
@@ -125,87 +95,93 @@ struct PreferencesView: View {
                         : AppStrings.checkForUpdatesButtonTitle,
                     action: updateManager.checkForUpdates
                 )
-                    .buttonStyle(.borderedProminent)
-                    .disabled(!updateManager.canCheckForUpdates || updateManager.isCheckingForUpdates)
+                .disabled(!updateManager.canCheckForUpdates || updateManager.isCheckingForUpdates)
+                .fixedSize()
 
-                Picker(AppStrings.checkFrequencyLabel, selection: $settings.updateCheckFrequency) {
+                Spacer(minLength: 0)
+
+                Text(AppStrings.checkFrequencyCompactLabel)
+                    .foregroundStyle(.secondary)
+
+                Picker("", selection: $settings.updateCheckFrequency) {
                     ForEach(UpdateCheckFrequency.allCases) { frequency in
                         Text(frequency.displayName).tag(frequency)
                     }
                 }
                 .labelsHidden()
-                .frame(width: 130, alignment: .leading)
+                .frame(width: 104, alignment: .leading)
             }
 
-            if let updateStatusMessage = updateManager.updateStatusMessage {
-                Text(updateStatusMessage)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+            ZStack(alignment: .leading) {
+                Text(AppStrings.updatesStatusPlaceholder)
+                    .foregroundStyle(.clear)
+                    .accessibilityHidden(true)
+
+                if let updateStatusMessage = updateManager.updateStatusMessage {
+                    Text(updateStatusMessage)
+                        .foregroundStyle(.secondary)
+                }
             }
+            .fixedSize(horizontal: false, vertical: true)
         }
     }
 
     private var behaviorSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(AppStrings.behaviorSectionTitle)
-                .font(sectionTitleFont)
-
-            Text(AppStrings.greenButtonClickLabel)
-                .lineLimit(1)
-                .fixedSize(horizontal: true, vertical: false)
-
-            HStack(spacing: 10) {
-                ForEach(WindowActionMode.allCases) { mode in
-                    actionModeButton(mode)
+        settingsSection(AppStrings.behaviorSectionTitle) {
+            LabeledContent(AppStrings.greenButtonClickLabel) {
+                Picker("", selection: selectedActionBinding) {
+                    ForEach(WindowActionMode.allCases) { mode in
+                        Text(mode.displayName).tag(mode)
+                    }
                 }
+                .labelsHidden()
+                .frame(width: 160, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
 
             Text(settings.selectedAction.helpText)
-                .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
 
-    private func checkboxRow(_ title: String, isOn: Binding<Bool>) -> some View {
-        Toggle(title, isOn: isOn)
-            .toggleStyle(.checkbox)
+    private var selectedActionBinding: Binding<WindowActionMode> {
+        Binding(
+            get: { settings.selectedAction },
+            set: { appState.setSelectedAction($0) }
+        )
     }
 
     private func permissionActionButton(
         title: String,
+        description: String,
         granted: Bool,
         action: @escaping () -> Void
     ) -> some View {
-        HStack(alignment: .center, spacing: 8) {
-            Button(title, action: action)
-                .buttonStyle(.bordered)
-            if !granted {
-                Image(systemName: "exclamationmark.circle.fill")
-                    .foregroundStyle(.red)
-                    .frame(width: 14)
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                Button(title, action: action)
+                if !granted {
+                    Text(AppStrings.permissionRequiredLabel)
+                        .foregroundStyle(.secondary)
+                }
             }
+
+            Text(description)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    @ViewBuilder
-    private func actionModeButton(_ mode: WindowActionMode) -> some View {
-        if settings.selectedAction == mode {
-            Button(mode.displayName) {
-                settings.selectedAction = mode
-            }
-            .buttonStyle(BorderedProminentButtonStyle())
-            .controlSize(.regular)
-        } else {
-            Button(mode.displayName) {
-                settings.selectedAction = mode
-            }
-            .buttonStyle(BorderedButtonStyle())
-            .controlSize(.regular)
+    private func settingsSection<Content: View>(
+        _ title: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: rowSpacing) {
+            Text(title)
+                .font(.headline)
+            content()
         }
+        .padding(.vertical, sectionSpacing / 2)
     }
 
     private func openGitHubPage() {

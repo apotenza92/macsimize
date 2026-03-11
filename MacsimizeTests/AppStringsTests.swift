@@ -13,8 +13,20 @@ final class AppStringsTests: XCTestCase {
         XCTAssertEqual(AppStrings.maximizeModeTitle, "Maximize")
         XCTAssertEqual(AppStrings.maximizeAllMenuTitle, "Maximize All")
         XCTAssertEqual(AppStrings.behaviorSectionTitle, "Behavior")
-        XCTAssertTrue(AppStrings.maximizeModeHelp.contains("pre-maximized"))
-        XCTAssertTrue(AppStrings.fullScreenModeHelp.contains("full-screen behavior"))
+        XCTAssertEqual(
+            AppStrings.maximizeModeHelp,
+            [
+                "Click again to restore the pre-maximized size.",
+                "⌥ Option-click does Full Screen instead."
+            ].joined(separator: "\n")
+        )
+        XCTAssertEqual(
+            AppStrings.fullScreenModeHelp,
+            [
+                "Native macOS behavior.",
+                "⌥ Option-click does Maximize instead."
+            ].joined(separator: "\n")
+        )
     }
 
     func testBritishEnglishUsesMaximiseSpelling() {
@@ -23,8 +35,20 @@ final class AppStringsTests: XCTestCase {
         XCTAssertEqual(AppStrings.maximizeModeTitle, "Maximise")
         XCTAssertEqual(AppStrings.maximizeAllMenuTitle, "Maximise All")
         XCTAssertEqual(AppStrings.behaviorSectionTitle, "Behaviour")
-        XCTAssertTrue(AppStrings.maximizeModeHelp.contains("pre-maximised"))
-        XCTAssertTrue(AppStrings.fullScreenModeHelp.contains("full-screen behaviour"))
+        XCTAssertEqual(
+            AppStrings.maximizeModeHelp,
+            [
+                "Click again to restore the pre-maximised size.",
+                "⌥ Option-click does Full Screen instead."
+            ].joined(separator: "\n")
+        )
+        XCTAssertEqual(
+            AppStrings.fullScreenModeHelp,
+            [
+                "Native macOS behavior.",
+                "⌥ Option-click does Maximise instead."
+            ].joined(separator: "\n")
+        )
     }
 
     func testAustralianEnglishUsesMaximiseSpelling() {

@@ -95,6 +95,30 @@ wait_for_textedit_full_screen() {
   return 1
 }
 
+run_click_helper() {
+  local option_flag="${1:-0}"
+  local attempt
+  for attempt in 1 2 3 4 5; do
+    osascript -e 'tell application "TextEdit" to activate' >/dev/null 2>&1 || true
+    sleep 0.6
+    if [[ "$option_flag" == "1" ]]; then
+      MACSIMIZE_CLICK_OPTION=1 /usr/bin/swift "$SCRIPT_DIR/click_window_green_button.swift" TextEdit && return 0
+    else
+      /usr/bin/swift "$SCRIPT_DIR/click_window_green_button.swift" TextEdit && return 0
+    fi
+    sleep 1
+  done
+  return 1
+}
+
+click_green_button() {
+  run_click_helper 0
+}
+
+option_click_green_button() {
+  run_click_helper 1
+}
+
 expected_maximized_bounds_for_window() {
   local window_bounds="$1"
   /usr/bin/swift -e '
@@ -160,7 +184,7 @@ expected_maximized_bounds="$(expected_maximized_bounds_for_window "$original_bou
 echo "  original bounds=$original_bounds"
 echo "  expected maximized bounds=$expected_maximized_bounds"
 
-/usr/bin/swift "$SCRIPT_DIR/click_window_green_button.swift" TextEdit
+click_green_button
 changed_bounds="$(wait_for_textedit_bounds_change "$original_bounds" change || true)"
 assert_macsimize_alive "$LOG_FILE" "after first green-button click"
 screencapture -x /tmp/macsimize-green-button-after-maximize.png
@@ -178,7 +202,7 @@ if [[ "$(bounds_nearly_equal "$changed_bounds" "$expected_maximized_bounds" 8)" 
   exit 1
 fi
 
-/usr/bin/swift "$SCRIPT_DIR/click_window_green_button.swift" TextEdit
+click_green_button
 restored_bounds="$(wait_for_textedit_bounds_change "$original_bounds" restore || true)"
 assert_macsimize_alive "$LOG_FILE" "after second green-button click"
 echo "  restored bounds=$restored_bounds"
@@ -213,7 +237,7 @@ if [[ "$(textedit_is_full_screen || true)" != "false" ]]; then
   exit 1
 fi
 
-/usr/bin/swift "$SCRIPT_DIR/click_window_green_button.swift" TextEdit
+click_green_button
 full_screen_state="$(wait_for_textedit_full_screen true 12 || true)"
 assert_macsimize_alive "$LOG_FILE" "after full-screen green-button click"
 if [[ "$full_screen_state" != "true" ]]; then

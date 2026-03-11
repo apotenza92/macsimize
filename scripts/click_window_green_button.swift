@@ -4,6 +4,7 @@ import Foundation
 
 let appName = CommandLine.arguments.dropFirst().first ?? "TextEdit"
 let debugLoggingEnabled = ProcessInfo.processInfo.environment["MACSIMIZE_CLICK_DEBUG"] == "1"
+let optionClickEnabled = ProcessInfo.processInfo.environment["MACSIMIZE_CLICK_OPTION"] == "1"
 
 func debugLog(_ message: String) {
     guard debugLoggingEnabled else {
@@ -220,6 +221,11 @@ guard let source = CGEventSource(stateID: .hidSystemState),
       let up = CGEvent(mouseEventSource: source, mouseType: .leftMouseUp, mouseCursorPosition: clickPoint, mouseButton: .left) else {
     fputs("failed to create mouse events\n", stderr)
     exit(4)
+}
+
+if optionClickEnabled {
+    down.flags = .maskAlternate
+    up.flags = .maskAlternate
 }
 
 down.post(tap: .cghidEventTap)

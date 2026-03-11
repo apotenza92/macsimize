@@ -13,7 +13,7 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertFalse(store.showSettingsOnStartup)
         XCTAssertFalse(store.firstLaunchCompleted)
         XCTAssertFalse(store.startAtLogin)
-        XCTAssertEqual(store.updateCheckFrequency, .daily)
+        XCTAssertEqual(store.updateCheckFrequency, .weekly)
     }
 
     func testFirstLaunchShowsSettingsEvenWhenStartupPreferenceIsDisabled() {

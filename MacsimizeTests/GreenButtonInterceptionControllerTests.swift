@@ -56,6 +56,7 @@ final class GreenButtonInterceptionControllerTests: XCTestCase {
         let decision = controller.handleMouseDown(
             location: CGPoint(x: 12, y: 24),
             timestamp: 1,
+            optionPressed: false,
             configuration: InterceptionConfiguration(
                 selectedAction: .fullScreen,
                 diagnosticsEnabled: false
@@ -78,6 +79,7 @@ final class GreenButtonInterceptionControllerTests: XCTestCase {
         let mouseDown = controller.handleMouseDown(
             location: CGPoint(x: 100, y: 200),
             timestamp: 10,
+            optionPressed: false,
             configuration: InterceptionConfiguration(
                 selectedAction: .maximize,
                 diagnosticsEnabled: true
@@ -107,6 +109,7 @@ final class GreenButtonInterceptionControllerTests: XCTestCase {
         _ = controller.handleMouseDown(
             location: CGPoint(x: 100, y: 100),
             timestamp: 5,
+            optionPressed: false,
             configuration: InterceptionConfiguration(
                 selectedAction: .maximize,
                 diagnosticsEnabled: false
@@ -133,6 +136,7 @@ final class GreenButtonInterceptionControllerTests: XCTestCase {
         _ = controller.handleMouseDown(
             location: CGPoint(x: 100, y: 100),
             timestamp: 1,
+            optionPressed: false,
             configuration: InterceptionConfiguration(
                 selectedAction: .maximize,
                 diagnosticsEnabled: false
@@ -160,6 +164,7 @@ final class GreenButtonInterceptionControllerTests: XCTestCase {
         _ = controller.handleMouseDown(
             location: CGPoint(x: 100, y: 100),
             timestamp: 1,
+            optionPressed: false,
             configuration: InterceptionConfiguration(
                 selectedAction: .maximize,
                 diagnosticsEnabled: false
@@ -169,6 +174,108 @@ final class GreenButtonInterceptionControllerTests: XCTestCase {
         let dragDecision = controller.handleMouseDragged(location: CGPoint(x: 102, y: 101))
 
         assertDecision(dragDecision, equals: .consume)
+    }
+
+    func testOptionClickInFullScreenModeCapturesAndPerformsMaximize() {
+        let resolver = ResolverSpy()
+        resolver.context = Self.makeContext()
+        let diagnostics = DebugDiagnostics()
+        let controller = GreenButtonInterceptionController(
+            contextResolver: resolver,
+            diagnostics: diagnostics
+        )
+
+        let mouseDown = controller.handleMouseDown(
+            location: CGPoint(x: 100, y: 200),
+            timestamp: 10,
+            optionPressed: true,
+            configuration: InterceptionConfiguration(
+                selectedAction: .fullScreen,
+                diagnosticsEnabled: false
+            )
+        )
+        let mouseUp = controller.handleMouseUp(location: CGPoint(x: 100, y: 200), timestamp: 10.1)
+
+        assertDecision(mouseDown, equals: .consume)
+        guard case .performAction(let pendingAction) = mouseUp else {
+            return XCTFail("Expected performAction decision")
+        }
+        XCTAssertEqual(pendingAction.mode, .maximize)
+    }
+
+    func testOptionClickInMaximizeModeCapturesAndPerformsFullScreen() {
+        let resolver = ResolverSpy()
+        resolver.context = Self.makeContext()
+        let diagnostics = DebugDiagnostics()
+        let controller = GreenButtonInterceptionController(
+            contextResolver: resolver,
+            diagnostics: diagnostics
+        )
+
+        let mouseDown = controller.handleMouseDown(
+            location: CGPoint(x: 100, y: 200),
+            timestamp: 10,
+            optionPressed: true,
+            configuration: InterceptionConfiguration(
+                selectedAction: .maximize,
+                diagnosticsEnabled: false
+            )
+        )
+        let mouseUp = controller.handleMouseUp(location: CGPoint(x: 100, y: 200), timestamp: 10.1)
+
+        assertDecision(mouseDown, equals: .consume)
+        guard case .performAction(let pendingAction) = mouseUp else {
+            return XCTFail("Expected performAction decision")
+        }
+        XCTAssertEqual(pendingAction.mode, .fullScreen)
+    }
+
+    func testMouseDownPassesThroughWhenWindowAlreadyInFullScreen() {
+        let resolver = ResolverSpy()
+        resolver.context = Self.makeContext(isFullScreen: true)
+        let diagnostics = DebugDiagnostics()
+        let controller = GreenButtonInterceptionController(
+            contextResolver: resolver,
+            diagnostics: diagnostics
+        )
+
+        let mouseDown = controller.handleMouseDown(
+            location: CGPoint(x: 100, y: 200),
+            timestamp: 10,
+            optionPressed: false,
+            configuration: InterceptionConfiguration(
+                selectedAction: .maximize,
+                diagnosticsEnabled: false
+            )
+        )
+        let mouseUp = controller.handleMouseUp(location: CGPoint(x: 100, y: 200), timestamp: 10.1)
+
+        assertDecision(mouseDown, equals: .passThrough)
+        assertDecision(mouseUp, equals: .passThrough)
+    }
+
+    func testOptionClickPassesThroughWhenWindowAlreadyInFullScreen() {
+        let resolver = ResolverSpy()
+        resolver.context = Self.makeContext(isFullScreen: true)
+        let diagnostics = DebugDiagnostics()
+        let controller = GreenButtonInterceptionController(
+            contextResolver: resolver,
+            diagnostics: diagnostics
+        )
+
+        let mouseDown = controller.handleMouseDown(
+            location: CGPoint(x: 100, y: 200),
+            timestamp: 10,
+            optionPressed: true,
+            configuration: InterceptionConfiguration(
+                selectedAction: .maximize,
+                diagnosticsEnabled: false
+            )
+        )
+        let mouseUp = controller.handleMouseUp(location: CGPoint(x: 100, y: 200), timestamp: 10.1)
+
+        assertDecision(mouseDown, equals: .passThrough)
+        assertDecision(mouseUp, equals: .passThrough)
     }
 
     private func assertDecision(_ decision: MouseInterceptionDecision, equals expected: MouseInterceptionDecision) {
@@ -182,7 +289,7 @@ final class GreenButtonInterceptionControllerTests: XCTestCase {
         }
     }
 
-    private static func makeContext() -> ClickedWindowContext {
+    private static func makeContext(isFullScreen: Bool = false) -> ClickedWindowContext {
         let element = AXUIElementCreateApplication(ProcessInfo.processInfo.processIdentifier)
         return ClickedWindowContext(
             appName: "Fixture",
@@ -201,6 +308,7 @@ final class GreenButtonInterceptionControllerTests: XCTestCase {
             canSetPosition: true,
             canSetSize: true,
             isResizable: true,
+            isFullScreen: isFullScreen,
             isMainWindow: true,
             isFocusedWindow: true
         )

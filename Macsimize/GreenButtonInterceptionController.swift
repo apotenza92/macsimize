@@ -56,9 +56,10 @@ final class GreenButtonInterceptionController {
     func handleMouseDown(
         location: CGPoint,
         timestamp: TimeInterval,
+        optionPressed: Bool,
         configuration: InterceptionConfiguration
     ) -> MouseInterceptionDecision {
-        guard configuration.selectedAction == .maximize else {
+        guard configuration.selectedAction == .maximize || optionPressed else {
             return .passThrough
         }
 
@@ -66,9 +67,22 @@ final class GreenButtonInterceptionController {
             return .passThrough
         }
 
+        if context.isFullScreen {
+            if configuration.diagnosticsEnabled {
+                diagnostics.logClickContext(
+                    context,
+                    chosenPath: "pass-through-full-screen",
+                    notes: [AppStrings.greenButtonFullScreenPassThroughMessage]
+                )
+            }
+            return .passThrough
+        }
+
+        let mode = optionPressed ? configuration.selectedAction.opposite : configuration.selectedAction
+
         pendingIntercept = PendingIntercept(
             context: context,
-            mode: configuration.selectedAction,
+            mode: mode,
             location: location,
             timestamp: timestamp
         )

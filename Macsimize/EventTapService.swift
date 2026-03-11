@@ -234,6 +234,7 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
         let greenButtonDecision = controller.handleMouseDown(
             location: event.location,
             timestamp: timestamp,
+            optionPressed: event.flags.contains(.maskAlternate),
             configuration: configuration
         )
 
@@ -340,7 +341,8 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
                 originalSequence.append(copiedEvent)
             }
             bufferedEvents.removeAll()
-            let replayToken = storeDeferredReplaySequence(originalSequence)
+            let replaySequence = Self.replaySequence(for: pendingAction.mode, originalEvents: originalSequence)
+            let replayToken = storeDeferredReplaySequence(replaySequence)
             performWindowActionAsync(pendingAction, replayToken: replayToken)
             return nil
         }
@@ -488,6 +490,20 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
     private func pruneExpiredSuppressions(now: TimeInterval) {
         for (pid, deadline) in Array(postActionSuppressionUntilByPID) where deadline <= now {
             postActionSuppressionUntilByPID.removeValue(forKey: pid)
+        }
+    }
+
+    static func replaySequence(for mode: WindowActionMode, originalEvents: [CGEvent]) -> [CGEvent] {
+        guard mode == .fullScreen else {
+            return originalEvents
+        }
+
+        return originalEvents.compactMap { event in
+            guard let copiedEvent = event.copy() else {
+                return nil
+            }
+            copiedEvent.flags.remove(.maskAlternate)
+            return copiedEvent
         }
     }
 

@@ -60,6 +60,14 @@ read_selected_action() {
   defaults read "$BUNDLE_ID" selectedAction 2>/dev/null || echo ""
 }
 
+read_show_settings_on_startup() {
+  defaults read "$BUNDLE_ID" showSettingsOnStartup 2>/dev/null || echo ""
+}
+
+read_update_check_frequency() {
+  defaults read "$BUNDLE_ID" updateCheckFrequency 2>/dev/null || echo ""
+}
+
 preferred_maximize_label() {
   local locale
   locale="$(defaults read -g AppleLocale 2>/dev/null || echo "")"
@@ -73,14 +81,15 @@ preferred_maximize_label() {
   esac
 }
 
-wait_for_selected_action() {
-  local expected="$1"
-  local timeout_seconds="${2:-6}"
+wait_for_default_value() {
+  local read_command="$1"
+  local expected="$2"
+  local timeout_seconds="${3:-6}"
   local deadline=$((SECONDS + timeout_seconds))
   local current=""
 
   while (( SECONDS <= deadline )); do
-    current="$(read_selected_action)"
+    current="$($read_command)"
     if [[ "$current" == "$expected" ]]; then
       echo "$current"
       return 0
@@ -92,12 +101,50 @@ wait_for_selected_action() {
   return 1
 }
 
+wait_for_selected_action() {
+  wait_for_default_value read_selected_action "$1" "${2:-6}"
+}
+
+wait_for_show_settings_on_startup() {
+  wait_for_default_value read_show_settings_on_startup "$1" "${2:-6}"
+}
+
+wait_for_update_check_frequency() {
+  wait_for_default_value read_update_check_frequency "$1" "${2:-6}"
+}
+
+select_settings_popup_item() {
+  local popup_index="$1"
+  local label="$2"
+  if osascript <<APPLESCRIPT >/dev/null 2>&1
+tell application "System Events"
+  tell process "$APP_NAME"
+    tell group 1 of window 1
+      click pop up button $popup_index
+      delay 0.2
+      click menu item "$label" of menu 1 of pop up button $popup_index
+    end tell
+  end tell
+end tell
+APPLESCRIPT
+  then
+    return 0
+  fi
+  return 1
+}
+
 click_action_mode_button() {
   local label="$1"
+  if select_settings_popup_item 1 "$label"; then
+    return 0
+  fi
   if [[ ! -x "$AX_PRESS_CONTROL_BIN" || "$SCRIPT_DIR/ax_press_control.swift" -nt "$AX_PRESS_CONTROL_BIN" ]]; then
     /usr/bin/swiftc "$SCRIPT_DIR/ax_press_control.swift" -o "$AX_PRESS_CONTROL_BIN"
   fi
-  "$AX_PRESS_CONTROL_BIN" "$APP_NAME" AXButton "$label" >/dev/null
+  if "$AX_PRESS_CONTROL_BIN" "$APP_NAME" AXButton "$label" >/dev/null; then
+    return 0
+  fi
+  "$AX_PRESS_CONTROL_BIN" "$APP_NAME" AXRadioButton "$label" >/dev/null
 }
 
 click_maximize_mode_button() {
@@ -115,28 +162,61 @@ click_maximize_mode_button() {
   click_action_mode_button "$alternate"
 }
 
+click_show_settings_on_startup_checkbox() {
+  osascript <<APPLESCRIPT >/dev/null
+tell application "System Events"
+  tell process "$APP_NAME"
+    tell group 1 of window 1
+      click checkbox 1
+    end tell
+  end tell
+end tell
+APPLESCRIPT
+}
+
+select_update_frequency() {
+  local label="$1"
+  select_settings_popup_item 2 "$label"
+}
+
 defaults delete "$BUNDLE_ID" selectedAction >/dev/null 2>&1 || true
+defaults write "$BUNDLE_ID" showSettingsOnStartup -bool false
+defaults write "$BUNDLE_ID" updateCheckFrequency -string daily
 
 echo "[settings-shell] direct --settings launch"
 start_macsimize_for_settings_shell "$LOG_FILE" --settings
 sleep 1.0
-if ! log_contains "Launch argument requested settings window" "$LOG_FILE"; then
+if [[ "$(wait_for_log_occurrence_count "Launch argument requested settings window" 1 "$LOG_FILE" 6 || true)" -lt 1 ]]; then
   echo "FAIL: missing settings launch-argument log"
   print_log_tail "$LOG_FILE" 80
   exit 1
 fi
-if ! log_contains "Opening settings window" "$LOG_FILE"; then
+if [[ "$(wait_for_log_occurrence_count "Opening settings window" 1 "$LOG_FILE" 6 || true)" -lt 1 ]]; then
   echo "FAIL: missing settings open log after --settings launch"
   print_log_tail "$LOG_FILE" 80
   exit 1
 fi
-if ! log_contains "Settings window fronting pass completed" "$LOG_FILE"; then
+if [[ "$(wait_for_log_occurrence_count "Settings window fronting pass completed" 1 "$LOG_FILE" 6 || true)" -lt 1 ]]; then
   echo "FAIL: missing settings fronting log after --settings launch"
   print_log_tail "$LOG_FILE" 80
   exit 1
 fi
 if [[ "$(wait_for_selected_action maximize 4 || true)" != "maximize" ]]; then
   echo "FAIL: expected fresh settings launch to persist Maximize as the default action"
+  print_log_tail "$LOG_FILE" 80
+  exit 1
+fi
+
+echo "[settings-shell] general checkbox should persist changes"
+click_show_settings_on_startup_checkbox
+if [[ "$(wait_for_show_settings_on_startup 1 4 || true)" != "1" ]]; then
+  echo "FAIL: expected clicking Show settings on startup to persist true"
+  print_log_tail "$LOG_FILE" 80
+  exit 1
+fi
+click_show_settings_on_startup_checkbox
+if [[ "$(wait_for_show_settings_on_startup 0 4 || true)" != "0" ]]; then
+  echo "FAIL: expected clicking Show settings on startup again to persist false"
   print_log_tail "$LOG_FILE" 80
   exit 1
 fi
@@ -154,6 +234,21 @@ if [[ "$(wait_for_selected_action maximize 4 || true)" != "maximize" ]]; then
   print_log_tail "$LOG_FILE" 80
   exit 1
 fi
+
+echo "[settings-shell] update frequency popup should persist changes"
+select_update_frequency "Weekly"
+if [[ "$(wait_for_update_check_frequency weekly 4 || true)" != "weekly" ]]; then
+  echo "FAIL: expected selecting Weekly to persist weekly"
+  print_log_tail "$LOG_FILE" 80
+  exit 1
+fi
+select_update_frequency "Daily"
+if [[ "$(wait_for_update_check_frequency daily 4 || true)" != "daily" ]]; then
+  echo "FAIL: expected selecting Daily to persist daily"
+  print_log_tail "$LOG_FILE" 80
+  exit 1
+fi
+
 assert_macsimize_alive "$LOG_FILE" "after action-mode button toggles"
 
 echo "[settings-shell] repeated relaunch should still show settings"

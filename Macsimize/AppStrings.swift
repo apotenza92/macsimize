@@ -49,6 +49,7 @@ enum AppStrings {
     static var checkForUpdatesButtonTitle: String { "Check for Updates" }
     static var installUpdateButtonTitle: String { "Install Update…" }
     static var checkFrequencyLabel: String { "Check frequency" }
+    static var checkFrequencyCompactLabel: String { "Check" }
     static var greenButtonClickLabel: String { "Green button click" }
 
     static var settingsMenuTitle: String { "Settings…" }
@@ -59,8 +60,13 @@ enum AppStrings {
 
     static var maximizeModeTitle: String { terms.maximizeVerb }
     static var fullScreenModeTitle: String { "Full Screen" }
-    static var maximizeModeHelp: String { "Click again to restore the pre-\(terms.maximizedAdjective) size." }
-    static var fullScreenModeHelp: String { "Pass the green-button click through to standard macOS full-screen \(terms.behaviorNoun.lowercased())." }
+    static var optionClickPrefix: String { "⌥ Option-click" }
+    static var maximizeModeHelp: String {
+        "Click again to restore the pre-\(terms.maximizedAdjective) size.\n\(optionClickPrefix) does \(fullScreenModeTitle) instead."
+    }
+    static var fullScreenModeHelp: String {
+        "Native macOS behavior.\n\(optionClickPrefix) does \(maximizeModeTitle) instead."
+    }
 
     static var updateFrequencyNever: String { "Never" }
     static var updateFrequencyStartup: String { "On Startup" }
@@ -74,6 +80,13 @@ enum AppStrings {
     static var permissionSummaryInputMonitoringRequired: String { "Input Monitoring required" }
     static var permissionSummaryReady: String { "Ready" }
     static var permissionSummaryWaitingForEventTap: String { "Waiting for event tap" }
+    static var permissionRequiredLabel: String { "Required" }
+    static var permissionAccessibilityWhyNeeded: String {
+        "Inspect windows and trigger window actions."
+    }
+    static var permissionInputMonitoringWhyNeeded: String {
+        "Intercept green button clicks."
+    }
     static var permissionDetailAccessibilityRequired: String {
         "Grant Accessibility access in System Settings > Privacy & Security > Accessibility. Until then, Macsimize cannot intercept the green button, so macOS will keep using its normal \(terms.behaviorNoun.lowercased())."
     }
@@ -102,6 +115,7 @@ enum AppStrings {
     static var updatesDisabledAutomatedMode: String { "Updates disabled in automated mode." }
     static var updatesDisabledDevelopmentBuild: String { "Updates disabled in development builds." }
     static var updatesUnavailableIncompleteRuntime: String { "Updates unavailable: incomplete Sparkle runtime in app bundle." }
+    static var updatesStatusPlaceholder: String { updatesUnavailableIncompleteRuntime }
     static func updateAvailable(version: String) -> String { "Update available: \(version)" }
 
     static var diagnosticsSnapshotSkippedNoFrontmostApp: String { "Diagnostics snapshot skipped: no frontmost app." }
@@ -125,8 +139,19 @@ enum AppStrings {
     static var greenButtonThresholdFlushMessage: String {
         "Intercepted green-button press exceeded clean-click thresholds; flushing buffered native events."
     }
+    static var greenButtonFullScreenPassThroughMessage: String {
+        "Window is already in native full screen; passing the green-button click through to macOS."
+    }
 
     static var actionEngineFullScreenPassThrough: String { "Allowing standard macOS full-screen \(terms.behaviorNoun.lowercased())." }
+    static var actionEngineFullScreenTriggered: String { "Triggered native macOS full screen via AXFullScreen on the window." }
+    static var actionEngineFullScreenActionUnavailable: String { "Green button does not expose AXPress for native full screen." }
+    static func actionEngineFullScreenAttributeFailed(code: AXError.RawValue) -> String {
+        "AXFullScreen on the window failed with \(code)."
+    }
+    static func actionEngineFullScreenActionFailed(code: AXError.RawValue) -> String {
+        "AXPress on the green button failed with \(code)."
+    }
     static var actionEngineWindowNotResizable: String { "Window does not appear to be resizable." }
 
     static var maximizeWindowFrameUnavailable: String { "Window frame unavailable." }

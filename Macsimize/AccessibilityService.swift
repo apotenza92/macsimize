@@ -926,6 +926,7 @@ final class AccessibilityService: @unchecked Sendable {
         let canSetPosition = AXHelpers.isAttributeSettable(kAXPositionAttribute as String, on: windowElement)
         let canSetSize = AXHelpers.isAttributeSettable(kAXSizeAttribute as String, on: windowElement)
         let resizable = AXHelpers.boolAttribute("AXResizable", on: windowElement) ?? canSetSize
+        let isFullScreen = AXHelpers.boolAttribute("AXFullScreen", on: windowElement) ?? false
         let identifier = resolvedWindowIdentifier(
             for: windowElement,
             pid: app.processIdentifier,
@@ -951,6 +952,7 @@ final class AccessibilityService: @unchecked Sendable {
             canSetPosition: canSetPosition,
             canSetSize: canSetSize,
             isResizable: resizable,
+            isFullScreen: isFullScreen,
             isMainWindow: false,
             isFocusedWindow: false
         )
@@ -976,6 +978,7 @@ final class AccessibilityService: @unchecked Sendable {
         let canSetPosition = AXHelpers.isAttributeSettable(kAXPositionAttribute as String, on: windowElement)
         let canSetSize = AXHelpers.isAttributeSettable(kAXSizeAttribute as String, on: windowElement)
         let resizable = AXHelpers.boolAttribute("AXResizable", on: windowElement) ?? canSetSize
+        let isFullScreen = AXHelpers.boolAttribute("AXFullScreen", on: windowElement) ?? false
         let windowNumber = AXHelpers.windowNumber(of: windowElement)
         let identifier = resolvedWindowIdentifier(
             for: windowElement,
@@ -1005,6 +1008,7 @@ final class AccessibilityService: @unchecked Sendable {
             canSetPosition: canSetPosition,
             canSetSize: canSetSize,
             isResizable: resizable,
+            isFullScreen: isFullScreen,
             isMainWindow: isMainWindow,
             isFocusedWindow: isFocusedWindow
         )

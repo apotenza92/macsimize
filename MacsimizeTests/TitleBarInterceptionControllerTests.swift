@@ -112,6 +112,7 @@ final class TitleBarInterceptionControllerTests: XCTestCase {
             canSetPosition: true,
             canSetSize: true,
             isResizable: true,
+            isFullScreen: false,
             isMainWindow: true,
             isFocusedWindow: true
         )

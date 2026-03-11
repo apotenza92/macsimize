@@ -90,7 +90,7 @@ final class SettingsStore: ObservableObject {
         let firstLaunchCompleted = userDefaults.object(forKey: Key.firstLaunchCompleted) as? Bool ?? false
         let updateCheckFrequency = UpdateCheckFrequency(
             rawValue: userDefaults.string(forKey: Key.updateCheckFrequency) ?? ""
-        ) ?? .daily
+        ) ?? .weekly
         let lastUpdateCheckTimestamp = userDefaults.object(forKey: Key.lastUpdateCheckTimestamp) as? TimeInterval ?? 0
         let startAtLogin = userDefaults.object(forKey: Key.startAtLogin) as? Bool ?? false
 

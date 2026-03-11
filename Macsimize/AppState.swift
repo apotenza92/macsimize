@@ -64,6 +64,14 @@ final class AppState: ObservableObject {
         eventTapService.restart()
     }
 
+    func setSelectedAction(_ selectedAction: WindowActionMode) {
+        guard settings.selectedAction != selectedAction else {
+            return
+        }
+        settings.selectedAction = selectedAction
+        refreshLiveInterceptionConfiguration(selectedAction: selectedAction)
+    }
+
     func captureDiagnosticsSnapshot() {
         accessibilityService.captureFrontmostWindowSnapshot()
     }

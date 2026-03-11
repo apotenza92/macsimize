@@ -6,6 +6,15 @@ enum WindowActionMode: String, CaseIterable, Codable, Identifiable {
 
     var id: String { rawValue }
 
+    var opposite: Self {
+        switch self {
+        case .maximize:
+            return .fullScreen
+        case .fullScreen:
+            return .maximize
+        }
+    }
+
     var displayName: String {
         switch self {
         case .maximize:

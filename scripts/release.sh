@@ -71,6 +71,7 @@ else
   echo "Running required pre-release validation..."
   xcodebuild test -project Macsimize.xcodeproj -scheme Macsimize -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO
   ./scripts/automated_settings_shell_checks.sh
+  ./scripts/automated_option_click_green_button_checks.sh
 fi
 
 git tag "$TAG"

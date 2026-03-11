@@ -1,3 +1,4 @@
+import ApplicationServices
 import XCTest
 @testable import Macsimize
 
@@ -29,5 +30,37 @@ final class DeferredReplayStoreTests: XCTestCase {
         store.removeAll()
 
         XCTAssertTrue(store.isEmpty)
+    }
+
+    func testReplaySequenceForFullScreenRemovesAlternateModifier() {
+        let event = makeMouseEvent()
+        event.flags = [.maskAlternate, .maskCommand]
+
+        let replaySequence = EventTapService.replaySequence(for: .fullScreen, originalEvents: [event])
+
+        XCTAssertEqual(replaySequence.count, 1)
+        XCTAssertFalse(replaySequence[0].flags.contains(.maskAlternate))
+        XCTAssertTrue(replaySequence[0].flags.contains(.maskCommand))
+    }
+
+    func testReplaySequenceForMaximizeKeepsOriginalModifiers() {
+        let event = makeMouseEvent()
+        event.flags = [.maskAlternate, .maskCommand]
+
+        let replaySequence = EventTapService.replaySequence(for: .maximize, originalEvents: [event])
+
+        XCTAssertEqual(replaySequence.count, 1)
+        XCTAssertTrue(replaySequence[0].flags.contains(.maskAlternate))
+        XCTAssertTrue(replaySequence[0].flags.contains(.maskCommand))
+    }
+
+    private func makeMouseEvent() -> CGEvent {
+        let source = CGEventSource(stateID: .hidSystemState)!
+        return CGEvent(
+            mouseEventSource: source,
+            mouseType: .leftMouseDown,
+            mouseCursorPosition: .zero,
+            mouseButton: .left
+        )!
     }
 }
