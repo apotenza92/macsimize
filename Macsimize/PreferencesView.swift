@@ -112,16 +112,8 @@ struct PreferencesView: View {
                 .frame(width: 104, alignment: .leading)
             }
 
-            ZStack(alignment: .leading) {
-                Text(AppStrings.updatesStatusPlaceholder)
-                    .foregroundStyle(.clear)
-                    .accessibilityHidden(true)
-
-                if let updateStatusMessage = updateManager.updateStatusMessage {
-                    Text(updateStatusMessage)
-                        .foregroundStyle(.secondary)
-                }
-            }
+            Text(updateManager.updateStatusMessage ?? AppStrings.currentVersionStatusMessage)
+                .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
         }
     }

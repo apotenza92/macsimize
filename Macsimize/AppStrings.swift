@@ -13,11 +13,28 @@ enum AppStrings {
         let systemLanguages = Locale.preferredLanguages
         return bundleLanguages + systemLanguages
     }
+    private static let defaultCurrentVersionProvider: @Sendable () -> String = {
+        let bundle = Bundle.main
+        if let shortVersion = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String,
+           !shortVersion.isEmpty {
+            return shortVersion
+        }
+        if let buildVersion = bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String,
+           !buildVersion.isEmpty {
+            return buildVersion
+        }
+        return "Unknown"
+    }
 
     nonisolated(unsafe) static var preferredLanguagesProvider: @Sendable () -> [String] = defaultPreferredLanguagesProvider
+    nonisolated(unsafe) static var currentVersionProvider: @Sendable () -> String = defaultCurrentVersionProvider
 
     static func resetPreferredLanguagesProvider() {
         preferredLanguagesProvider = defaultPreferredLanguagesProvider
+    }
+
+    static func resetCurrentVersionProvider() {
+        currentVersionProvider = defaultCurrentVersionProvider
     }
 
     private static var terms: Terms {
@@ -115,7 +132,7 @@ enum AppStrings {
     static var updatesDisabledAutomatedMode: String { "Updates disabled in automated mode." }
     static var updatesDisabledDevelopmentBuild: String { "Updates disabled in development builds." }
     static var updatesUnavailableIncompleteRuntime: String { "Updates unavailable: incomplete Sparkle runtime in app bundle." }
-    static var updatesStatusPlaceholder: String { updatesUnavailableIncompleteRuntime }
+    static var currentVersionStatusMessage: String { "Current version: \(currentVersionProvider())" }
     static func updateAvailable(version: String) -> String { "Update available: \(version)" }
 
     static var diagnosticsSnapshotSkippedNoFrontmostApp: String { "Diagnostics snapshot skipped: no frontmost app." }

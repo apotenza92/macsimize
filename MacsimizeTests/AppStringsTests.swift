@@ -4,6 +4,7 @@ import XCTest
 final class AppStringsTests: XCTestCase {
     override func tearDown() {
         AppStrings.resetPreferredLanguagesProvider()
+        AppStrings.resetCurrentVersionProvider()
         super.tearDown()
     }
 
@@ -57,5 +58,11 @@ final class AppStringsTests: XCTestCase {
         XCTAssertEqual(AppStrings.maximizeModeTitle, "Maximise")
         XCTAssertEqual(AppStrings.maximizeAllMenuTitle, "Maximise All")
         XCTAssertEqual(AppStrings.behaviorSectionTitle, "Behaviour")
+    }
+
+    func testCurrentVersionStatusMessageUsesProvidedVersion() {
+        AppStrings.currentVersionProvider = { "2.4.6" }
+
+        XCTAssertEqual(AppStrings.currentVersionStatusMessage, "Current version: 2.4.6")
     }
 }

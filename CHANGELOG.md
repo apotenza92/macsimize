@@ -6,6 +6,10 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [v0.3.3]
+
+- Changed the Settings update status placeholder to show the installed app version until Sparkle reports a live update state.
+
 ## [v0.3.2]
 
 - Added direct native macOS full-screen handling for green-button interception, including `Option`-click inverse behavior and regression coverage for replayed click modifiers.
