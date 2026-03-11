@@ -5,19 +5,19 @@
     <description>Macsimize update feed (beta channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.3.1</title>
-      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.3.1</link>
-      <sparkle:version>300190000</sparkle:version>
-      <sparkle:shortVersionString>0.3.1</sparkle:shortVersionString>
+      <title>Version 0.3.2</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.3.2</link>
+      <sparkle:version>300290000</sparkle:version>
+      <sparkle:shortVersionString>0.3.2</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Fixed manual Sparkle checks so available updates now open the installer flow instead of only showing a status line in Settings.
-- Added an explicit `Install Update…` button state when an update has already been detected.
-- Narrowed the Settings window so it fits the current controls better.]]></description>
-      <pubDate>Tue, 10 Mar 2026 14:11:02 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.3.1/Macsimize-Beta-v0.3.1-macos-arm64.zip"
-                 sparkle:edSignature="JZ56vONMv6Iz/HsqfSk0xVfosSr2lBy2kB3DjY7LBBVFF0Q9C2CjT4H2Pp5Vu+R3VrkCMIFD/nqW4wxa5OosBw=="
-                 length="2623588"
+      <description sparkle:format="plain-text"><![CDATA[- Added direct native macOS full-screen handling for green-button interception, including `Option`-click inverse behavior and regression coverage for replayed click modifiers.
+- Refined the Settings window with a narrower native layout, clearer Full Screen and permission copy, stable update-status sizing, and GUI automation coverage for popup-driven settings changes.
+- Updated the download page copy and release validation scripts to match the current product behavior and native settings controls.]]></description>
+      <pubDate>Wed, 11 Mar 2026 09:04:45 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.3.2/Macsimize-Beta-v0.3.2-macos-arm64.zip"
+                 sparkle:edSignature="jXVDBQju3SYZTvGG89cySsYia36sDhoeaa8QCp9/HPmSNxGCjReVwyAwNCcqWiv9X3xZ6+r7GfeV1NFSDwQ6CQ=="
+                 length="2615893"
                  type="application/octet-stream" />
     </item>
   </channel>
