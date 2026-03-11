@@ -17,28 +17,6 @@ Enjoying Macsimize?
 
 [![Buy me a coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=000000)](https://buymeacoffee.com/apotenza)
 
-## Install
-
-### Homebrew
-
-```bash
-brew tap apotenza92/tap
-brew install --cask apotenza92/tap/macsimize
-```
-
-Beta can be installed side by side with stable:
-
-```bash
-brew tap apotenza92/tap
-brew install --cask apotenza92/tap/macsimize@beta
-```
-
-### Manual install
-
-1. Download the latest zip from the [download page](https://apotenza92.github.io/macsimize/) or [GitHub Releases](https://github.com/apotenza92/macsimize/releases).
-2. Move `Macsimize.app` (or `Macsimize Beta.app`) to `/Applications`.
-3. Launch once and grant permissions.
-
 ## Required macOS Permissions
 
 - Accessibility
