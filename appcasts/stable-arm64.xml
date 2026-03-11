@@ -5,19 +5,17 @@
     <description>Macsimize update feed (stable channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.3.2</title>
-      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.3.2</link>
-      <sparkle:version>300290000</sparkle:version>
-      <sparkle:shortVersionString>0.3.2</sparkle:shortVersionString>
+      <title>Version 0.3.3</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.3.3</link>
+      <sparkle:version>300390000</sparkle:version>
+      <sparkle:shortVersionString>0.3.3</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Added direct native macOS full-screen handling for green-button interception, including `Option`-click inverse behavior and regression coverage for replayed click modifiers.
-- Refined the Settings window with a narrower native layout, clearer Full Screen and permission copy, stable update-status sizing, and GUI automation coverage for popup-driven settings changes.
-- Updated the download page copy and release validation scripts to match the current product behavior and native settings controls.]]></description>
-      <pubDate>Wed, 11 Mar 2026 09:04:45 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.3.2/Macsimize-v0.3.2-macos-arm64.zip"
-                 sparkle:edSignature="SB79DMl/fY37rT7vtRV8dnrTAcqaUJhjQP5sWTcHTwpTLoQq4FDx96dH0ryabItnei7dHKPAWXDiw0UAy6PPBg=="
-                 length="2729567"
+      <description sparkle:format="plain-text"><![CDATA[- Changed the Settings update status placeholder to show the installed app version until Sparkle reports a live update state.]]></description>
+      <pubDate>Wed, 11 Mar 2026 09:31:15 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.3.3/Macsimize-v0.3.3-macos-arm64.zip"
+                 sparkle:edSignature="jULvIeyf3cHPIGzXTy4Uzw194OVEqTJ9PNPhGfWaJVKmdB21AKm158nrxdIlmT5sSSCpYvxT+rvggOHiouhhCg=="
+                 length="2728991"
                  type="application/octet-stream" />
     </item>
   </channel>
