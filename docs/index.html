@@ -6,7 +6,7 @@
     <meta name="color-scheme" content="light dark" />
     <meta
       name="description"
-      content="Download Macsimize for macOS. Macsimize turns the green window button into Maximize instead of Full Screen. It also overrides title-bar double-click to use the same maximize behavior. Use Maximize All and Restore All from the Macsimize menu bar icon for the windows in your current space."
+      content="Download Macsimize. Macsimize is a free open source macOS app to turn the green window button into Maximize instead of Full Screen. It also overrides title-bar double-click to use the same maximize behavior. Use Maximize All and Restore All from the Macsimize menu bar icon for the windows in your current space."
     />
     <link
       rel="icon"
@@ -39,6 +39,8 @@
         --text-subtle: #888;
         --border: #e0e0e0;
         --code-bg: #f4f4f4;
+        --surface-elevated: rgba(255, 255, 255, 0.82);
+        --surface-elevated-hover: rgba(255, 255, 255, 0.94);
         --accent-solid: #49c96a;
         --accent-hover: #33b856;
         --accent-start: #79dd8f;
@@ -76,6 +78,8 @@
           --text-subtle: #777;
           --border: #333;
           --code-bg: #1a1a1a;
+          --surface-elevated: rgba(26, 26, 26, 0.88);
+          --surface-elevated-hover: rgba(36, 36, 36, 0.96);
         }
       }
 
@@ -119,20 +123,77 @@
         line-height: 1.6;
       }
 
-      .github-icon-link {
-        color: var(--text-muted);
+      .github-button-row {
+        display: flex;
+        justify-content: center;
+        margin-top: 1.5rem;
+      }
+
+      .github-button-link {
         display: inline-flex;
         align-items: center;
-        transition: color 0.2s ease;
+        justify-content: flex-start;
+        gap: 0.65rem;
+        min-width: 0;
+        padding: 0.55rem 0.8rem;
+        background: var(--surface-elevated);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        text-decoration: none;
+        box-shadow: none;
+        transition:
+          border-color 0.2s ease,
+          background 0.2s ease;
       }
 
-      .github-icon-link:hover {
-        color: var(--accent-solid);
+      .github-button-link:hover {
+        background: var(--surface-elevated-hover);
+        border-color: var(--accent-soft-border);
       }
 
-      .github-icon-link svg {
-        width: 20px;
-        height: 20px;
+      .github-icon-badge {
+        width: 28px;
+        height: 28px;
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: linear-gradient(
+          180deg,
+          rgba(var(--accent-rgb), 0.14) 0%,
+          rgba(var(--accent-rgb), 0.08) 100%
+        );
+        color: var(--text);
+      }
+
+      .github-icon-badge svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      .github-link-copy {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        line-height: 1.2;
+      }
+
+      .github-link-title {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .github-link-subtitle {
+        font-size: 0.68rem;
+        color: var(--text-muted);
+      }
+
+      .github-release-meta {
+        margin-top: 0.18rem;
+        font-size: 0.66rem;
+        color: var(--text-subtle);
       }
 
       .download-btn {
@@ -180,6 +241,10 @@
 
       .selection-flow {
         position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
       }
 
       .connector-svg {
@@ -213,7 +278,6 @@
       .mac-arch-toggle {
         display: flex;
         justify-content: center;
-        margin-bottom: 1.5rem;
         position: relative;
         z-index: 1;
       }
@@ -265,7 +329,6 @@
         font-size: 0.8rem;
         font-weight: 500;
         text-align: center;
-        margin-bottom: 1rem;
         display: none;
       }
 
@@ -497,27 +560,14 @@
         alt="Macsimize"
         class="icon"
       />
-      <h1>Macsimize for macOS</h1>
+      <h1>Macsimize</h1>
       <p class="subtitle">
-        Macsimize turns the green window button into Maximize instead of Full
-        Screen. It also overrides title-bar double-click to use the same
-        maximize behavior. Click the Macsimize app icon in the menu bar to use
-        Maximize All and Restore All for the windows in your current space.
+        Macsimize is a free open source macOS app to turn the green window
+        button into Maximize instead of Full Screen. It also overrides title-bar
+        double-click to use the same maximize behavior. Click the Macsimize app
+        icon in the menu bar to use Maximize All and Restore All for the windows
+        in your current space.
       </p>
-
-      <div style="display: flex; justify-content: center; margin-bottom: 1rem">
-        <a
-          href="https://github.com/apotenza92/macsimize"
-          class="github-icon-link"
-          title="View on GitHub"
-        >
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path
-              d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
-            />
-          </svg>
-        </a>
-      </div>
 
       <div class="selection-flow" id="selection-flow">
         <svg class="connector-svg" id="connector-svg"></svg>
@@ -578,6 +628,29 @@
         <strong>Beta Version:</strong> Beta builds install as
         <span id="beta-app-name">Macsimize Beta.app</span> and track the newest
         beta-channel release.
+      </div>
+
+      <div class="github-button-row">
+        <a
+          href="https://github.com/apotenza92/macsimize"
+          class="github-button-link"
+          title="View on GitHub"
+        >
+          <span class="github-icon-badge" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
+              />
+            </svg>
+          </span>
+          <span class="github-link-copy">
+            <span class="github-link-title">GitHub</span>
+            <span class="github-link-subtitle">Free and Open Source</span>
+            <span class="github-release-meta" id="github-release-meta"
+              >Latest release metadata</span
+            >
+          </span>
+        </a>
       </div>
 
       <p class="support-cta">
@@ -762,8 +835,27 @@
             xmlText(item, "sparkle:shortVersionString") ||
             xmlText(item, "shortVersionString") ||
             "Unknown",
+          pubDate: xmlText(item, "pubDate"),
           downloadUrl,
         };
+      }
+
+      function formatReleaseDate(pubDate) {
+        if (!pubDate) {
+          return "";
+        }
+
+        const parsed = new Date(pubDate);
+        if (Number.isNaN(parsed.getTime())) {
+          return "";
+        }
+
+        return new Intl.DateTimeFormat("en", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          timeZone: "UTC",
+        }).format(parsed);
       }
 
       async function fetchAppcast(channel, arch) {
@@ -885,18 +977,22 @@
         const heading = document.querySelector("h1");
         appIcon.src = ICONS[currentChannel];
         appIcon.alt = DISPLAY_NAMES[currentChannel];
-        heading.textContent =
-          currentChannel === "beta" ? "Macsimize Beta for macOS" : "Macsimize for macOS";
+        heading.textContent = currentChannel === "beta" ? "Macsimize Beta" : "Macsimize";
         document.title =
           currentChannel === "beta" ? "Download Macsimize Beta" : "Download Macsimize";
 
         const homebrewCode = document.getElementById("mac-homebrew-code");
         const homebrewLabel = document.getElementById("mac-homebrew-label");
         const betaAppName = document.getElementById("beta-app-name");
+        const githubReleaseMeta = document.getElementById("github-release-meta");
         homebrewCode.textContent = BREW_COMMANDS[currentChannel];
         homebrewLabel.textContent =
           currentChannel === "beta" ? "Or install via Homebrew (Beta):" : "Or install via Homebrew:";
         betaAppName.textContent = APP_NAMES.beta;
+        githubReleaseMeta.textContent =
+          currentChannel === "beta"
+            ? "Latest beta release"
+            : "Latest stable release";
 
         const versionDisplay = document.getElementById("version-display");
         versionDisplay.classList.remove("stable", "beta");
@@ -924,6 +1020,7 @@
         const downloadBtn = document.getElementById("download-btn");
         const btnText = document.getElementById("btn-text");
         const versionDisplay = document.getElementById("version-display");
+        const githubReleaseMeta = document.getElementById("github-release-meta");
 
         btnText.textContent =
           currentArch === "x64" ? "Download for Intel" : "Download for Apple Silicon";
@@ -935,6 +1032,10 @@
         try {
           const appcast = await fetchAppcast(currentChannel, currentArch);
           versionDisplay.textContent = `v${appcast.version}`;
+          const formattedDate = formatReleaseDate(appcast.pubDate);
+          githubReleaseMeta.textContent = formattedDate
+            ? `v${appcast.version} • ${formattedDate}`
+            : `v${appcast.version}`;
           btnText.textContent =
             currentArch === "x64"
               ? "Download for Intel"
@@ -943,6 +1044,7 @@
         } catch (error) {
           console.error(error);
           versionDisplay.textContent = "Latest release";
+          githubReleaseMeta.textContent = "Latest release on GitHub";
           btnText.textContent = "Open GitHub Releases";
           downloadBtn.href = RELEASES_URL;
         } finally {

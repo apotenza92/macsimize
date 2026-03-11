@@ -7,7 +7,7 @@
 </a>
 <br><br>
 
-Macsimize turns the green window button into Maximize instead of Full Screen.
+Macsimize is a free open source macOS app to turn the green window button into Maximize instead of Full Screen.
 
 It also overrides title-bar double-click to use the same maximize behavior.
 
