@@ -5,17 +5,19 @@
     <description>Macsimize update feed (stable channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.3.3</title>
-      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.3.3</link>
-      <sparkle:version>300390000</sparkle:version>
-      <sparkle:shortVersionString>0.3.3</sparkle:shortVersionString>
+      <title>Version 0.3.4</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.3.4</link>
+      <sparkle:version>300490000</sparkle:version>
+      <sparkle:shortVersionString>0.3.4</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Changed the Settings update status placeholder to show the installed app version until Sparkle reports a live update state.]]></description>
-      <pubDate>Wed, 11 Mar 2026 09:31:15 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.3.3/Macsimize-v0.3.3-macos-arm64.zip"
-                 sparkle:edSignature="jULvIeyf3cHPIGzXTy4Uzw194OVEqTJ9PNPhGfWaJVKmdB21AKm158nrxdIlmT5sSSCpYvxT+rvggOHiouhhCg=="
-                 length="2728991"
+      <description sparkle:format="plain-text"><![CDATA[- Refined title-bar double-click handling so passive title and tab-strip regions can still maximize while interactive controls and uncertain fallback hits no longer get treated like titlebar space.
+- Added broader AX survey tooling, app-family matrices, and regression coverage to probe titlebar behavior across Finder, Chromium browsers, Electron apps, and other custom toolbars.
+- Added a build step that stops running Macsimize copies before launching a new debug build and changed release automation so optional GUI validation is no longer required by default.]]></description>
+      <pubDate>Thu, 12 Mar 2026 00:35:35 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.3.4/Macsimize-v0.3.4-macos-arm64.zip"
+                 sparkle:edSignature="G+uh4Sm6pChz998wme2ssAsfBtSJy87tDHgJWCGA+Bd4YjjASK+py+YubZjOVcedXxdm+8uIlAmdaMqi5H7GDg=="
+                 length="2732935"
                  type="application/octet-stream" />
     </item>
   </channel>
