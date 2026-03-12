@@ -10,6 +10,7 @@ final class SettingsStoreTests: XCTestCase {
         let store = SettingsStore(userDefaults: defaults)
 
         XCTAssertEqual(store.selectedAction, .maximize)
+        XCTAssertTrue(store.showMenuBarIcon)
         XCTAssertFalse(store.showSettingsOnStartup)
         XCTAssertFalse(store.firstLaunchCompleted)
         XCTAssertFalse(store.startAtLogin)
@@ -73,6 +74,7 @@ final class SettingsStoreTests: XCTestCase {
         let store = SettingsStore(userDefaults: defaults)
         store.selectedAction = .maximize
         store.diagnosticsEnabled = false
+        store.showMenuBarIcon = false
         store.showSettingsOnStartup = true
         store.firstLaunchCompleted = true
         store.updateCheckFrequency = .weekly
@@ -80,6 +82,7 @@ final class SettingsStoreTests: XCTestCase {
         let reloaded = SettingsStore(userDefaults: defaults)
         XCTAssertEqual(reloaded.selectedAction, .maximize)
         XCTAssertFalse(reloaded.diagnosticsEnabled)
+        XCTAssertFalse(reloaded.showMenuBarIcon)
         XCTAssertTrue(reloaded.showSettingsOnStartup)
         XCTAssertTrue(reloaded.firstLaunchCompleted)
         XCTAssertEqual(reloaded.updateCheckFrequency, .weekly)

@@ -7,7 +7,7 @@ final class SettingsWindowController: NSWindowController {
 
     init(appState: AppState) {
         let view = PreferencesView(appState: appState)
-        let hostingController = NSHostingController(rootView: view)
+        let hostingController = SettingsHostingController(rootView: view)
         let window = NSWindow(contentViewController: hostingController)
 
         window.title = AppIdentity.settingsWindowTitle
@@ -53,5 +53,35 @@ final class SettingsWindowController: NSWindowController {
         window.makeKeyAndOrderFront(nil)
         window.makeMain()
         window.orderFrontRegardless()
+    }
+}
+
+@MainActor
+private final class SettingsHostingController<Content: View>: NSHostingController<Content> {
+    override func loadView() {
+        view = ZeroSafeAreaHostingView(rootView: rootView)
+    }
+}
+
+@MainActor
+private final class ZeroSafeAreaHostingView<Content: View>: NSHostingView<Content> {
+    private let zeroInsets = NSEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+
+    override var safeAreaInsets: NSEdgeInsets {
+        zeroInsets
+    }
+
+    override var safeAreaRect: NSRect {
+        bounds
+    }
+
+    override var additionalSafeAreaInsets: NSEdgeInsets {
+        get { zeroInsets }
+        set {}
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        layoutSubtreeIfNeeded()
     }
 }

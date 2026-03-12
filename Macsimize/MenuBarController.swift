@@ -10,6 +10,7 @@ final class MenuBarController: NSObject {
     private let restoreAllItem = NSMenuItem(title: AppStrings.restoreAllMenuTitle, action: #selector(restoreAllWindows), keyEquivalent: "")
     private let settingsItem = NSMenuItem(title: AppStrings.settingsMenuTitle, action: #selector(openSettings), keyEquivalent: ",")
     private let quitItem: NSMenuItem
+    private var isInvalidated = false
 
     init(appDelegate: AppDelegate) {
         let appDisplayName = AppIdentity.displayName
@@ -49,6 +50,15 @@ final class MenuBarController: NSObject {
         menu.addItem(quitItem)
 
         statusItem.menu = menu
+    }
+
+    func invalidate() {
+        guard !isInvalidated else {
+            return
+        }
+        isInvalidated = true
+        statusItem.menu = nil
+        NSStatusBar.system.removeStatusItem(statusItem)
     }
 
     @objc

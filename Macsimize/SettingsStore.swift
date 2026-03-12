@@ -6,6 +6,7 @@ final class SettingsStore: ObservableObject {
     private enum Key {
         static let selectedAction = "selectedAction"
         static let diagnosticsEnabled = "diagnosticsEnabled"
+        static let showMenuBarIcon = "showMenuBarIcon"
         static let showSettingsOnStartup = "showSettingsOnStartup"
         static let firstLaunchCompleted = "firstLaunchCompleted"
         static let startAtLogin = "startAtLogin"
@@ -25,6 +26,12 @@ final class SettingsStore: ObservableObject {
     @Published var diagnosticsEnabled: Bool {
         didSet {
             userDefaults.set(diagnosticsEnabled, forKey: Key.diagnosticsEnabled)
+        }
+    }
+
+    @Published var showMenuBarIcon: Bool {
+        didSet {
+            userDefaults.set(showMenuBarIcon, forKey: Key.showMenuBarIcon)
         }
     }
 
@@ -86,6 +93,7 @@ final class SettingsStore: ObservableObject {
         }
 
         let diagnosticsEnabled = userDefaults.object(forKey: Key.diagnosticsEnabled) as? Bool ?? true
+        let showMenuBarIcon = userDefaults.object(forKey: Key.showMenuBarIcon) as? Bool ?? true
         let showSettingsOnStartup = userDefaults.object(forKey: Key.showSettingsOnStartup) as? Bool ?? false
         let firstLaunchCompleted = userDefaults.object(forKey: Key.firstLaunchCompleted) as? Bool ?? false
         let updateCheckFrequency = UpdateCheckFrequency(
@@ -96,6 +104,7 @@ final class SettingsStore: ObservableObject {
 
         self.selectedAction = selectedAction
         self.diagnosticsEnabled = diagnosticsEnabled
+        self.showMenuBarIcon = showMenuBarIcon
         self.showSettingsOnStartup = showSettingsOnStartup
         self.firstLaunchCompleted = firstLaunchCompleted
         self.startAtLogin = startAtLogin

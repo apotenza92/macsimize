@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [v0.3.5]
+
+- Added a `Show menu bar icon` setting, defaulted it on for existing installs, and wired it to hide or restore the menu bar item immediately.
+- Tightened the Settings window layout with less top whitespace and kept the General section aligned closer to the title bar.
+- Simplified permission status indicators to compact icon badges beside each permission button.
+
 ## [v0.3.4]
 
 - Refined title-bar double-click handling so passive title and tab-strip regions can still maximize while interactive controls and uncertain fallback hits no longer get treated like titlebar space.

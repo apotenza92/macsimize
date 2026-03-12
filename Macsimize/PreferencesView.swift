@@ -11,7 +11,6 @@ struct PreferencesView: View {
     private let contentWidth: CGFloat = 360
     private let sectionSpacing: CGFloat = 24
     private let rowSpacing: CGFloat = 12
-
     init(appState: AppState) {
         self.appState = appState
         _settings = ObservedObject(wrappedValue: appState.settings)
@@ -20,22 +19,29 @@ struct PreferencesView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            generalSection
-            Divider()
-            behaviorSection
-            Divider()
-            updatesSection
-            Divider()
-            permissionsSection
+        ZStack(alignment: .topLeading) {
+            VStack(alignment: .leading, spacing: 0) {
+                generalSection
+                Divider()
+                behaviorSection
+                Divider()
+                updatesSection
+                Divider()
+                permissionsSection
+            }
+            .padding(.top, 10)
+            .padding(.horizontal, 20)
+            .padding(.bottom, 20)
+            .frame(width: contentWidth, alignment: .topLeading)
+            .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(20)
-        .frame(width: contentWidth, alignment: .topLeading)
-        .fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .ignoresSafeArea(.container, edges: .top)
     }
 
     private var generalSection: some View {
         settingsSection(AppStrings.generalSectionTitle) {
+            Toggle(AppStrings.showMenuBarIcon, isOn: $settings.showMenuBarIcon)
             Toggle(AppStrings.showSettingsOnStartup, isOn: $settings.showSettingsOnStartup)
             Toggle(AppStrings.startAtLogin(appName: appDisplayName), isOn: $settings.startAtLogin)
 
@@ -152,16 +158,19 @@ struct PreferencesView: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline, spacing: 12) {
                 Button(title, action: action)
-                if !granted {
-                    Text(AppStrings.permissionRequiredLabel)
-                        .foregroundStyle(.secondary)
-                }
+                permissionStatusBadge(granted: granted)
             }
 
             Text(description)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
+    }
+
+    private func permissionStatusBadge(granted: Bool) -> some View {
+        Image(systemName: granted ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+            .font(.system(size: 14, weight: .semibold))
+            .foregroundStyle(granted ? .green : .orange)
     }
 
     private func settingsSection<Content: View>(

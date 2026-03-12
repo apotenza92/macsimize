@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import Darwin
 
 @MainActor
@@ -13,6 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var updateManager: UpdateManager { appState.updateManager }
     private let isAutomatedTestSuite = ProcessInfo.processInfo.environment["MACSIMIZE_TEST_SUITE"] == "1"
     private var scheduledPermissionPrompts: [DispatchWorkItem] = []
+    private var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -39,7 +41,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        menuBarController = MenuBarController(appDelegate: self)
+        bindSettings()
+        updateMenuBarIconVisibility(isVisible: appState.settings.showMenuBarIcon)
 
         let firstLaunch = !appState.settings.firstLaunchCompleted
         let needsPermissions = !appState.permissions.state.allRequiredPermissionsGranted
@@ -223,6 +226,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let me = ProcessInfo.processInfo.processIdentifier
         return NSRunningApplication.runningApplications(withBundleIdentifier: bundleId)
             .filter { $0.processIdentifier != me && !$0.isTerminated }
+    }
+
+    private func bindSettings() {
+        appState.settings.$showMenuBarIcon
+            .removeDuplicates()
+            .sink { [weak self] isVisible in
+                self?.updateMenuBarIconVisibility(isVisible: isVisible)
+            }
+            .store(in: &cancellables)
+    }
+
+    private func updateMenuBarIconVisibility(isVisible: Bool) {
+        if isVisible {
+            if menuBarController == nil {
+                menuBarController = MenuBarController(appDelegate: self)
+            }
+        } else {
+            menuBarController?.invalidate()
+            menuBarController = nil
+        }
     }
 
     private func startObservingOpenSettingsRequests() {

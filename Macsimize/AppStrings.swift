@@ -53,6 +53,7 @@ enum AppStrings {
     static var updatesSectionTitle: String { "Updates" }
     static var behaviorSectionTitle: String { terms.behaviorNoun }
 
+    static var showMenuBarIcon: String { "Show menu bar icon" }
     static var showSettingsOnStartup: String { "Show settings on startup" }
     static func startAtLogin(appName: String) -> String { "Start \(appName) at login" }
     static var restartButtonTitle: String { "Restart" }
