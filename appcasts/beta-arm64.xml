@@ -5,19 +5,19 @@
     <description>Macsimize update feed (beta channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.3.4</title>
-      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.3.4</link>
-      <sparkle:version>300490000</sparkle:version>
-      <sparkle:shortVersionString>0.3.4</sparkle:shortVersionString>
+      <title>Version 0.3.5</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.3.5</link>
+      <sparkle:version>300590000</sparkle:version>
+      <sparkle:shortVersionString>0.3.5</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Refined title-bar double-click handling so passive title and tab-strip regions can still maximize while interactive controls and uncertain fallback hits no longer get treated like titlebar space.
-- Added broader AX survey tooling, app-family matrices, and regression coverage to probe titlebar behavior across Finder, Chromium browsers, Electron apps, and other custom toolbars.
-- Added a build step that stops running Macsimize copies before launching a new debug build and changed release automation so optional GUI validation is no longer required by default.]]></description>
-      <pubDate>Thu, 12 Mar 2026 00:35:35 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.3.4/Macsimize-Beta-v0.3.4-macos-arm64.zip"
-                 sparkle:edSignature="8y2ACJOP+EA/CD10muWSRcZvROPHX/+w4TuHfNgkGOQNTkBHAu5GqGLGdUJ7t32LtpYDCiRbOP5XNdwHmLQuBg=="
-                 length="2619191"
+      <description sparkle:format="plain-text"><![CDATA[- Added a `Show menu bar icon` setting, defaulted it on for existing installs, and wired it to hide or restore the menu bar item immediately.
+- Tightened the Settings window layout with less top whitespace and kept the General section aligned closer to the title bar.
+- Simplified permission status indicators to compact icon badges beside each permission button.]]></description>
+      <pubDate>Thu, 12 Mar 2026 12:52:58 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.3.5/Macsimize-Beta-v0.3.5-macos-arm64.zip"
+                 sparkle:edSignature="SqwTEYxEFGmhNxluNTfvMiNpj/HM6WyMNO8UouFOacGUbB+AR6GUDE2bZOVi6bawKYTip234PdjMNvacBGZbAg=="
+                 length="2626715"
                  type="application/octet-stream" />
     </item>
   </channel>
