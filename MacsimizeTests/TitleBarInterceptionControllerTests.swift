@@ -52,17 +52,17 @@ final class TitleBarInterceptionControllerTests: XCTestCase {
         )
 
         _ = controller.handleMouseDown(
-            location: CGPoint(x: 100, y: 100),
+            location: CGPoint(x: 100, y: 30),
             clickCount: 1,
             configuration: InterceptionConfiguration(selectedAction: .maximize, diagnosticsEnabled: false)
         )
-        let dragDecision = controller.handleMouseDragged(location: CGPoint(x: 108, y: 100))
+        let dragDecision = controller.handleMouseDragged(location: CGPoint(x: 108, y: 30))
 
         guard case .dragRestore(let context, let cursorLocation) = dragDecision else {
             return XCTFail("Expected dragRestore decision")
         }
         XCTAssertEqual(context.windowIdentifier, "fixture-window")
-        XCTAssertEqual(cursorLocation, CGPoint(x: 108, y: 100))
+        XCTAssertEqual(cursorLocation, CGPoint(x: 108, y: 30))
     }
 
     func testDragWithinThresholdPassesThrough() {
@@ -75,12 +75,57 @@ final class TitleBarInterceptionControllerTests: XCTestCase {
         )
 
         _ = controller.handleMouseDown(
-            location: CGPoint(x: 100, y: 100),
+            location: CGPoint(x: 100, y: 30),
             clickCount: 1,
             configuration: InterceptionConfiguration(selectedAction: .maximize, diagnosticsEnabled: false)
         )
 
-        let dragDecision = controller.handleMouseDragged(location: CGPoint(x: 102, y: 102))
+        let dragDecision = controller.handleMouseDragged(location: CGPoint(x: 102, y: 32))
+        assertDecision(dragDecision, equals: .passThrough)
+    }
+
+    func testDoubleClickUsesActivationRectOutsideDraggableRect() {
+        let resolver = TitleBarResolverSpy()
+        resolver.context = Self.makeContext(
+            draggableRect: CGRect(x: 10, y: 10, width: 500, height: 40),
+            activationRect: CGRect(x: 10, y: 10, width: 500, height: 80)
+        )
+        let controller = TitleBarInterceptionController(
+            contextResolver: resolver,
+            diagnostics: DebugDiagnostics()
+        )
+
+        let mouseDown = controller.handleMouseDown(
+            location: CGPoint(x: 20, y: 70),
+            clickCount: 2,
+            configuration: InterceptionConfiguration(selectedAction: .maximize, diagnosticsEnabled: false)
+        )
+
+        guard case .performAction(let context) = mouseDown else {
+            return XCTFail("Expected performAction for activation rect double-click")
+        }
+        XCTAssertEqual(context.windowIdentifier, "fixture-window")
+    }
+
+    func testSingleClickInActivationRectOutsideDraggableRectDoesNotArmDragRestore() {
+        let resolver = TitleBarResolverSpy()
+        resolver.context = Self.makeContext(
+            draggableRect: CGRect(x: 10, y: 10, width: 500, height: 40),
+            activationRect: CGRect(x: 10, y: 10, width: 500, height: 80)
+        )
+        let controller = TitleBarInterceptionController(
+            contextResolver: resolver,
+            diagnostics: DebugDiagnostics(),
+            maxMovement: 4
+        )
+
+        _ = controller.handleMouseDown(
+            location: CGPoint(x: 20, y: 70),
+            clickCount: 1,
+            configuration: InterceptionConfiguration(selectedAction: .maximize, diagnosticsEnabled: false)
+        )
+        let dragDecision = controller.handleMouseDragged(location: CGPoint(x: 30, y: 70))
+
         assertDecision(dragDecision, equals: .passThrough)
     }
 
@@ -93,7 +138,10 @@ final class TitleBarInterceptionControllerTests: XCTestCase {
         }
     }
 
-    private static func makeContext() -> TitleBarInteractionContext {
+    private static func makeContext(
+        draggableRect: CGRect = CGRect(x: 10, y: 10, width: 500, height: 40),
+        activationRect: CGRect? = nil
+    ) -> TitleBarInteractionContext {
         let element = AXUIElementCreateApplication(ProcessInfo.processInfo.processIdentifier)
         let windowContext = ClickedWindowContext(
             appName: "Fixture",
@@ -117,7 +165,8 @@ final class TitleBarInterceptionControllerTests: XCTestCase {
             isFocusedWindow: true
         )
         return TitleBarInteractionContext(
-            draggableRect: CGRect(x: 10, y: 10, width: 500, height: 40),
+            draggableRect: draggableRect,
+            activationRect: activationRect ?? draggableRect,
             windowContext: windowContext
         )
     }

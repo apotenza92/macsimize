@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [v0.3.4]
+
+- Refined title-bar double-click handling so passive title and tab-strip regions can still maximize while interactive controls and uncertain fallback hits no longer get treated like titlebar space.
+- Added broader AX survey tooling, app-family matrices, and regression coverage to probe titlebar behavior across Finder, Chromium browsers, Electron apps, and other custom toolbars.
+- Added a build step that stops running Macsimize copies before launching a new debug build and changed release automation so optional GUI validation is no longer required by default.
+
 ## [v0.3.3]
 
 - Changed the Settings update status placeholder to show the installed app version until Sparkle reports a live update state.

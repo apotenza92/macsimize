@@ -58,8 +58,11 @@ For TextEdit, Finder, and Safari:
 2. Click and drag from the titlebar or toolbar.
 3. Confirm the window restores to its prior size as the drag begins.
 4. Confirm the drag continues naturally with the restored window under the pointer.
-5. Release and maximize again.
-6. Resize or move the window manually, then drag again to confirm stale maximize state does not restore incorrectly.
+5. Maximize via titlebar double-click, then immediately click and drag from the titlebar or toolbar.
+6. Confirm the window restores to its prior size as the drag begins and continues dragging naturally.
+7. Release, maximize again via the green button, then immediately click and drag from the titlebar or toolbar.
+8. Confirm the window restores to its prior size as the drag begins and continues dragging naturally.
+9. Resize or move the window manually, then drag again to confirm stale maximize state does not restore incorrectly.
 
 Expected:
 

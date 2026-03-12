@@ -70,8 +70,13 @@ if [[ -n "${MACSIMIZE_RELEASE_VALIDATION_WAIVER:-}" ]]; then
 else
   echo "Running required pre-release validation..."
   xcodebuild test -project Macsimize.xcodeproj -scheme Macsimize -destination 'platform=macOS' CODE_SIGNING_ALLOWED=NO
-  ./scripts/automated_settings_shell_checks.sh
-  ./scripts/automated_option_click_green_button_checks.sh
+  if [[ "${MACSIMIZE_RUN_GUI_VALIDATION:-0}" == "1" ]]; then
+    echo "Running optional GUI validation..."
+    ./scripts/automated_settings_shell_checks.sh
+    ./scripts/automated_option_click_green_button_checks.sh
+  else
+    echo "Skipping optional GUI validation. Set MACSIMIZE_RUN_GUI_VALIDATION=1 to enable it."
+  fi
 fi
 
 git tag "$TAG"

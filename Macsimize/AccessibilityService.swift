@@ -25,8 +25,26 @@ struct CurrentSpaceWindowScan {
 }
 
 final class AccessibilityService: @unchecked Sendable {
+    private struct TitleBarInteractionRects {
+        let draggableRect: CGRect
+        let activationRect: CGRect
+    }
+
+    private struct TitleBarHitAncestor {
+        let role: String?
+        let actions: [String]
+        let frame: CGRect?
+    }
+
+    private enum TitleBarHitTestResolution {
+        case resolved(TitleBarInteractionContext)
+        case blocked
+        case miss
+    }
+
     private let diagnostics: DebugDiagnostics
     private let supportedGreenButtonSubroles: Set<String> = ["AXZoomButton", "AXFullScreenButton"]
+    private let titleBarSupplementaryRoles: Set<String> = [kAXToolbarRole as String, kAXGroupRole as String, "AXTabGroup"]
     private let greenButtonHitTolerance: CGFloat = 8
     private let trafficLightHotZoneWidth: CGFloat = 180
     private let trafficLightHotZoneHeight: CGFloat = 64
@@ -96,8 +114,13 @@ final class AccessibilityService: @unchecked Sendable {
             return nil
         }
 
-        if let hitResolvedContext = resolveTitleBarInteractionUsingHitTest(at: location) {
-            return hitResolvedContext
+        switch resolveTitleBarInteractionUsingHitTest(at: location) {
+        case .resolved(let context):
+            return context
+        case .blocked:
+            return nil
+        case .miss:
+            break
         }
 
         guard let app = NSWorkspace.shared.frontmostApplication else {
@@ -110,7 +133,12 @@ final class AccessibilityService: @unchecked Sendable {
 
         let appElement = AXUIElementCreateApplication(app.processIdentifier)
         for window in focusedOrMainWindows(in: appElement) {
-            guard let draggableRect = draggableRect(for: window), draggableRect.contains(location) else {
+            guard let interactionRects = titleBarInteractionRects(for: window),
+                  Self.shouldAcceptFallbackTitleBarInteraction(
+                    originalLocation: location,
+                    windowFrame: AXHelpers.cgRect(of: window),
+                    draggableRect: interactionRects.draggableRect
+                  ) else {
                 continue
             }
             guard let context = windowContext(
@@ -124,7 +152,11 @@ final class AccessibilityService: @unchecked Sendable {
             ) else {
                 continue
             }
-            return TitleBarInteractionContext(draggableRect: draggableRect, windowContext: context)
+            return TitleBarInteractionContext(
+                draggableRect: interactionRects.draggableRect,
+                activationRect: interactionRects.activationRect,
+                windowContext: context
+            )
         }
 
         return nil
@@ -479,7 +511,7 @@ final class AccessibilityService: @unchecked Sendable {
         return nil
     }
 
-    private func resolveTitleBarInteractionUsingHitTest(at location: CGPoint) -> TitleBarInteractionContext? {
+    private func resolveTitleBarInteractionUsingHitTest(at location: CGPoint) -> TitleBarHitTestResolution {
         let systemWideElement = AXUIElementCreateSystemWide()
         let candidatePoints = candidateHitTestPoints(for: location)
 
@@ -495,13 +527,20 @@ final class AccessibilityService: @unchecked Sendable {
             let pid = AXHelpers.pid(of: windowElement)
             guard pid != 0,
                   pid != ProcessInfo.processInfo.processIdentifier,
-                  let app = NSRunningApplication(processIdentifier: pid),
-                  let windowFrame = AXHelpers.cgRect(of: windowElement),
-                  let draggableRect = draggableRect(for: windowElement),
+                  let app = NSRunningApplication(processIdentifier: pid) else {
+                continue
+            }
+
+            if shouldIgnoreTitleBarHitElement(hitElement, window: windowElement) {
+                return .blocked
+            }
+
+            guard let windowFrame = AXHelpers.cgRect(of: windowElement),
+                  let interactionRects = titleBarInteractionRects(for: windowElement, sourceElement: hitElement),
                   Self.shouldAcceptHitTestResolvedTitleBarInteraction(
-                      originalLocation: location,
-                      windowFrame: windowFrame,
-                      draggableRect: draggableRect
+                    originalLocation: location,
+                    windowFrame: windowFrame,
+                    activationRect: interactionRects.activationRect
                   ) else {
                 continue
             }
@@ -518,10 +557,14 @@ final class AccessibilityService: @unchecked Sendable {
                 continue
             }
 
-            return TitleBarInteractionContext(draggableRect: draggableRect, windowContext: context)
+            return .resolved(TitleBarInteractionContext(
+                draggableRect: interactionRects.draggableRect,
+                activationRect: interactionRects.activationRect,
+                windowContext: context
+            ))
         }
 
-        return nil
+        return .miss
     }
 
     private func resolveGreenButton(from hitElement: AXUIElement, clickLocation: CGPoint) -> AXUIElement? {
@@ -684,6 +727,32 @@ final class AccessibilityService: @unchecked Sendable {
         return resolvedRect
     }
 
+    private func titleBarInteractionRects(
+        for window: AXUIElement,
+        sourceElement: AXUIElement? = nil
+    ) -> TitleBarInteractionRects? {
+        guard let windowFrame = AXHelpers.cgRect(of: window),
+              let draggableRect = draggableRect(for: window) else {
+            return nil
+        }
+
+        var activationRect = draggableRect
+        for frame in supplementaryTitleBarFrames(in: window, windowFrame: windowFrame) {
+            activationRect = activationRect.union(frame)
+        }
+        if let sourceElement {
+            for frame in supplementaryFramesAlongAncestorChain(
+                from: sourceElement,
+                to: window,
+                windowFrame: windowFrame
+            ) {
+                activationRect = activationRect.union(frame)
+            }
+        }
+
+        return TitleBarInteractionRects(draggableRect: draggableRect, activationRect: activationRect)
+    }
+
     private func titleBarReferenceFrame(in window: AXUIElement) -> CGRect? {
         for attribute in [
             kAXCloseButtonAttribute as String,
@@ -709,6 +778,107 @@ final class AccessibilityService: @unchecked Sendable {
             }
         }
         return nil
+    }
+
+    private func supplementaryTitleBarFrames(in window: AXUIElement, windowFrame: CGRect) -> [CGRect] {
+        var frames: [CGRect] = []
+        var queue: [(element: AXUIElement, depth: Int)] = AXHelpers.children(of: window).map { ($0, 1) }
+        var enqueued = Set(queue.map { Int(CFHash($0.element)) })
+        var visited = 0
+        let maxDepth = 5
+        let maxVisitedNodes = 160
+
+        while !queue.isEmpty, visited < maxVisitedNodes {
+            let current = queue.removeFirst()
+            visited += 1
+
+            let role = AXHelpers.stringAttribute(kAXRoleAttribute as String, on: current.element)
+            if titleBarSupplementaryRoles.contains(role ?? ""),
+               let frame = AXHelpers.cgRect(of: current.element),
+               Self.isLikelyTitleBarSupplementaryFrame(frame, in: windowFrame, fallbackTitleBarHeight: fallbackTitleBarHeight) {
+                frames.append(frame)
+            }
+
+            guard current.depth < maxDepth else {
+                continue
+            }
+
+            let children = AXHelpers.children(of: current.element)
+            let visibleChildren = AXHelpers.children(of: current.element, attribute: kAXVisibleChildrenAttribute as String)
+            for child in visibleChildren + children {
+                let identifier = Int(CFHash(child))
+                guard enqueued.insert(identifier).inserted else {
+                    continue
+                }
+                queue.append((child, current.depth + 1))
+            }
+        }
+
+        return frames
+    }
+
+    private func supplementaryFramesAlongAncestorChain(
+        from element: AXUIElement,
+        to window: AXUIElement,
+        windowFrame: CGRect
+    ) -> [CGRect] {
+        var frames: [CGRect] = []
+        var current: AXUIElement? = element
+        var remainingDepth = maxAncestorTraversalDepth
+
+        while let candidate = current, remainingDepth > 0 {
+            if let frame = AXHelpers.cgRect(of: candidate),
+               Self.isLikelyTitleBarSupplementaryFrame(frame, in: windowFrame, fallbackTitleBarHeight: fallbackTitleBarHeight) {
+                frames.append(frame)
+            }
+            if AXHelpers.elementsEqual(candidate, window) {
+                break
+            }
+            current = AXHelpers.parent(of: candidate)
+            remainingDepth -= 1
+        }
+
+        return frames
+    }
+
+    private func shouldIgnoreTitleBarHitElement(_ element: AXUIElement, window: AXUIElement) -> Bool {
+        let ancestors = titleBarHitAncestors(from: element, to: window)
+
+        if Self.isLikelyTabStripTab(roles: ancestors.map(\.role), frames: ancestors.map(\.frame)) {
+            return true
+        }
+
+        for ancestor in ancestors {
+            if Self.isInteractiveTitleBarElement(role: ancestor.role, actions: ancestor.actions) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    private func titleBarHitAncestors(from element: AXUIElement, to window: AXUIElement) -> [TitleBarHitAncestor] {
+        var ancestors: [TitleBarHitAncestor] = []
+        var current: AXUIElement? = element
+        var remainingDepth = maxAncestorTraversalDepth
+
+        while let candidate = current, remainingDepth > 0 {
+            ancestors.append(
+                TitleBarHitAncestor(
+                    role: AXHelpers.stringAttribute(kAXRoleAttribute as String, on: candidate),
+                    actions: AXHelpers.actions(for: candidate),
+                    frame: AXHelpers.cgRect(of: candidate)
+                )
+            )
+
+            if AXHelpers.elementsEqual(candidate, window) {
+                break
+            }
+            current = AXHelpers.parent(of: candidate)
+            remainingDepth -= 1
+        }
+
+        return ancestors
     }
 
     static func isLikelyTitleBarSupplementaryFrame(
@@ -770,9 +940,84 @@ final class AccessibilityService: @unchecked Sendable {
     static func shouldAcceptHitTestResolvedTitleBarInteraction(
         originalLocation: CGPoint,
         windowFrame: CGRect,
+        activationRect: CGRect
+    ) -> Bool {
+        windowFrame.contains(originalLocation) && activationRect.contains(originalLocation)
+    }
+
+    static func shouldAcceptFallbackTitleBarInteraction(
+        originalLocation: CGPoint,
+        windowFrame: CGRect?,
         draggableRect: CGRect
     ) -> Bool {
-        windowFrame.contains(originalLocation) && draggableRect.contains(originalLocation)
+        guard let windowFrame else {
+            return false
+        }
+        return windowFrame.contains(originalLocation) && draggableRect.contains(originalLocation)
+    }
+
+    static func isInteractiveTitleBarElement(role: String?, actions: [String]) -> Bool {
+        let interactiveRoles: Set<String> = [
+            kAXButtonRole as String,
+            kAXRadioButtonRole as String,
+            kAXCheckBoxRole as String,
+            kAXPopUpButtonRole as String,
+            kAXMenuButtonRole as String,
+            kAXComboBoxRole as String,
+            kAXTextFieldRole as String,
+            "AXSearchField",
+            kAXSliderRole as String,
+            kAXIncrementorRole as String
+        ]
+        let passiveRoles: Set<String> = [
+            kAXStaticTextRole as String,
+            kAXImageRole as String,
+            kAXGroupRole as String,
+            kAXToolbarRole as String,
+            kAXWindowRole as String
+        ]
+        let interactiveActions: Set<String> = [
+            kAXPressAction as String,
+            kAXConfirmAction as String,
+            kAXIncrementAction as String,
+            kAXDecrementAction as String
+        ]
+
+        if let role, interactiveRoles.contains(role) {
+            return true
+        }
+
+        if let role, passiveRoles.contains(role) {
+            return false
+        }
+
+        return !interactiveActions.isDisjoint(with: Set(actions))
+    }
+
+    static func isLikelyTabStripTab(roles: [String?], frames: [CGRect?]) -> Bool {
+        guard let tabGroupIndex = roles.firstIndex(where: { $0 == "AXTabGroup" }),
+              tabGroupIndex >= 2,
+              roles[0] == kAXGroupRole as String,
+              roles[1] == kAXGroupRole as String,
+              let leafFrame = frames[0],
+              let parentFrame = frames[1],
+              let tabGroupFrame = frames[tabGroupIndex] else {
+            return false
+        }
+
+        let frameTolerance: CGFloat = 2
+        let sameLeafAndParentFrame =
+            abs(leafFrame.minX - parentFrame.minX) <= frameTolerance
+            && abs(leafFrame.minY - parentFrame.minY) <= frameTolerance
+            && abs(leafFrame.width - parentFrame.width) <= frameTolerance
+            && abs(leafFrame.height - parentFrame.height) <= frameTolerance
+        guard sameLeafAndParentFrame else {
+            return false
+        }
+
+        let widthDelta = tabGroupFrame.width - leafFrame.width
+        let heightDelta = abs(tabGroupFrame.height - leafFrame.height)
+        return widthDelta >= 12 && heightDelta <= 6
     }
 
     private func shouldUseFallbackTitleBarRect(for window: AXUIElement, windowFrame: CGRect) -> Bool {

@@ -234,10 +234,49 @@ final class AccessibilityServiceCurrentSpaceTests: XCTestCase {
 
     func testHitTestResolvedTitleBarInteractionAcceptsOriginalLocationInsideTitleBar() {
         let windowFrame = CGRect(x: 100, y: 100, width: 800, height: 600)
-        let draggableRect = CGRect(x: 100, y: 100, width: 800, height: 48)
+        let activationRect = CGRect(x: 100, y: 100, width: 800, height: 48)
 
         XCTAssertTrue(
             AccessibilityService.shouldAcceptHitTestResolvedTitleBarInteraction(
+                originalLocation: CGPoint(x: 220, y: 120),
+                windowFrame: windowFrame,
+                activationRect: activationRect
+            )
+        )
+    }
+
+    func testHitTestResolvedTitleBarInteractionRejectsOriginalLocationOutsideWindow() {
+        let windowFrame = CGRect(x: 100, y: 100, width: 800, height: 600)
+        let activationRect = CGRect(x: 100, y: 100, width: 800, height: 48)
+
+        XCTAssertFalse(
+            AccessibilityService.shouldAcceptHitTestResolvedTitleBarInteraction(
+                originalLocation: CGPoint(x: 220, y: 760),
+                windowFrame: windowFrame,
+                activationRect: activationRect
+            )
+        )
+    }
+
+    func testHitTestResolvedTitleBarInteractionAcceptsOriginalLocationInsideSupplementaryChrome() {
+        let windowFrame = CGRect(x: 100, y: 100, width: 800, height: 600)
+        let activationRect = CGRect(x: 100, y: 100, width: 800, height: 84)
+
+        XCTAssertTrue(
+            AccessibilityService.shouldAcceptHitTestResolvedTitleBarInteraction(
+                originalLocation: CGPoint(x: 220, y: 170),
+                windowFrame: windowFrame,
+                activationRect: activationRect
+            )
+        )
+    }
+
+    func testFallbackTitleBarInteractionAcceptsOriginalLocationInsideDraggableRect() {
+        let windowFrame = CGRect(x: 100, y: 100, width: 800, height: 600)
+        let draggableRect = CGRect(x: 100, y: 100, width: 800, height: 48)
+
+        XCTAssertTrue(
+            AccessibilityService.shouldAcceptFallbackTitleBarInteraction(
                 originalLocation: CGPoint(x: 220, y: 120),
                 windowFrame: windowFrame,
                 draggableRect: draggableRect
@@ -245,15 +284,106 @@ final class AccessibilityServiceCurrentSpaceTests: XCTestCase {
         )
     }
 
-    func testHitTestResolvedTitleBarInteractionRejectsOriginalLocationOutsideWindow() {
+    func testFallbackTitleBarInteractionRejectsSupplementaryChromeOutsideDraggableRect() {
         let windowFrame = CGRect(x: 100, y: 100, width: 800, height: 600)
         let draggableRect = CGRect(x: 100, y: 100, width: 800, height: 48)
 
         XCTAssertFalse(
-            AccessibilityService.shouldAcceptHitTestResolvedTitleBarInteraction(
-                originalLocation: CGPoint(x: 220, y: 760),
+            AccessibilityService.shouldAcceptFallbackTitleBarInteraction(
+                originalLocation: CGPoint(x: 220, y: 170),
                 windowFrame: windowFrame,
                 draggableRect: draggableRect
+            )
+        )
+    }
+
+    func testFallbackTitleBarInteractionRejectsMissingWindowFrame() {
+        XCTAssertFalse(
+            AccessibilityService.shouldAcceptFallbackTitleBarInteraction(
+                originalLocation: CGPoint(x: 220, y: 120),
+                windowFrame: nil,
+                draggableRect: CGRect(x: 100, y: 100, width: 800, height: 48)
+            )
+        )
+    }
+
+    func testInteractiveTitleBarElementRejectsButtons() {
+        XCTAssertTrue(
+            AccessibilityService.isInteractiveTitleBarElement(
+                role: kAXButtonRole as String,
+                actions: []
+            )
+        )
+    }
+
+    func testInteractiveTitleBarElementRejectsPressActions() {
+        XCTAssertFalse(
+            AccessibilityService.isInteractiveTitleBarElement(
+                role: kAXStaticTextRole as String,
+                actions: [kAXPressAction as String]
+            )
+        )
+    }
+
+    func testInteractiveTitleBarElementRejectsPressActionsForUnknownRole() {
+        XCTAssertTrue(
+            AccessibilityService.isInteractiveTitleBarElement(
+                role: nil,
+                actions: [kAXPressAction as String]
+            )
+        )
+    }
+
+    func testInteractiveTitleBarElementAllowsPassiveGroups() {
+        XCTAssertFalse(
+            AccessibilityService.isInteractiveTitleBarElement(
+                role: kAXGroupRole as String,
+                actions: []
+            )
+        )
+    }
+
+    func testInteractiveTitleBarElementAllowsToolbarShowMenuAction() {
+        XCTAssertFalse(
+            AccessibilityService.isInteractiveTitleBarElement(
+                role: kAXToolbarRole as String,
+                actions: [kAXShowMenuAction as String]
+            )
+        )
+    }
+
+    func testLikelyTabStripTabRejectsDuplicatedLeafGroupInsideTabGroup() {
+        XCTAssertTrue(
+            AccessibilityService.isLikelyTabStripTab(
+                roles: [
+                    kAXGroupRole as String,
+                    kAXGroupRole as String,
+                    "AXTabGroup",
+                    kAXWindowRole as String
+                ],
+                frames: [
+                    CGRect(x: 201, y: 120, width: 248, height: 41),
+                    CGRect(x: 201, y: 120, width: 248, height: 41),
+                    CGRect(x: 198, y: 120, width: 842, height: 41),
+                    CGRect(x: 120, y: 120, width: 920, height: 640)
+                ]
+            )
+        )
+    }
+
+    func testLikelyTabStripTabAllowsSingleSpacerGroupInsideTabGroup() {
+        XCTAssertFalse(
+            AccessibilityService.isLikelyTabStripTab(
+                roles: [
+                    kAXGroupRole as String,
+                    "AXTabGroup",
+                    kAXWindowRole as String
+                ],
+                frames: [
+                    CGRect(x: 481, y: 120, width: 559, height: 41),
+                    CGRect(x: 198, y: 120, width: 842, height: 41),
+                    CGRect(x: 120, y: 120, width: 920, height: 640)
+                ]
             )
         )
     }

@@ -62,6 +62,11 @@ final class TitleBarInterceptionController {
             return .performAction(context.windowContext)
         }
 
+        guard context.draggableRect.contains(location) else {
+            pendingDrag = nil
+            return .passThrough
+        }
+
         pendingDrag = PendingDrag(context: context, location: location)
         return .passThrough
     }

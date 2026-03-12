@@ -33,5 +33,6 @@ struct ClickedWindowContext: @unchecked Sendable {
 
 struct TitleBarInteractionContext: @unchecked Sendable {
     let draggableRect: CGRect
+    let activationRect: CGRect
     let windowContext: ClickedWindowContext
 }

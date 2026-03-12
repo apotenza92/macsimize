@@ -54,6 +54,36 @@ final class DeferredReplayStoreTests: XCTestCase {
         XCTAssertTrue(replaySequence[0].flags.contains(.maskCommand))
     }
 
+    func testGreenButtonSuppressionBlocksOnlyGreenButtonSource() {
+        let store = InterceptionSuppressionStore()
+        store.recordGreenButtonSuppression(for: 42, now: 10, duration: 0.6)
+
+        XCTAssertTrue(store.shouldSuppress(for: .greenButton, frontmostPID: 42, now: 10.2))
+        XCTAssertFalse(store.shouldSuppress(for: .titleBar, frontmostPID: 42, now: 10.2))
+    }
+
+    func testGreenButtonSuppressionDoesNotApplyToDifferentFrontmostApp() {
+        let store = InterceptionSuppressionStore()
+        store.recordGreenButtonSuppression(for: 42, now: 10, duration: 0.6)
+
+        XCTAssertFalse(store.shouldSuppress(for: .greenButton, frontmostPID: 99, now: 10.2))
+    }
+
+    func testGreenButtonSuppressionExpiresAfterTimeout() {
+        let store = InterceptionSuppressionStore()
+        store.recordGreenButtonSuppression(for: 42, now: 10, duration: 0.6)
+
+        XCTAssertFalse(store.shouldSuppress(for: .greenButton, frontmostPID: 42, now: 10.6))
+        XCTAssertTrue(store.isEmpty)
+    }
+
+    func testTitleBarSourceNeverArmsSuppressionState() {
+        let store = InterceptionSuppressionStore()
+
+        XCTAssertFalse(store.shouldSuppress(for: .titleBar, frontmostPID: 42, now: 10))
+        XCTAssertTrue(store.isEmpty)
+    }
+
     private func makeMouseEvent() -> CGEvent {
         let source = CGEventSource(stateID: .hidSystemState)!
         return CGEvent(

@@ -23,7 +23,7 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
     private var holdTimer: DispatchSourceTimer?
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
-    private var postActionSuppressionUntilByPID: [pid_t: TimeInterval] = [:]
+    private let interceptionSuppressionStore = InterceptionSuppressionStore()
     private let deferredReplayStore = DeferredReplayStore()
     private let postActionSuppressionDuration: TimeInterval = 0.6
 
@@ -162,7 +162,7 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
             bufferedEvents.removeAll()
             controller.reset()
             titleBarController.reset()
-            postActionSuppressionUntilByPID.removeAll()
+            interceptionSuppressionStore.removeAll()
             deferredReplayStore.removeAll()
         }
 
@@ -193,6 +193,7 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
                 bufferedEvents.removeAll()
                 controller.reset()
                 titleBarController.reset()
+                self.interceptionSuppressionStore.removeAll()
                 deferredReplayStore.removeAll()
             }
             if let eventTap {
@@ -227,16 +228,17 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
         }
 
         let timestamp = ProcessInfo.processInfo.systemUptime
-        if shouldSuppressInterception(now: timestamp) {
-            return Unmanaged.passUnretained(event)
+        let greenButtonDecision: MouseInterceptionDecision
+        if shouldSuppressGreenButtonInterception(now: timestamp) {
+            greenButtonDecision = .passThrough
+        } else {
+            greenButtonDecision = controller.handleMouseDown(
+                location: event.location,
+                timestamp: timestamp,
+                optionPressed: event.flags.contains(.maskAlternate),
+                configuration: configuration
+            )
         }
-
-        let greenButtonDecision = controller.handleMouseDown(
-            location: event.location,
-            timestamp: timestamp,
-            optionPressed: event.flags.contains(.maskAlternate),
-            configuration: configuration
-        )
 
         switch greenButtonDecision {
         case .passThrough:
@@ -403,7 +405,7 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
             if outcome.handled {
                 self.callbackQueue.async { [weak self] in
                     self?.clearDeferredReplaySequence(for: replayToken)
-                    self?.recordPostActionSuppression(for: windowPID, now: ProcessInfo.processInfo.systemUptime)
+                    self?.recordGreenButtonSuppression(for: windowPID, now: ProcessInfo.processInfo.systemUptime)
                 }
                 return
             }
@@ -431,9 +433,7 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
 
             let outcome = self.actionPerformer.perform(mode: .maximize, context: context)
             if outcome.handled {
-                self.callbackQueue.async { [weak self] in
-                    self?.recordPostActionSuppression(for: context.pid, now: ProcessInfo.processInfo.systemUptime)
-                }
+                return
             }
         }
     }
@@ -468,29 +468,20 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
         return location.y > screen.visibleFrame.maxY
     }
 
-    private func shouldSuppressInterception(now: TimeInterval) -> Bool {
-        pruneExpiredSuppressions(now: now)
-        guard let frontmostPID = NSWorkspace.shared.frontmostApplication?.processIdentifier else {
-            return false
-        }
-        guard let suppressedUntil = postActionSuppressionUntilByPID[frontmostPID] else {
-            return false
-        }
-        if now < suppressedUntil {
-            return true
-        }
-        postActionSuppressionUntilByPID.removeValue(forKey: frontmostPID)
-        return false
+    private func shouldSuppressGreenButtonInterception(now: TimeInterval) -> Bool {
+        interceptionSuppressionStore.shouldSuppress(
+            for: .greenButton,
+            frontmostPID: NSWorkspace.shared.frontmostApplication?.processIdentifier,
+            now: now
+        )
     }
 
-    private func recordPostActionSuppression(for pid: pid_t, now: TimeInterval) {
-        postActionSuppressionUntilByPID[pid] = now + postActionSuppressionDuration
-    }
-
-    private func pruneExpiredSuppressions(now: TimeInterval) {
-        for (pid, deadline) in Array(postActionSuppressionUntilByPID) where deadline <= now {
-            postActionSuppressionUntilByPID.removeValue(forKey: pid)
-        }
+    private func recordGreenButtonSuppression(for pid: pid_t, now: TimeInterval) {
+        interceptionSuppressionStore.recordGreenButtonSuppression(
+            for: pid,
+            now: now,
+            duration: postActionSuppressionDuration
+        )
     }
 
     static func replaySequence(for mode: WindowActionMode, originalEvents: [CGEvent]) -> [CGEvent] {
@@ -521,6 +512,54 @@ protocol WindowActionPerforming {
 
 protocol DragRestorePerforming {
     func performDragRestore(on context: ClickedWindowContext, cursorLocation: CGPoint) -> DragRestoreResult
+}
+
+enum InterceptionSource {
+    case greenButton
+    case titleBar
+}
+
+final class InterceptionSuppressionStore {
+    private var greenButtonSuppressionUntilByPID: [pid_t: TimeInterval] = [:]
+
+    func shouldSuppress(
+        for source: InterceptionSource,
+        frontmostPID: pid_t?,
+        now: TimeInterval
+    ) -> Bool {
+        pruneExpiredSuppressions(now: now)
+
+        guard source == .greenButton,
+              let frontmostPID,
+              let suppressedUntil = greenButtonSuppressionUntilByPID[frontmostPID] else {
+            return false
+        }
+
+        if now < suppressedUntil {
+            return true
+        }
+
+        greenButtonSuppressionUntilByPID.removeValue(forKey: frontmostPID)
+        return false
+    }
+
+    func recordGreenButtonSuppression(for pid: pid_t, now: TimeInterval, duration: TimeInterval) {
+        greenButtonSuppressionUntilByPID[pid] = now + duration
+    }
+
+    func removeAll() {
+        greenButtonSuppressionUntilByPID.removeAll()
+    }
+
+    var isEmpty: Bool {
+        greenButtonSuppressionUntilByPID.isEmpty
+    }
+
+    private func pruneExpiredSuppressions(now: TimeInterval) {
+        for (pid, deadline) in Array(greenButtonSuppressionUntilByPID) where deadline <= now {
+            greenButtonSuppressionUntilByPID.removeValue(forKey: pid)
+        }
+    }
 }
 
 final class DeferredReplayStore {

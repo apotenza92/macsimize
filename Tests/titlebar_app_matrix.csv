@@ -1,0 +1,39 @@
+app_name,bundle_id,family,priority,prep_mode,window_mode,sample_profile,gui_validation,notes
+Finder,com.apple.finder,apple_native_unified_toolbar,P0,finder_home,standard_window,unified_toolbar,always,baseline unified toolbar app
+Safari,com.apple.Safari,apple_native_unified_toolbar,P0,new_browser_window,browser_window,unified_toolbar,always,apple browser reference
+Brave Browser,com.brave.Browser,chromium_browser,P0,new_browser_window,browser_window,browser_tabstrip,always,chromium tabstrip reference
+Google Chrome,com.google.Chrome,chromium_browser,P0,new_browser_window,browser_window,browser_tabstrip,always,second chromium browser reference
+Firefox,org.mozilla.firefox,firefox_browser,P0,open_app_only,browser_window,browser_tabstrip,auto,mozilla browser outlier candidate
+Visual Studio Code,com.microsoft.VSCode,editor_ide_web_shell,P0,open_app_only,editor_window,editor_custom_toolbar,auto,electron editor reference
+Xcode,com.apple.dt.Xcode,editor_ide_native,P0,open_app_only,editor_window,editor_custom_toolbar,always,native ide reference
+Microsoft Word,com.microsoft.Word,office_productivity,P0,open_app_only,document_window,unknown_top_chrome,auto,office suite reference
+Microsoft Excel,com.microsoft.Excel,office_productivity,P0,open_app_only,document_window,unknown_top_chrome,auto,office suite reference
+Microsoft PowerPoint,com.microsoft.Powerpoint,office_productivity,P0,open_app_only,document_window,unknown_top_chrome,auto,office suite reference
+Telegram,ru.keepcoder.Telegram,communication_collaboration,P0,open_app_only,custom_window,unknown_top_chrome,auto,popular communication app
+Discord,com.hnc.Discord,electron_app,P0,open_app_only,custom_window,unknown_top_chrome,auto,popular electron communication app
+Spotify,com.spotify.client,electron_app,P0,open_app_only,custom_window,unknown_top_chrome,auto,popular media app
+ChatGPT,com.openai.chat,electron_app,P0,open_app_only,custom_window,unknown_top_chrome,auto,mainstream ai desktop app
+Claude,com.anthropic.claudefordesktop,electron_app,P0,open_app_only,custom_window,unknown_top_chrome,auto,mainstream ai desktop app
+Zed,dev.zed.Zed,editor_ide_native,P0,open_app_only,editor_window,editor_custom_toolbar,auto,modern native editor
+Cursor,com.todesktop.230313mzl4w4u92,editor_ide_web_shell,P0,open_app_only,editor_window,editor_custom_toolbar,auto,ai editor popularity target
+TextEdit,com.apple.TextEdit,apple_native_standard,P1,new_text_document,document_window,standard_titlebar,auto,native document baseline
+Terminal,com.apple.Terminal,terminal_emulator,P1,activate_existing_window,standard_window,standard_titlebar,auto,apple terminal baseline
+Ghostty,com.mitchellh.ghostty,terminal_emulator,P1,open_app_only,standard_window,standard_titlebar,auto,custom terminal reference
+GitHub Desktop,com.github.GitHubClient,electron_app,P1,open_app_only,custom_window,unknown_top_chrome,auto,electron productivity app
+Obsidian,md.obsidian,electron_app,P1,open_app_only,custom_window,unknown_top_chrome,auto,electron workspace app
+Signal,org.whispersystems.signal-desktop,electron_app,P1,open_app_only,custom_window,unknown_top_chrome,auto,electron messaging app
+WhatsApp,net.whatsapp.WhatsApp,electron_app,P1,open_app_only,custom_window,unknown_top_chrome,auto,electron messaging app
+Messenger,com.facebook.messenger.desktop,electron_app,P1,open_app_only,custom_window,unknown_top_chrome,auto,electron messaging app
+Pocket Casts,com.electron.pocket-casts,electron_app,P1,open_app_only,custom_window,unknown_top_chrome,auto,electron media app
+Reeder,app.reeder,unknown,P1,open_app_only,custom_window,unknown_top_chrome,auto,custom toolbar candidate
+IINA,com.colliderli.iina,media_creation,P1,open_app_only,custom_window,unknown_top_chrome,auto,media player custom chrome candidate
+Kindle,com.amazon.Lassen,unknown,P1,open_app_only,custom_window,unknown_top_chrome,auto,reader app custom chrome candidate
+OneDrive,com.microsoft.OneDrive,utility_menu_or_desktop,P1,open_app_only,utility_window,unknown_top_chrome,auto,desktop utility with settings windows
+Microsoft Outlook,com.microsoft.Outlook,office_productivity,P1,open_app_only,document_window,unknown_top_chrome,auto,office app with dense toolbar
+Microsoft Teams,com.microsoft.teams2,communication_collaboration,P1,open_app_only,custom_window,unknown_top_chrome,auto,popular collaboration app
+LibreOffice,org.libreoffice.script,office_productivity,P1,open_app_only,document_window,unknown_top_chrome,auto,office alternative
+ONLYOFFICE,asc.onlyoffice.ONLYOFFICE,office_productivity,P1,open_app_only,document_window,unknown_top_chrome,auto,office alternative
+Parallels Desktop,com.parallels.desktop.console,utility_menu_or_desktop,P1,open_app_only,custom_window,unknown_top_chrome,auto,virtualization control app
+UTM,com.utmapp.UTM,utility_menu_or_desktop,P1,open_app_only,custom_window,unknown_top_chrome,auto,virtualization control app
+LinearMouse,com.lujjjh.LinearMouse,utility_menu_or_desktop,P1,open_app_only,utility_window,unknown_top_chrome,auto,desktop utility app
+BetterDisplay,pro.betterdisplay.BetterDisplay,utility_menu_or_desktop,P1,open_app_only,utility_window,unknown_top_chrome,auto,desktop utility app

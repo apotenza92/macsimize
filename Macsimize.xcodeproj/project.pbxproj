@@ -128,6 +128,28 @@
 		};
 /* End PBXFrameworksBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		B4A1C2D3E4F5061728394A5B /* Stop Running Macsimize */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Stop Running Macsimize";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -eu\n\n/usr/bin/pkill -x \"Macsimize\" >/dev/null 2>&1 || true\n/usr/bin/pkill -x \"Macsimize Beta\" >/dev/null 2>&1 || true\n/usr/bin/pkill -f '/Macsimize.app/Contents/MacOS/Macsimize' >/dev/null 2>&1 || true\n/usr/bin/pkill -f '/Macsimize Beta.app/Contents/MacOS/Macsimize Beta' >/dev/null 2>&1 || true\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXGroup section */
 		1CA5B21EBCBEB8CADE957DEF /* Utilities */ = {
 			isa = PBXGroup;
@@ -251,6 +273,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 576BBAA446E284E479844812 /* Build configuration list for PBXNativeTarget "Macsimize" */;
 			buildPhases = (
+				B4A1C2D3E4F5061728394A5B /* Stop Running Macsimize */,
 				427B6D1D5872D6C9349C68CA /* Sources */,
 				FF54B3AB2AFA4F3EDAED7EBE /* Frameworks */,
 				8C59DC18BD298E2F19A3CDA7 /* Resources */,
@@ -455,7 +478,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS = "";
-				MARKETING_VERSION = 0.3.3;
+				MARKETING_VERSION = 0.3.4;
 				PRODUCT_BUNDLE_IDENTIFIER = pzc.Macsimize;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -486,7 +509,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS = "";
-				MARKETING_VERSION = 0.3.3;
+				MARKETING_VERSION = 0.3.4;
 				PRODUCT_BUNDLE_IDENTIFIER = pzc.Macsimize;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
