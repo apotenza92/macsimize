@@ -83,18 +83,22 @@ final class MenuBarController: NSObject {
 }
 
 @MainActor
-private enum MacsimizeGlyphImage {
-    private static let image = makeSymbolImage()
+enum MacsimizeGlyphImage {
+    private static let menuBarImage = makeSymbolImage(pointSize: 15)
 
     static func make(size _: NSSize) -> NSImage {
-        image
+        menuBarImage
     }
 
-    private static func makeSymbolImage() -> NSImage {
-        let configuration = NSImage.SymbolConfiguration(pointSize: 15, weight: .regular, scale: .medium)
+    static func image(pointSize: CGFloat) -> NSImage {
+        makeSymbolImage(pointSize: pointSize)
+    }
+
+    private static func makeSymbolImage(pointSize: CGFloat) -> NSImage {
+        let configuration = NSImage.SymbolConfiguration(pointSize: pointSize, weight: .regular, scale: .medium)
         guard let image = NSImage(systemSymbolName: "plus.circle.fill", accessibilityDescription: AppStrings.appAccessibilityLabel)?
             .withSymbolConfiguration(configuration) else {
-            let fallback = NSImage(size: NSSize(width: 18, height: 18))
+            let fallback = NSImage(size: NSSize(width: pointSize, height: pointSize))
             fallback.isTemplate = true
             return fallback
         }

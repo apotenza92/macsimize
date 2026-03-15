@@ -52,8 +52,8 @@ final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdate
             return
         }
 
-        guard !Self.isDevelopmentBuild else {
-            RuntimeLogger.log("UpdateManager disabled in development build")
+        guard AppIdentity.supportsUpdates else {
+            RuntimeLogger.log("UpdateManager disabled for app identity \(AppIdentity.runningIdentity)")
             canCheckForUpdates = false
             updateStatus(AppStrings.updatesDisabledDevelopmentBuild)
             return
@@ -66,7 +66,7 @@ final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdate
             return
         }
 
-        RuntimeLogger.log("UpdateManager configuring updater (requiresLauncherService=\(Self.requiresSparkleInstallerLauncherService))")
+        RuntimeLogger.log("UpdateManager configuring updater (requiresLauncherService=\(Self.requiresSparkleInstallerLauncherService), channel=\(AppIdentity.updateChannelName ?? "none"))")
         updaterController.startUpdater()
         bindUpdaterState()
         bindSettings()
@@ -131,8 +131,10 @@ final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdate
     }
 
     nonisolated func feedURLString(for updater: SPUUpdater) -> String? {
+        guard let channel = AppIdentity.updateChannelName else {
+            return nil
+        }
         let base = "https://raw.githubusercontent.com/apotenza92/macsimize/main/appcasts"
-        let channel = Self.isBetaBuild ? "beta" : "stable"
         let arch = Self.architectureSuffix
         return "\(base)/\(channel)-\(arch).xml"
     }
@@ -189,23 +191,11 @@ final class UpdateManager: NSObject, ObservableObject, @preconcurrency SPUUpdate
         }
     }
 
-    nonisolated private static var isBetaBuild: Bool {
-        Bundle.main.bundleIdentifier?.hasSuffix(".beta") == true
-    }
-
     nonisolated private static var architectureSuffix: String {
         #if arch(arm64)
         return "arm64"
         #else
         return "x64"
-        #endif
-    }
-
-    nonisolated private static var isDevelopmentBuild: Bool {
-        #if DEBUG
-        return true
-        #else
-        return false
         #endif
     }
 

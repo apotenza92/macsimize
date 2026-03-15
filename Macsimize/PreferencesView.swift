@@ -1,6 +1,11 @@
 import AppKit
 import SwiftUI
 
+enum SharedUpdatesSectionStyle {
+    case settings
+    case onboarding
+}
+
 struct PreferencesView: View {
     @ObservedObject private var settings: SettingsStore
     @ObservedObject private var permissions: PermissionsCoordinator
@@ -11,6 +16,7 @@ struct PreferencesView: View {
     private let contentWidth: CGFloat = 360
     private let sectionSpacing: CGFloat = 24
     private let rowSpacing: CGFloat = 12
+
     init(appState: AppState) {
         self.appState = appState
         _settings = ObservedObject(wrappedValue: appState.settings)
@@ -43,7 +49,7 @@ struct PreferencesView: View {
         settingsSection(AppStrings.generalSectionTitle) {
             Toggle(AppStrings.showMenuBarIcon, isOn: $settings.showMenuBarIcon)
             Toggle(AppStrings.showSettingsOnStartup, isOn: $settings.showSettingsOnStartup)
-            Toggle(AppStrings.startAtLogin(appName: appDisplayName), isOn: $settings.startAtLogin)
+            SharedLoginItemSection(settings: settings)
 
             HStack(spacing: 8) {
                 Button(AppStrings.restartButtonTitle) {
@@ -68,59 +74,13 @@ struct PreferencesView: View {
 
     private var permissionsSection: some View {
         settingsSection(AppStrings.permissionsSectionTitle) {
-            if permissions.state.hasVisibleIssue {
-                VStack(alignment: .leading, spacing: 6) {
-                    Label(permissions.state.summary, systemImage: "exclamationmark.triangle.fill")
-                    Text(statusDetailText)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-
-            permissionActionButton(
-                title: AppStrings.accessibilityButtonTitle,
-                description: AppStrings.permissionAccessibilityWhyNeeded,
-                granted: permissions.state.accessibilityTrusted,
-                action: appState.openAccessibilitySettings
-            )
-            permissionActionButton(
-                title: AppStrings.inputMonitoringButtonTitle,
-                description: AppStrings.permissionInputMonitoringWhyNeeded,
-                granted: permissions.state.inputMonitoringGranted,
-                action: appState.openInputMonitoringSettings
-            )
+            SharedPermissionsSection(appState: appState)
         }
     }
 
     private var updatesSection: some View {
         settingsSection(AppStrings.updatesSectionTitle) {
-            HStack(alignment: .center, spacing: 12) {
-                Button(
-                    updateManager.hasAvailableUpdate
-                        ? AppStrings.installUpdateButtonTitle
-                        : AppStrings.checkForUpdatesButtonTitle,
-                    action: updateManager.checkForUpdates
-                )
-                .disabled(!updateManager.canCheckForUpdates || updateManager.isCheckingForUpdates)
-                .fixedSize()
-
-                Spacer(minLength: 0)
-
-                Text(AppStrings.checkFrequencyCompactLabel)
-                    .foregroundStyle(.secondary)
-
-                Picker("", selection: $settings.updateCheckFrequency) {
-                    ForEach(UpdateCheckFrequency.allCases) { frequency in
-                        Text(frequency.displayName).tag(frequency)
-                    }
-                }
-                .labelsHidden()
-                .frame(width: 104, alignment: .leading)
-            }
-
-            Text(updateManager.updateStatusMessage ?? AppStrings.currentVersionStatusMessage)
-                .foregroundStyle(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
+            SharedUpdatesSection(settings: settings, updateManager: updateManager, style: .settings)
         }
     }
 
@@ -149,30 +109,6 @@ struct PreferencesView: View {
         )
     }
 
-    private func permissionActionButton(
-        title: String,
-        description: String,
-        granted: Bool,
-        action: @escaping () -> Void
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline, spacing: 12) {
-                Button(title, action: action)
-                permissionStatusBadge(granted: granted)
-            }
-
-            Text(description)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    private func permissionStatusBadge(granted: Bool) -> some View {
-        Image(systemName: granted ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-            .font(.system(size: 14, weight: .semibold))
-            .foregroundStyle(granted ? .green : .orange)
-    }
-
     private func settingsSection<Content: View>(
         _ title: String,
         @ViewBuilder content: () -> Content
@@ -191,12 +127,137 @@ struct PreferencesView: View {
         }
         NSWorkspace.shared.open(url)
     }
+}
 
-    private var statusDetailText: String {
-        var detail = permissions.state.detail
-        if settings.selectedAction == .maximize && !permissions.state.eventTapRunning {
-            detail += " \(AppStrings.inactiveInterceptionWarning)"
+struct SharedLoginItemSection: View {
+    @ObservedObject var settings: SettingsStore
+
+    var body: some View {
+        if AppIdentity.supportsLoginItem {
+            Toggle(AppStrings.startAtLogin(appName: AppIdentity.displayName), isOn: $settings.startAtLogin)
+        } else {
+            Text("Start at Login is unavailable in development builds.")
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
-        return detail
+    }
+}
+
+struct SharedUpdatesSection: View {
+    @ObservedObject var settings: SettingsStore
+    @ObservedObject var updateManager: UpdateManager
+    let style: SharedUpdatesSectionStyle
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if AppIdentity.supportsUpdates {
+                HStack(alignment: .center, spacing: 12) {
+                    Button(
+                        updateManager.hasAvailableUpdate
+                            ? AppStrings.installUpdateButtonTitle
+                            : AppStrings.checkForUpdatesButtonTitle,
+                        action: updateManager.checkForUpdates
+                    )
+                    .disabled(!updateManager.canCheckForUpdates || updateManager.isCheckingForUpdates)
+                    .fixedSize()
+
+                    Spacer(minLength: 0)
+
+                    Text(AppStrings.checkFrequencyCompactLabel)
+                        .foregroundStyle(.secondary)
+
+                    Picker("", selection: $settings.updateCheckFrequency) {
+                        ForEach(UpdateCheckFrequency.allCases) { frequency in
+                            Text(frequency.displayName).tag(frequency)
+                        }
+                    }
+                    .labelsHidden()
+                    .frame(width: style == .settings ? 104 : 132, alignment: .leading)
+                }
+            } else {
+                Text(updateManager.updateStatusMessage ?? AppStrings.updatesDisabledDevelopmentBuild)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Text(updateManager.updateStatusMessage ?? AppStrings.currentVersionStatusMessage)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
+struct SharedPermissionsSection: View {
+    @ObservedObject private var permissions: PermissionsCoordinator
+
+    private let appState: AppState
+
+    init(appState: AppState) {
+        self.appState = appState
+        _permissions = ObservedObject(wrappedValue: appState.permissions)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            permissionRow(
+                title: AppStrings.accessibilityButtonTitle,
+                infoText: AppStrings.permissionAccessibilityWhyNeeded,
+                granted: permissions.state.accessibilityTrusted,
+                action: appState.openAccessibilitySettings
+            )
+
+            permissionRow(
+                title: AppStrings.inputMonitoringButtonTitle,
+                infoText: AppStrings.permissionInputMonitoringWhyNeeded,
+                granted: permissions.state.inputMonitoringGranted,
+                action: appState.openInputMonitoringSettings
+            )
+
+            if let footerText {
+                Text(footerText)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private func permissionRow(
+        title: String,
+        infoText: String,
+        granted: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        HStack(alignment: .center, spacing: 10) {
+            HStack(alignment: .center, spacing: 8) {
+                Image(systemName: granted ? "checkmark.circle.fill" : "exclamationmark.circle")
+                    .foregroundStyle(granted ? Color.green : Color.orange)
+
+                Text(title)
+                    .font(.body.weight(.medium))
+                    .lineLimit(1)
+
+                Image(systemName: "info.circle")
+                    .foregroundStyle(.secondary)
+                    .help(infoText)
+            }
+
+            Spacer(minLength: 0)
+
+            Button(AppStrings.openSettingsButtonTitle, action: action)
+                .buttonStyle(.bordered)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var footerText: String? {
+        if permissions.state.allRequiredPermissionsGranted {
+            return "All required permissions are enabled."
+        }
+
+        if permissions.state.secureEventInputEnabled {
+            return AppStrings.permissionDetailSecureEventInput
+        }
+
+        return nil
     }
 }

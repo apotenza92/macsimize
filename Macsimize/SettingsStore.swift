@@ -9,6 +9,7 @@ final class SettingsStore: ObservableObject {
         static let showMenuBarIcon = "showMenuBarIcon"
         static let showSettingsOnStartup = "showSettingsOnStartup"
         static let firstLaunchCompleted = "firstLaunchCompleted"
+        static let onboardingCompleted = "onboardingCompleted"
         static let startAtLogin = "startAtLogin"
         static let updateCheckFrequency = "updateCheckFrequency"
         static let lastUpdateCheckTimestamp = "lastUpdateCheckTimestamp"
@@ -41,15 +42,31 @@ final class SettingsStore: ObservableObject {
         }
     }
 
-    @Published var firstLaunchCompleted: Bool {
+    @Published private(set) var firstLaunchCompleted: Bool {
         didSet {
             userDefaults.set(firstLaunchCompleted, forKey: Key.firstLaunchCompleted)
+        }
+    }
+
+    @Published private(set) var onboardingCompleted: Bool {
+        didSet {
+            userDefaults.set(onboardingCompleted, forKey: Key.onboardingCompleted)
         }
     }
 
     @Published var startAtLogin: Bool {
         didSet {
             guard !applyingLoginItemChange else {
+                return
+            }
+
+            guard AppIdentity.supportsLoginItem else {
+                if startAtLogin {
+                    applyingLoginItemChange = true
+                    startAtLogin = false
+                    applyingLoginItemChange = false
+                }
+                userDefaults.set(false, forKey: Key.startAtLogin)
                 return
             }
 
@@ -83,6 +100,14 @@ final class SettingsStore: ObservableObject {
         }
     }
 
+    var isOnboardingCompleted: Bool {
+        onboardingCompleted
+    }
+
+    var shouldPresentOnboarding: Bool {
+        !isOnboardingCompleted
+    }
+
     init(userDefaults: UserDefaults = .standard) {
         self.userDefaults = userDefaults
 
@@ -95,22 +120,37 @@ final class SettingsStore: ObservableObject {
         let diagnosticsEnabled = userDefaults.object(forKey: Key.diagnosticsEnabled) as? Bool ?? true
         let showMenuBarIcon = userDefaults.object(forKey: Key.showMenuBarIcon) as? Bool ?? true
         let showSettingsOnStartup = userDefaults.object(forKey: Key.showSettingsOnStartup) as? Bool ?? false
-        let firstLaunchCompleted = userDefaults.object(forKey: Key.firstLaunchCompleted) as? Bool ?? false
+        let legacyFirstLaunchCompleted = userDefaults.object(forKey: Key.firstLaunchCompleted) as? Bool ?? false
+        let storedOnboardingCompleted = userDefaults.object(forKey: Key.onboardingCompleted) as? Bool
+        let onboardingCompleted = storedOnboardingCompleted ?? legacyFirstLaunchCompleted
+        if storedOnboardingCompleted == nil && onboardingCompleted {
+            userDefaults.set(true, forKey: Key.onboardingCompleted)
+        }
         let updateCheckFrequency = UpdateCheckFrequency(
             rawValue: userDefaults.string(forKey: Key.updateCheckFrequency) ?? ""
         ) ?? .weekly
         let lastUpdateCheckTimestamp = userDefaults.object(forKey: Key.lastUpdateCheckTimestamp) as? TimeInterval ?? 0
-        let startAtLogin = userDefaults.object(forKey: Key.startAtLogin) as? Bool ?? false
+        let startAtLogin = (userDefaults.object(forKey: Key.startAtLogin) as? Bool ?? false) && AppIdentity.supportsLoginItem
 
         self.selectedAction = selectedAction
         self.diagnosticsEnabled = diagnosticsEnabled
         self.showMenuBarIcon = showMenuBarIcon
         self.showSettingsOnStartup = showSettingsOnStartup
-        self.firstLaunchCompleted = firstLaunchCompleted
+        self.firstLaunchCompleted = legacyFirstLaunchCompleted || onboardingCompleted
+        self.onboardingCompleted = onboardingCompleted
         self.startAtLogin = startAtLogin
         self.updateCheckFrequency = updateCheckFrequency
         self.lastUpdateCheckTimestamp = lastUpdateCheckTimestamp
         userDefaults.removeObject(forKey: "excludedBundleIDs")
+    }
+
+    func completeOnboarding() {
+        if !onboardingCompleted {
+            onboardingCompleted = true
+        }
+        if !firstLaunchCompleted {
+            firstLaunchCompleted = true
+        }
     }
 
     func markUpdateCheckNow(now: Date = Date()) {
@@ -128,16 +168,6 @@ final class SettingsStore: ObservableObject {
             let elapsed = now.timeIntervalSince1970 - lastUpdateCheckTimestamp
             return elapsed >= interval
         }
-    }
-
-    func shouldShowSettingsOnLaunch(
-        explicitSettingsRequest: Bool,
-        needsPermissions: Bool
-    ) -> Bool {
-        !firstLaunchCompleted
-            || explicitSettingsRequest
-            || showSettingsOnStartup
-            || needsPermissions
     }
 
     private static func migratedAction(from storedRawValue: String?) -> WindowActionMode {

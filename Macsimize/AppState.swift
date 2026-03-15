@@ -80,14 +80,16 @@ final class AppState: ObservableObject {
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
             NSWorkspace.shared.open(url)
         }
-        requestAccessibilityPermission()
+        permissions.startMonitoringForChanges()
+        refreshPermissions(promptIfNeeded: false)
     }
 
     func openInputMonitoringSettings() {
         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent") {
             NSWorkspace.shared.open(url)
         }
-        requestInputMonitoringPermission()
+        permissions.startMonitoringForChanges()
+        refreshPermissions(promptIfNeeded: false)
     }
 
     func showAboutPanel() {
@@ -489,6 +491,79 @@ private final class BatchExecutionMetrics: @unchecked Sendable {
 }
 
 enum AppIdentity {
+    enum RunningIdentity: Equatable {
+        case stable
+        case beta
+        case development
+        case unknown
+    }
+
+    static let stableBundleIdentifier = "pzc.Macsimize"
+    static let betaBundleIdentifier = "pzc.Macsimize.beta"
+    static let developmentBundleIdentifier = "pzc.Macsimize.dev"
+
+    static var bundleIdentifier: String {
+        Bundle.main.bundleIdentifier ?? ""
+    }
+
+    static var runningIdentity: RunningIdentity {
+        runningIdentity(bundleIdentifier: bundleIdentifier)
+    }
+
+    static func runningIdentity(bundleIdentifier: String?) -> RunningIdentity {
+        switch bundleIdentifier ?? "" {
+        case stableBundleIdentifier:
+            return .stable
+        case betaBundleIdentifier:
+            return .beta
+        case developmentBundleIdentifier:
+            return .development
+        default:
+            return .unknown
+        }
+    }
+
+    static var supportsUpdates: Bool {
+        supportsUpdates(bundleIdentifier: bundleIdentifier)
+    }
+
+    static func supportsUpdates(bundleIdentifier: String?) -> Bool {
+        switch runningIdentity(bundleIdentifier: bundleIdentifier) {
+        case .stable, .beta:
+            return true
+        case .development, .unknown:
+            return false
+        }
+    }
+
+    static var supportsLoginItem: Bool {
+        supportsLoginItem(bundleIdentifier: bundleIdentifier)
+    }
+
+    static func supportsLoginItem(bundleIdentifier: String?) -> Bool {
+        switch runningIdentity(bundleIdentifier: bundleIdentifier) {
+        case .stable, .beta:
+            return true
+        case .development, .unknown:
+            return false
+        }
+    }
+
+    static var updateChannelName: String? {
+        updateChannelName(bundleIdentifier: bundleIdentifier)
+    }
+
+    static func updateChannelName(bundleIdentifier: String?) -> String? {
+        switch runningIdentity(bundleIdentifier: bundleIdentifier) {
+        case .stable:
+            return "stable"
+        case .beta:
+            return "beta"
+        case .development, .unknown:
+            return nil
+        }
+    }
+
     static var displayName: String {
         displayName(bundle: .main)
     }

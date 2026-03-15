@@ -4,6 +4,8 @@ import AppKit
 
 struct IconSpec {
     let size: Int
+    let logicalSize: String
+    let scale: String
     let filename: String
 }
 
@@ -13,12 +15,10 @@ struct IconTheme {
     let glow: NSColor
     let sheenTop: NSColor
     let sheenBottom: NSColor
-    let panelTop: NSColor
-    let panelBottom: NSColor
-    let panelStroke: NSColor
     let vignette: NSColor
     let glyphTopAlpha: CGFloat
     let glyphBottomAlpha: CGFloat
+    let glyphShadow: NSColor
 }
 
 struct IconSet {
@@ -28,16 +28,16 @@ struct IconSet {
 }
 
 let specs: [IconSpec] = [
-    .init(size: 16, filename: "icon_16x16.png"),
-    .init(size: 32, filename: "icon_16x16@2x.png"),
-    .init(size: 32, filename: "icon_32x32.png"),
-    .init(size: 64, filename: "icon_32x32@2x.png"),
-    .init(size: 128, filename: "icon_128x128.png"),
-    .init(size: 256, filename: "icon_128x128@2x.png"),
-    .init(size: 256, filename: "icon_256x256.png"),
-    .init(size: 512, filename: "icon_256x256@2x.png"),
-    .init(size: 512, filename: "icon_512x512.png"),
-    .init(size: 1024, filename: "icon_512x512@2x.png")
+    .init(size: 16, logicalSize: "16x16", scale: "1x", filename: "icon_16x16.png"),
+    .init(size: 32, logicalSize: "16x16", scale: "2x", filename: "icon_16x16@2x.png"),
+    .init(size: 32, logicalSize: "32x32", scale: "1x", filename: "icon_32x32.png"),
+    .init(size: 64, logicalSize: "32x32", scale: "2x", filename: "icon_32x32@2x.png"),
+    .init(size: 128, logicalSize: "128x128", scale: "1x", filename: "icon_128x128.png"),
+    .init(size: 256, logicalSize: "128x128", scale: "2x", filename: "icon_128x128@2x.png"),
+    .init(size: 256, logicalSize: "256x256", scale: "1x", filename: "icon_256x256.png"),
+    .init(size: 512, logicalSize: "256x256", scale: "2x", filename: "icon_256x256@2x.png"),
+    .init(size: 512, logicalSize: "512x512", scale: "1x", filename: "icon_512x512.png"),
+    .init(size: 1024, logicalSize: "512x512", scale: "2x", filename: "icon_512x512@2x.png")
 ]
 
 let stableTheme = IconTheme(
@@ -45,13 +45,11 @@ let stableTheme = IconTheme(
     baseBottom: NSColor(calibratedRed: 0.17, green: 0.73, blue: 0.27, alpha: 1.0),
     glow: NSColor(calibratedRed: 0.84, green: 1.00, blue: 0.86, alpha: 0.34),
     sheenTop: NSColor(calibratedRed: 1.00, green: 1.00, blue: 1.00, alpha: 0.16),
-    sheenBottom: NSColor(calibratedRed: 0.86, green: 1.00, blue: 0.87, alpha: 0.0),
-    panelTop: NSColor(calibratedRed: 0.98, green: 1.00, blue: 0.99, alpha: 0.10),
-    panelBottom: NSColor(calibratedRed: 0.08, green: 0.42, blue: 0.12, alpha: 0.10),
-    panelStroke: NSColor(calibratedRed: 1.00, green: 1.00, blue: 1.00, alpha: 0.12),
+    sheenBottom: NSColor(calibratedRed: 0.86, green: 1.00, blue: 0.87, alpha: 0.00),
     vignette: NSColor(calibratedRed: 0.05, green: 0.30, blue: 0.09, alpha: 0.16),
     glyphTopAlpha: 0.98,
-    glyphBottomAlpha: 0.82
+    glyphBottomAlpha: 0.82,
+    glyphShadow: NSColor(calibratedWhite: 0.0, alpha: 0.14)
 )
 
 let betaTheme = IconTheme(
@@ -59,13 +57,11 @@ let betaTheme = IconTheme(
     baseBottom: NSColor(calibratedRed: 0.33, green: 0.19, blue: 0.82, alpha: 1.0),
     glow: NSColor(calibratedRed: 0.87, green: 0.92, blue: 1.00, alpha: 0.58),
     sheenTop: NSColor(calibratedRed: 1.00, green: 1.00, blue: 1.00, alpha: 0.22),
-    sheenBottom: NSColor(calibratedRed: 0.88, green: 0.91, blue: 1.00, alpha: 0.0),
-    panelTop: NSColor(calibratedRed: 0.99, green: 0.99, blue: 1.00, alpha: 0.18),
-    panelBottom: NSColor(calibratedRed: 0.15, green: 0.11, blue: 0.42, alpha: 0.22),
-    panelStroke: NSColor(calibratedRed: 1.00, green: 1.00, blue: 1.00, alpha: 0.19),
+    sheenBottom: NSColor(calibratedRed: 0.88, green: 0.91, blue: 1.00, alpha: 0.00),
     vignette: NSColor(calibratedRed: 0.08, green: 0.07, blue: 0.24, alpha: 0.28),
     glyphTopAlpha: 0.98,
-    glyphBottomAlpha: 0.78
+    glyphBottomAlpha: 0.78,
+    glyphShadow: NSColor(calibratedWhite: 0.0, alpha: 0.16)
 )
 
 let iconSets: [IconSet] = [
@@ -121,7 +117,7 @@ func drawCirclePlusGlyph(in rect: NSRect, strokeColor: NSColor, lineWidth: CGFlo
     NSGraphicsContext.restoreGraphicsState()
 }
 
-func drawGlyphVerticalGradient(in rect: NSRect, lineWidth: CGFloat, topAlpha: CGFloat, bottomAlpha: CGFloat) {
+func drawGlyphVerticalGradient(in rect: NSRect, lineWidth: CGFloat, topAlpha: CGFloat, bottomAlpha: CGFloat, shadowColor: NSColor) {
     let maskImage = NSImage(size: rect.size)
     maskImage.lockFocus()
     NSColor.clear.setFill()
@@ -144,6 +140,7 @@ func drawGlyphVerticalGradient(in rect: NSRect, lineWidth: CGFloat, topAlpha: CG
     }
 
     ctx.saveGState()
+    ctx.setShadow(offset: CGSize(width: 0, height: -rect.height * 0.01), blur: rect.width * 0.04, color: shadowColor.cgColor)
     ctx.clip(to: rect, mask: maskCG)
     ctx.drawLinearGradient(
         gradient,
@@ -204,16 +201,16 @@ func drawIcon(size: Int, theme: IconTheme) -> NSBitmapImageRep {
     NSGraphicsContext.restoreGraphicsState()
 
     let outerStroke = roundedRect(outerRect.insetBy(dx: s * 0.004, dy: s * 0.004), radius: s * 0.23)
-    NSColor(calibratedWhite: 1.0, alpha: 0.14).setStroke()
+    NSColor(calibratedWhite: 1.0, alpha: 0.16).setStroke()
     outerStroke.lineWidth = max(1.0, s * 0.01)
     outerStroke.stroke()
 
-    let glyphRect = outerRect
     drawGlyphVerticalGradient(
-        in: glyphRect,
+        in: outerRect,
         lineWidth: 1.85,
         topAlpha: theme.glyphTopAlpha,
-        bottomAlpha: theme.glyphBottomAlpha
+        bottomAlpha: theme.glyphBottomAlpha,
+        shadowColor: theme.glyphShadow
     )
 
     return rep
@@ -227,23 +224,10 @@ func writePNG(_ rep: NSBitmapImageRep, to url: URL) throws {
 }
 
 func appIconContentsJSON() -> String {
-    """
-    {
-      "images" : [
-        { "filename" : "icon_16x16.png", "idiom" : "mac", "scale" : "1x", "size" : "16x16" },
-        { "filename" : "icon_16x16@2x.png", "idiom" : "mac", "scale" : "2x", "size" : "16x16" },
-        { "filename" : "icon_32x32.png", "idiom" : "mac", "scale" : "1x", "size" : "32x32" },
-        { "filename" : "icon_32x32@2x.png", "idiom" : "mac", "scale" : "2x", "size" : "32x32" },
-        { "filename" : "icon_128x128.png", "idiom" : "mac", "scale" : "1x", "size" : "128x128" },
-        { "filename" : "icon_128x128@2x.png", "idiom" : "mac", "scale" : "2x", "size" : "128x128" },
-        { "filename" : "icon_256x256.png", "idiom" : "mac", "scale" : "1x", "size" : "256x256" },
-        { "filename" : "icon_256x256@2x.png", "idiom" : "mac", "scale" : "2x", "size" : "256x256" },
-        { "filename" : "icon_512x512.png", "idiom" : "mac", "scale" : "1x", "size" : "512x512" },
-        { "filename" : "icon_512x512@2x.png", "idiom" : "mac", "scale" : "2x", "size" : "512x512" }
-      ],
-      "info" : { "author" : "xcode", "version" : 1 }
+    let imageEntries = specs.map { spec in
+        "    { \"filename\" : \"\(spec.filename)\", \"idiom\" : \"mac\", \"scale\" : \"\(spec.scale)\", \"size\" : \"\(spec.logicalSize)\" }"
     }
-    """
+    return "{\n  \"images\" : [\n\(imageEntries.joined(separator: ",\n"))\n  ],\n  \"info\" : { \"author\" : \"xcode\", \"version\" : 1 }\n}\n"
 }
 
 func writeCatalogScaffolding() throws {

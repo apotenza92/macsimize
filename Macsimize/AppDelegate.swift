@@ -13,7 +13,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var openSettingsObserver: NSObjectProtocol?
     private var updateManager: UpdateManager { appState.updateManager }
     private let isAutomatedTestSuite = ProcessInfo.processInfo.environment["MACSIMIZE_TEST_SUITE"] == "1"
-    private var scheduledPermissionPrompts: [DispatchWorkItem] = []
     private var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -24,11 +23,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let launchRequestsSettings = ProcessInfo.processInfo.arguments.contains { openSettingsLaunchArguments.contains($0) }
         let finderLaunch = isFinderLaunch()
-        let explicitSettingsRequest = launchRequestsSettings || finderLaunch
-
-        // Finder-style relaunches are also used by restart/update flows.
-        // Hand off only explicit settings launches to an already-running instance.
-        let shouldRequestSettingsFromExisting = launchRequestsSettings
+        let needsPermissions = !appState.permissions.state.allRequiredPermissionsGranted
+        let launchDecision = LaunchBehavior.decide(
+            LaunchBehaviorInput(
+                isDevelopmentBuild: AppIdentity.runningIdentity == .development,
+                onboardingCompleted: appState.settings.isOnboardingCompleted,
+                showSettingsOnStartup: appState.settings.showSettingsOnStartup,
+                launchArgumentsRequestSettings: launchRequestsSettings,
+                launchedFromFinder: finderLaunch,
+                needsPermissions: needsPermissions
+            )
+        )
 
         if launchRequestsSettings {
             RuntimeLogger.log("Launch argument requested settings window")
@@ -37,28 +42,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             RuntimeLogger.log("Finder launch detected")
         }
 
-        if resolveRunningInstances(shouldRequestSettingsFromExisting: shouldRequestSettingsFromExisting) {
+        if resolveRunningInstances(shouldRequestSettingsFromExisting: launchDecision.shouldRequestSettingsFromExistingInstance) {
             return
         }
 
         bindSettings()
         updateMenuBarIconVisibility(isVisible: appState.settings.showMenuBarIcon)
 
-        let firstLaunch = !appState.settings.firstLaunchCompleted
-        let needsPermissions = !appState.permissions.state.allRequiredPermissionsGranted
-        let shouldShowSettings = appState.settings.shouldShowSettingsOnLaunch(
-            explicitSettingsRequest: explicitSettingsRequest,
-            needsPermissions: needsPermissions
-        )
-
         DispatchQueue.main.async {
-            if shouldShowSettings {
-                self.showSettingsWindow()
-            }
-            self.handlePermissionsIfNeeded(allowPrompt: shouldShowSettings)
-            if firstLaunch {
-                self.appState.settings.firstLaunchCompleted = true
-            }
+            self.showInitialWindow(for: launchDecision.initialWindowRequest)
+            self.handlePermissionsIfNeeded()
         }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
@@ -68,7 +61,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        cancelScheduledPermissionPrompts()
         if let openSettingsObserver {
             DistributedNotificationCenter.default().removeObserver(openSettingsObserver)
             self.openSettingsObserver = nil
@@ -84,7 +76,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func showSettingsWindow() {
         RuntimeLogger.log("Opening settings window")
-        settingsWindowController.show()
+        settingsWindowController.show(request: .settings(explicit: true))
     }
 
     func maximizeAllCurrentSpaceWindows() {
@@ -97,9 +89,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         appState.restoreAllCurrentSpaceWindows()
     }
 
-    private func handlePermissionsIfNeeded(allowPrompt: Bool) {
-        cancelScheduledPermissionPrompts()
+    private func showInitialWindow(for request: InitialWindowRequest) {
+        guard request != .none else {
+            return
+        }
+        settingsWindowController.show(request: request)
+    }
 
+    private func handlePermissionsIfNeeded() {
         let permissionState = appState.permissions.state
         let needsAccessibility = !permissionState.accessibilityTrusted
         let needsInputMonitoring = !permissionState.inputMonitoringGranted
@@ -110,51 +107,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        RuntimeLogger.log("Permissions missing on launch; waiting for onboarding or settings actions before requesting them")
         appState.permissions.startMonitoringForChanges()
-
-        guard allowPrompt else {
-            return
-        }
-
-        schedulePermissionPrompts(
-            needsAccessibility: needsAccessibility,
-            needsInputMonitoring: needsInputMonitoring
-        )
-    }
-
-    private func schedulePermissionPrompts(
-        needsAccessibility: Bool,
-        needsInputMonitoring: Bool
-    ) {
-        if needsAccessibility {
-            let accessibilityPrompt = DispatchWorkItem { [weak self] in
-                guard let self else { return }
-                guard !self.appState.permissions.state.accessibilityTrusted else { return }
-                RuntimeLogger.log("Prompting for Accessibility permission after launch delay")
-                self.appState.requestAccessibilityPermission()
-            }
-            scheduledPermissionPrompts.append(accessibilityPrompt)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: accessibilityPrompt)
-        }
-
-        if needsInputMonitoring {
-            let inputMonitoringPrompt = DispatchWorkItem { [weak self] in
-                guard let self else { return }
-                guard !self.appState.permissions.state.inputMonitoringGranted else { return }
-                RuntimeLogger.log("Prompting for Input Monitoring permission after launch delay")
-                self.appState.requestInputMonitoringPermission()
-            }
-            scheduledPermissionPrompts.append(inputMonitoringPrompt)
-            let delay: TimeInterval = needsAccessibility ? 3.5 : 1.5
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: inputMonitoringPrompt)
-        }
-    }
-
-    private func cancelScheduledPermissionPrompts() {
-        for workItem in scheduledPermissionPrompts {
-            workItem.cancel()
-        }
-        scheduledPermissionPrompts.removeAll()
     }
 
     private func isFinderLaunch() -> Bool {

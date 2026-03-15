@@ -10,6 +10,12 @@
 		0078EB4061C4BF4D2D37EFC5 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCC9EABC0A52521090781119 /* SettingsStore.swift */; };
 		0866F34659970F00A62F1AB6 /* GreenButtonInterceptionControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85477C08043CBA13C681FD8E /* GreenButtonInterceptionControllerTests.swift */; };
 		0C72948B6836D3F29DE95890 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B04EA2F430D809B32F21432 /* PreferencesView.swift */; };
+		0C72948B6836D3F29DE95891 /* SettingsRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B04EA2F430D809B32F21433 /* SettingsRootView.swift */; };
+		0C72948B6836D3F29DE95892 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B04EA2F430D809B32F21434 /* OnboardingView.swift */; };
+		0C72948B6836D3F29DE95893 /* LaunchBehavior.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B04EA2F430D809B32F21435 /* LaunchBehavior.swift */; };
+		0C72948B6836D3F29DE95894 /* LaunchBehaviorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B04EA2F430D809B32F21436 /* LaunchBehaviorTests.swift */; };
+		0C72948B6836D3F29DE95895 /* SettingsStoreMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B04EA2F430D809B32F21437 /* SettingsStoreMigrationTests.swift */; };
+		0C72948B6836D3F29DE95896 /* AppIdentityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B04EA2F430D809B32F21438 /* AppIdentityTests.swift */; };
 		0FA1A55B4B944A29A3A41531 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7EBA0D193235411C9188C66A /* Assets.xcassets */; };
 		13F814B4EC99459FB7A7B9E1 /* AccessibilityServiceCurrentSpaceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13F814B3EC99459FB7A7B9E1 /* AccessibilityServiceCurrentSpaceTests.swift */; };
 		21F092E0D2C54D0B178BF7E8 /* WindowFrameStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A6D0D4D5F0829BF1A678276 /* WindowFrameStoreTests.swift */; };
@@ -81,6 +87,13 @@
 		77EFEEA6F298CB61FC79BB4C /* MenuBarController.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
 		78E4CED87C9A622E1DF8399B /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.0.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
 		7B04EA2F430D809B32F21432 /* PreferencesView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
+		7B04EA2F430D809B32F21433 /* SettingsRootView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsRootView.swift; sourceTree = "<group>"; };
+		7B04EA2F430D809B32F21434 /* OnboardingView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		7B04EA2F430D809B32F21435 /* LaunchBehavior.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LaunchBehavior.swift; sourceTree = "<group>"; };
+		7B04EA2F430D809B32F21436 /* LaunchBehaviorTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LaunchBehaviorTests.swift; sourceTree = "<group>"; };
+		7B04EA2F430D809B32F21437 /* SettingsStoreMigrationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsStoreMigrationTests.swift; sourceTree = "<group>"; };
+		7B04EA2F430D809B32F21438 /* AppIdentityTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppIdentityTests.swift; sourceTree = "<group>"; };
+		7B04EA2F430D809B32F21439 /* Info-Debug.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Info-Debug.plist"; sourceTree = "<group>"; };
 		7EBA0D193235411C9188C66A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		85477C08043CBA13C681FD8E /* GreenButtonInterceptionControllerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GreenButtonInterceptionControllerTests.swift; sourceTree = "<group>"; };
 		8A825EE6AF3223A8F3F1FFD1 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -146,7 +159,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -eu\n\n/usr/bin/pkill -x \"Macsimize\" >/dev/null 2>&1 || true\n/usr/bin/pkill -x \"Macsimize Beta\" >/dev/null 2>&1 || true\n/usr/bin/pkill -f '/Macsimize.app/Contents/MacOS/Macsimize' >/dev/null 2>&1 || true\n/usr/bin/pkill -f '/Macsimize Beta.app/Contents/MacOS/Macsimize Beta' >/dev/null 2>&1 || true\n";
+			shellScript = "set -eu\n\n/usr/bin/pkill -x \"Macsimize\" >/dev/null 2>&1 || true\n/usr/bin/pkill -x \"Macsimize Beta\" >/dev/null 2>&1 || true\n/usr/bin/pkill -x \"Macsimize Dev\" >/dev/null 2>&1 || true\n/usr/bin/pkill -f '/Macsimize.app/Contents/MacOS/Macsimize' >/dev/null 2>&1 || true\n/usr/bin/pkill -f '/Macsimize Beta.app/Contents/MacOS/Macsimize Beta' >/dev/null 2>&1 || true\n/usr/bin/pkill -f '/Macsimize Dev.app/Contents/MacOS/Macsimize Dev' >/dev/null 2>&1 || true\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -175,6 +188,7 @@
 				1CA5B21EBCBEB8CADE957DEF /* Utilities */,
 				7EBA0D193235411C9188C66A /* Assets.xcassets */,
 				D49364C02B10669742DA715E /* Info.plist */,
+				7B04EA2F430D809B32F21439 /* Info-Debug.plist */,
 				5C288B7CC408B2FDFF17DE83 /* Macsimize.entitlements */,
 				CB8C7A9E5C3303B2FFBCE1B3 /* MacsimizeApp.swift */,
 				A04B5546F5A64D0E8E6BC282 /* AppStrings.swift */,
@@ -182,6 +196,9 @@
 				C84A9F92F687B14DF66FC445 /* AppState.swift */,
 				77EFEEA6F298CB61FC79BB4C /* MenuBarController.swift */,
 				45C27532EEB4187EB32351B1 /* SettingsWindowController.swift */,
+				7B04EA2F430D809B32F21435 /* LaunchBehavior.swift */,
+				7B04EA2F430D809B32F21433 /* SettingsRootView.swift */,
+				7B04EA2F430D809B32F21434 /* OnboardingView.swift */,
 				7B04EA2F430D809B32F21432 /* PreferencesView.swift */,
 				DCC9EABC0A52521090781119 /* SettingsStore.swift */,
 				A1B2C3D4E5F60718293A4B5F /* UpdateManager.swift */,
@@ -237,7 +254,10 @@
 			children = (
 				13F814B3EC99459FB7A7B9E1 /* AccessibilityServiceCurrentSpaceTests.swift */,
 				35FE782955EC4B039E2424A8 /* AppStringsTests.swift */,
+				7B04EA2F430D809B32F21438 /* AppIdentityTests.swift */,
+				7B04EA2F430D809B32F21436 /* LaunchBehaviorTests.swift */,
 				56F75A96FF840A05E84CFA8F /* SettingsStoreTests.swift */,
+				7B04EA2F430D809B32F21437 /* SettingsStoreMigrationTests.swift */,
 				47D37FC9D090345C6A471647 /* MaximizeStrategyTests.swift */,
 				9A6D0D4D5F0829BF1A678276 /* WindowFrameStoreTests.swift */,
 				F05F341F856A19558AB88CD6 /* WindowActionEngineTests.swift */,
@@ -382,6 +402,9 @@
 				A04B5547F5A64D0E8E6BC282 /* AppStrings.swift in Sources */,
 				C1C1A083CDE1BA596C1273FA /* MenuBarController.swift in Sources */,
 				6CEDDCC383DFD1F96EB1B537 /* SettingsWindowController.swift in Sources */,
+				0C72948B6836D3F29DE95893 /* LaunchBehavior.swift in Sources */,
+				0C72948B6836D3F29DE95891 /* SettingsRootView.swift in Sources */,
+				0C72948B6836D3F29DE95892 /* OnboardingView.swift in Sources */,
 				0C72948B6836D3F29DE95890 /* PreferencesView.swift in Sources */,
 				0078EB4061C4BF4D2D37EFC5 /* SettingsStore.swift in Sources */,
 				A1B2C3D4E5F60718293A4B5C /* UpdateManager.swift in Sources */,
@@ -412,7 +435,10 @@
 			files = (
 				13F814B4EC99459FB7A7B9E1 /* AccessibilityServiceCurrentSpaceTests.swift in Sources */,
 				35FE782A55EC4B039E2424A8 /* AppStringsTests.swift in Sources */,
+				0C72948B6836D3F29DE95896 /* AppIdentityTests.swift in Sources */,
+				0C72948B6836D3F29DE95894 /* LaunchBehaviorTests.swift in Sources */,
 				FE8371893A5540E249E7B826 /* SettingsStoreTests.swift in Sources */,
+				0C72948B6836D3F29DE95895 /* SettingsStoreMigrationTests.swift in Sources */,
 				83A36437A8F280351FBE8EFE /* MaximizeStrategyTests.swift in Sources */,
 				21F092E0D2C54D0B178BF7E8 /* WindowFrameStoreTests.swift in Sources */,
 				ED44708BD3D00D3ACD5E6360 /* WindowActionEngineTests.swift in Sources */,
@@ -457,6 +483,28 @@
 			};
 			name = Release;
 		};
+		1A2B3C4D5E6F708192A3B4C6 /* Beta */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 27JL2VERNC;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = pzc.MacsimizeTests.beta;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Macsimize Beta.app/Contents/MacOS/Macsimize Beta";
+			};
+			name = Beta;
+		};
 		4ED22AF937824F8DE9D8FB2A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -471,16 +519,17 @@
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = Macsimize/Info.plist;
+				INFOPLIST_FILE = Macsimize/Info-Debug.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS = "";
-					MARKETING_VERSION = 0.3.5;
-				PRODUCT_BUNDLE_IDENTIFIER = pzc.Macsimize;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				MARKETING_VERSION = 0.3.6;
+				PRODUCT_BUNDLE_IDENTIFIER = pzc.Macsimize.dev;
+				PRODUCT_MODULE_NAME = Macsimize;
+				PRODUCT_NAME = "Macsimize Dev";
 				SDKROOT = macosx;
 				SU_FEED_URL = "https://raw.githubusercontent.com/apotenza92/macsimize/main/appcasts/stable-arm64.xml";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) $(MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS)";
@@ -509,8 +558,9 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS = "";
-					MARKETING_VERSION = 0.3.5;
+				MARKETING_VERSION = 0.3.6;
 				PRODUCT_BUNDLE_IDENTIFIER = pzc.Macsimize;
+				PRODUCT_MODULE_NAME = Macsimize;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SU_FEED_URL = "https://raw.githubusercontent.com/apotenza92/macsimize/main/appcasts/stable-arm64.xml";
@@ -518,6 +568,38 @@
 				SWIFT_VERSION = 6.0;
 			};
 			name = Release;
+		};
+		1A2B3C4D5E6F708192A3B4C5 /* Beta */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIconBeta;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Macsimize/Macsimize.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 27JL2VERNC;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Macsimize/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS = "";
+				MARKETING_VERSION = 0.3.6;
+				PRODUCT_BUNDLE_IDENTIFIER = pzc.Macsimize.beta;
+				PRODUCT_MODULE_NAME = Macsimize;
+				PRODUCT_NAME = "Macsimize Beta";
+				SDKROOT = macosx;
+				SU_FEED_URL = "https://raw.githubusercontent.com/apotenza92/macsimize/main/appcasts/beta-arm64.xml";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) $(MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS)";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Beta;
 		};
 		9EF7405B4D153AF54A8C7C7F /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -633,6 +715,59 @@
 			};
 			name = Release;
 		};
+		1A2B3C4D5E6F708192A3B4C7 /* Beta */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Beta;
+		};
 		DC6FDAE0BE1AC8F84C2B5E06 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -652,7 +787,7 @@
 				SDKROOT = macosx;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 6.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Macsimize.app/Contents/MacOS/Macsimize";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Macsimize Dev.app/Contents/MacOS/Macsimize Dev";
 			};
 			name = Debug;
 		};
@@ -664,6 +799,7 @@
 			buildConfigurations = (
 				9EF7405B4D153AF54A8C7C7F /* Debug */,
 				DADDBC2BAF47F576C0121743 /* Release */,
+				1A2B3C4D5E6F708192A3B4C7 /* Beta */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -673,6 +809,7 @@
 			buildConfigurations = (
 				9B50599B7FB21F50D8B6F7D0 /* Release */,
 				4ED22AF937824F8DE9D8FB2A /* Debug */,
+				1A2B3C4D5E6F708192A3B4C5 /* Beta */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -682,6 +819,7 @@
 			buildConfigurations = (
 				0BA9080AE76BA03AC05576D2 /* Release */,
 				DC6FDAE0BE1AC8F84C2B5E06 /* Debug */,
+				1A2B3C4D5E6F708192A3B4C6 /* Beta */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

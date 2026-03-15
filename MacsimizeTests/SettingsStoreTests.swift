@@ -13,57 +13,25 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertTrue(store.showMenuBarIcon)
         XCTAssertFalse(store.showSettingsOnStartup)
         XCTAssertFalse(store.firstLaunchCompleted)
+        XCTAssertFalse(store.isOnboardingCompleted)
+        XCTAssertTrue(store.shouldPresentOnboarding)
         XCTAssertFalse(store.startAtLogin)
         XCTAssertEqual(store.updateCheckFrequency, .weekly)
     }
 
-    func testFirstLaunchShowsSettingsEvenWhenStartupPreferenceIsDisabled() {
+    func testCompleteOnboardingUpdatesOnboardingAndLegacyFirstLaunchFlags() {
         let defaults = UserDefaults(suiteName: #function)!
         defaults.removePersistentDomain(forName: #function)
         defer { defaults.removePersistentDomain(forName: #function) }
 
         let store = SettingsStore(userDefaults: defaults)
+        store.completeOnboarding()
 
-        XCTAssertTrue(
-            store.shouldShowSettingsOnLaunch(
-                explicitSettingsRequest: false,
-                needsPermissions: false
-            )
-        )
-    }
-
-    func testSubsequentLaunchDoesNotShowSettingsWhenStartupPreferenceIsDisabled() {
-        let defaults = UserDefaults(suiteName: #function)!
-        defaults.removePersistentDomain(forName: #function)
-        defer { defaults.removePersistentDomain(forName: #function) }
-
-        let store = SettingsStore(userDefaults: defaults)
-        store.firstLaunchCompleted = true
-        store.showSettingsOnStartup = false
-
-        XCTAssertFalse(
-            store.shouldShowSettingsOnLaunch(
-                explicitSettingsRequest: false,
-                needsPermissions: false
-            )
-        )
-    }
-
-    func testSubsequentLaunchShowsSettingsWhenStartupPreferenceIsEnabled() {
-        let defaults = UserDefaults(suiteName: #function)!
-        defaults.removePersistentDomain(forName: #function)
-        defer { defaults.removePersistentDomain(forName: #function) }
-
-        let store = SettingsStore(userDefaults: defaults)
-        store.firstLaunchCompleted = true
-        store.showSettingsOnStartup = true
-
-        XCTAssertTrue(
-            store.shouldShowSettingsOnLaunch(
-                explicitSettingsRequest: false,
-                needsPermissions: false
-            )
-        )
+        XCTAssertTrue(store.isOnboardingCompleted)
+        XCTAssertTrue(store.firstLaunchCompleted)
+        XCTAssertFalse(store.shouldPresentOnboarding)
+        XCTAssertEqual(defaults.object(forKey: "onboardingCompleted") as? Bool, true)
+        XCTAssertEqual(defaults.object(forKey: "firstLaunchCompleted") as? Bool, true)
     }
 
     func testSettingsPersistAcrossInstances() {
@@ -76,7 +44,7 @@ final class SettingsStoreTests: XCTestCase {
         store.diagnosticsEnabled = false
         store.showMenuBarIcon = false
         store.showSettingsOnStartup = true
-        store.firstLaunchCompleted = true
+        store.completeOnboarding()
         store.updateCheckFrequency = .weekly
 
         let reloaded = SettingsStore(userDefaults: defaults)
@@ -85,6 +53,7 @@ final class SettingsStoreTests: XCTestCase {
         XCTAssertFalse(reloaded.showMenuBarIcon)
         XCTAssertTrue(reloaded.showSettingsOnStartup)
         XCTAssertTrue(reloaded.firstLaunchCompleted)
+        XCTAssertTrue(reloaded.isOnboardingCompleted)
         XCTAssertEqual(reloaded.updateCheckFrequency, .weekly)
     }
 
@@ -193,42 +162,6 @@ final class SettingsStoreTests: XCTestCase {
                 bundleIdentifier: "pzc.Macsimize",
                 bundleURL: appURL
             )
-        )
-    }
-
-    func testAppIdentityPrefersBundleDisplayName() {
-        XCTAssertEqual(
-            AppIdentity.displayName(
-                bundleDisplayName: "Macsimize Beta",
-                bundleName: "Macsimize",
-                bundleURL: URL(fileURLWithPath: "/Applications/Macsimize.app"),
-                executableName: "Macsimize"
-            ),
-            "Macsimize Beta"
-        )
-    }
-
-    func testAppIdentityFallsBackToBundleURLName() {
-        XCTAssertEqual(
-            AppIdentity.displayName(
-                bundleDisplayName: nil,
-                bundleName: nil,
-                bundleURL: URL(fileURLWithPath: "/Applications/Macsimize Beta.app"),
-                executableName: "Macsimize"
-            ),
-            "Macsimize Beta"
-        )
-    }
-
-    func testAppIdentityFallsBackToDefaultName() {
-        XCTAssertEqual(
-            AppIdentity.displayName(
-                bundleDisplayName: "   ",
-                bundleName: nil,
-                bundleURL: nil,
-                executableName: ""
-            ),
-            "Macsimize"
         )
     }
 }

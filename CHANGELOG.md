@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [v0.3.6]
+
+- Added a Dockmint-style first-run onboarding flow, including a completion screen that points new users to the menu bar icon for future settings access.
+- Stopped auto-opening Settings and automatic permission prompts during first-run setup, so onboarding now owns the initial experience end to end.
+- Simplified permission setup UI with tooltip-based explanations, direct System Settings links, updated app identities for dev and beta builds, and refreshed app icon packaging.
+
 ## [v0.3.5]
 
 - Added a `Show menu bar icon` setting, defaulted it on for existing installs, and wired it to hide or restore the menu bar item immediately.

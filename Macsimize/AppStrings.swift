@@ -63,6 +63,7 @@ enum AppStrings {
 
     static var accessibilityButtonTitle: String { "Accessibility" }
     static var inputMonitoringButtonTitle: String { "Input Monitoring" }
+    static var openSettingsButtonTitle: String { "Open Settings" }
 
     static var checkForUpdatesButtonTitle: String { "Check for Updates" }
     static var installUpdateButtonTitle: String { "Install Update…" }
