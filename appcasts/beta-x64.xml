@@ -5,19 +5,19 @@
     <description>Macsimize update feed (beta channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.3.5</title>
-      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.3.5</link>
-      <sparkle:version>300590000</sparkle:version>
-      <sparkle:shortVersionString>0.3.5</sparkle:shortVersionString>
+      <title>Version 0.3.6</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.3.6</link>
+      <sparkle:version>300690000</sparkle:version>
+      <sparkle:shortVersionString>0.3.6</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Added a `Show menu bar icon` setting, defaulted it on for existing installs, and wired it to hide or restore the menu bar item immediately.
-- Tightened the Settings window layout with less top whitespace and kept the General section aligned closer to the title bar.
-- Simplified permission status indicators to compact icon badges beside each permission button.]]></description>
-      <pubDate>Thu, 12 Mar 2026 12:52:58 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.3.5/Macsimize-Beta-v0.3.5-macos-x64.zip"
-                 sparkle:edSignature="DpccQWzhFNGXSV26EZaAFj/d3enuks2hHLwXg7KEby9b8ceudYInp5l9dYunwavfB2yKvnkAFtwIZY2pL8SrBg=="
-                 length="2640084"
+      <description sparkle:format="plain-text"><![CDATA[- Added a Dockmint-style first-run onboarding flow, including a completion screen that points new users to the menu bar icon for future settings access.
+- Stopped auto-opening Settings and automatic permission prompts during first-run setup, so onboarding now owns the initial experience end to end.
+- Simplified permission setup UI with tooltip-based explanations, direct System Settings links, updated app identities for dev and beta builds, and refreshed app icon packaging.]]></description>
+      <pubDate>Sun, 15 Mar 2026 14:01:06 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.3.6/Macsimize-Beta-v0.3.6-macos-x64.zip"
+                 sparkle:edSignature="dd4bz/N4S+yTJRh8aBthWYH1bZ4PmzIJ6PuBV7/1rHYVq/9mxnxhf8Qm/Wr0Ev6bIDc1Y6PSk845cPn35H/xCw=="
+                 length="2668506"
                  type="application/octet-stream" />
     </item>
   </channel>
