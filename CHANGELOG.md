@@ -6,6 +6,11 @@ All notable changes to this project will be documented in this file.
 
 - No unreleased changes yet.
 
+## [v0.3.7]
+
+- Fixed intermittent menu bar icon clipping by constraining the template symbol to menu bar-safe dimensions and using a square image-only status item.
+- Added regression coverage for menu bar glyph sizing while keeping the larger onboarding icon rendering unchanged.
+
 ## [v0.3.6]
 
 - Added a Dockmint-style first-run onboarding flow, including a completion screen that points new users to the menu bar icon for future settings access.

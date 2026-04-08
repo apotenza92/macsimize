@@ -1,3 +1,4 @@
+import AppKit
 import XCTest
 @testable import Macsimize
 
@@ -53,5 +54,30 @@ final class AppIdentityTests: XCTestCase {
             ),
             "Macsimize"
         )
+    }
+}
+
+@MainActor
+final class MacsimizeGlyphImageTests: XCTestCase {
+    func testMenuBarImageUsesTemplateRenderingAndFitsWithinDerivedBounds() {
+        let statusBarThickness = NSStatusBar.system.thickness
+        let targetSide = MacsimizeGlyphImage.menuBarImageSideLength(statusBarThickness: statusBarThickness)
+
+        let image = MacsimizeGlyphImage.menuBarImage(statusBarThickness: statusBarThickness)
+
+        XCTAssertTrue(image.isTemplate)
+        XCTAssertLessThanOrEqual(image.size.width, targetSide)
+        XCTAssertLessThanOrEqual(image.size.height, targetSide)
+        XCTAssertEqual(image.size.width, targetSide)
+        XCTAssertEqual(image.size.height, targetSide)
+    }
+
+    func testLargerPointSizeImageRemainsAvailableForOnboardingContexts() {
+        let menuBarImage = MacsimizeGlyphImage.menuBarImage(statusBarThickness: NSStatusBar.system.thickness)
+        let onboardingImage = MacsimizeGlyphImage.image(pointSize: 42)
+
+        XCTAssertTrue(onboardingImage.isTemplate)
+        XCTAssertGreaterThan(onboardingImage.size.width, menuBarImage.size.width)
+        XCTAssertGreaterThan(onboardingImage.size.height, menuBarImage.size.height)
     }
 }

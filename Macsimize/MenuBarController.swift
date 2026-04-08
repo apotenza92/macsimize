@@ -3,7 +3,7 @@ import AppKit
 @MainActor
 final class MenuBarController: NSObject {
     private let appDisplayName: String
-    private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+    private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     private weak var appDelegate: AppDelegate?
     private let menu = NSMenu()
     private let maximizeAllItem = NSMenuItem(title: AppStrings.maximizeAllMenuTitle, action: #selector(maximizeAllWindows), keyEquivalent: "")
@@ -27,8 +27,9 @@ final class MenuBarController: NSObject {
             return
         }
 
-        button.image = MacsimizeGlyphImage.make(size: NSSize(width: 18, height: 18))
+        button.image = MacsimizeGlyphImage.menuBarImage(statusBarThickness: NSStatusBar.system.thickness)
         button.imagePosition = .imageOnly
+        button.imageScaling = .scaleProportionallyDown
         button.setAccessibilityLabel(appDisplayName)
         button.toolTip = appDisplayName
     }
@@ -84,23 +85,34 @@ final class MenuBarController: NSObject {
 
 @MainActor
 enum MacsimizeGlyphImage {
-    private static let menuBarImage = makeSymbolImage(pointSize: 15)
+    private static let menuBarSymbolName = "plus.circle.fill"
 
-    static func make(size _: NSSize) -> NSImage {
-        menuBarImage
+    static func menuBarImage(statusBarThickness: CGFloat) -> NSImage {
+        let targetSide = menuBarImageSideLength(statusBarThickness: statusBarThickness)
+        let requestedSize = NSSize(width: targetSide, height: targetSide)
+        let pointSize = max(11, targetSide - 2)
+        return makeSymbolImage(pointSize: pointSize, preferredSize: requestedSize)
     }
 
     static func image(pointSize: CGFloat) -> NSImage {
-        makeSymbolImage(pointSize: pointSize)
+        makeSymbolImage(pointSize: pointSize, preferredSize: nil)
     }
 
-    private static func makeSymbolImage(pointSize: CGFloat) -> NSImage {
+    static func menuBarImageSideLength(statusBarThickness: CGFloat) -> CGFloat {
+        min(16, max(12, floor(statusBarThickness - 6)))
+    }
+
+    private static func makeSymbolImage(pointSize: CGFloat, preferredSize: NSSize?) -> NSImage {
         let configuration = NSImage.SymbolConfiguration(pointSize: pointSize, weight: .regular, scale: .medium)
-        guard let image = NSImage(systemSymbolName: "plus.circle.fill", accessibilityDescription: AppStrings.appAccessibilityLabel)?
+        guard let image = NSImage(systemSymbolName: menuBarSymbolName, accessibilityDescription: AppStrings.appAccessibilityLabel)?
             .withSymbolConfiguration(configuration) else {
-            let fallback = NSImage(size: NSSize(width: pointSize, height: pointSize))
+            let fallbackSize = preferredSize ?? NSSize(width: pointSize, height: pointSize)
+            let fallback = NSImage(size: fallbackSize)
             fallback.isTemplate = true
             return fallback
+        }
+        if let preferredSize {
+            image.size = preferredSize
         }
         image.isTemplate = true
         return image
