@@ -5,19 +5,18 @@
     <description>Macsimize update feed (stable channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.3.6</title>
-      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.3.6</link>
-      <sparkle:version>300690000</sparkle:version>
-      <sparkle:shortVersionString>0.3.6</sparkle:shortVersionString>
+      <title>Version 0.3.7</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.3.7</link>
+      <sparkle:version>300790000</sparkle:version>
+      <sparkle:shortVersionString>0.3.7</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Added a Dockmint-style first-run onboarding flow, including a completion screen that points new users to the menu bar icon for future settings access.
-- Stopped auto-opening Settings and automatic permission prompts during first-run setup, so onboarding now owns the initial experience end to end.
-- Simplified permission setup UI with tooltip-based explanations, direct System Settings links, updated app identities for dev and beta builds, and refreshed app icon packaging.]]></description>
-      <pubDate>Sun, 15 Mar 2026 14:01:06 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.3.6/Macsimize-v0.3.6-macos-x64.zip"
-                 sparkle:edSignature="UI2Mqkb+y0EYsNjeyzKoJnaX4kk6ZZdTGGdL25TvSPQeZLX3Z038DOAtrUVmdbPwy1fDRRGcybCxIyg40G6VAQ=="
-                 length="2783634"
+      <description sparkle:format="plain-text"><![CDATA[- Fixed intermittent menu bar icon clipping by constraining the template symbol to menu bar-safe dimensions and using a square image-only status item.
+- Added regression coverage for menu bar glyph sizing while keeping the larger onboarding icon rendering unchanged.]]></description>
+      <pubDate>Wed, 08 Apr 2026 12:05:59 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.3.7/Macsimize-v0.3.7-macos-x64.zip"
+                 sparkle:edSignature="xfEypPP3DacmogEhZEJI10zXfbUKJk2+xRo0Z7KQCQskjn5PTu7M6Bkr5Np7fIzs1PuC9iTB+WTNRmhK4l4WDA=="
+                 length="2783741"
                  type="application/octet-stream" />
     </item>
   </channel>
