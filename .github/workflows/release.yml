@@ -25,7 +25,7 @@ jobs:
       build_number: ${{ steps.meta.outputs.build_number }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Parse tag metadata
         id: meta
@@ -114,7 +114,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: ${{ needs.prepare.outputs.tag }}
 
@@ -355,7 +355,7 @@ jobs:
           ls -lah out
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-macos-${{ matrix.channel }}-${{ matrix.arch }}
           path: out/*
@@ -368,10 +368,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download release artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: release-macos-*
           merge-multiple: true
@@ -409,7 +409,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout main branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           ref: main
 
@@ -465,7 +465,7 @@ jobs:
 
       - name: Checkout Macsimize
         if: ${{ steps.tap.outputs.enabled == 'true' }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Clone homebrew tap
         if: ${{ steps.tap.outputs.enabled == 'true' }}
