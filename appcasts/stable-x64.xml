@@ -5,18 +5,20 @@
     <description>Macsimize update feed (stable channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.3.7</title>
-      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.3.7</link>
-      <sparkle:version>300790000</sparkle:version>
-      <sparkle:shortVersionString>0.3.7</sparkle:shortVersionString>
+      <title>Version 0.3.8</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.3.8</link>
+      <sparkle:version>300890000</sparkle:version>
+      <sparkle:shortVersionString>0.3.8</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Fixed intermittent menu bar icon clipping by constraining the template symbol to menu bar-safe dimensions and using a square image-only status item.
-- Added regression coverage for menu bar glyph sizing while keeping the larger onboarding icon rendering unchanged.]]></description>
-      <pubDate>Wed, 08 Apr 2026 12:05:59 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.3.7/Macsimize-v0.3.7-macos-x64.zip"
-                 sparkle:edSignature="xfEypPP3DacmogEhZEJI10zXfbUKJk2+xRo0Z7KQCQskjn5PTu7M6Bkr5Np7fIzs1PuC9iTB+WTNRmhK4l4WDA=="
-                 length="2783741"
+      <description sparkle:format="plain-text"><![CDATA[- Fixed green-button maximise reliability for Chromium-style and custom-chrome apps by resolving clicks through system-wide AX hit-testing, tightening per-window transaction handling, and preventing stale managed-window state from blocking later restore clicks.
+- Made maximise land in a single visible step more consistently by simplifying the managed frame-apply path, removing old repair-loop heuristics, and keeping direct visible-frame maximise behaviour as the default.
+- Kept title-bar double-click maximise working independently of the green-button preference and restored drag-to-restore for title-bar-managed maximised windows even when the green button is configured for full screen.
+- Hardened development relaunch handling with deterministic stop-running and stable dev launch scripts, plus bounded relaunch retries when stale instances survive cleanup.]]></description>
+      <pubDate>Mon, 13 Apr 2026 12:04:34 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.3.8/Macsimize-v0.3.8-macos-x64.zip"
+                 sparkle:edSignature="HuYpHZk9paHWYHEqfaMetheuYkV6I4Cfv/e1HxCDLB60UIdoLA7hHNq9HhOPiDiU67EeUDgLSbsjM+Qug/kgCg=="
+                 length="2815571"
                  type="application/octet-stream" />
     </item>
   </channel>
