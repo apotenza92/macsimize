@@ -2,6 +2,19 @@ import ApplicationServices
 import CoreGraphics
 import Foundation
 
+struct WindowInterceptionKey: Hashable, Sendable {
+    let pid: pid_t
+    let windowIdentifier: String
+    let windowNumber: Int?
+}
+
+struct ManagedWindowMutationExpectation: Equatable, Sendable {
+    let sourceFrame: CGRect
+    let destinationFrame: CGRect
+    let observedFrame: CGRect?
+    let restored: Bool
+}
+
 struct ClickedWindowContext: @unchecked Sendable {
     let appName: String
     let bundleIdentifier: String?
@@ -29,10 +42,19 @@ struct ClickedWindowContext: @unchecked Sendable {
         }
         return appName
     }
+
+    var interceptionKey: WindowInterceptionKey {
+        WindowInterceptionKey(
+            pid: pid,
+            windowIdentifier: windowIdentifier,
+            windowNumber: windowNumber
+        )
+    }
 }
 
 struct TitleBarInteractionContext: @unchecked Sendable {
     let draggableRect: CGRect
     let activationRect: CGRect
+    let allowsActivationOutsideDraggableRect: Bool
     let windowContext: ClickedWindowContext
 }

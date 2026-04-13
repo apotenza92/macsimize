@@ -99,17 +99,24 @@ final class AppState: ObservableObject {
 
     func restartApp() {
         let bundleURL = Bundle.main.bundleURL
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
-        task.arguments = ["-n", bundleURL.path]
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = false
+        configuration.createsNewApplicationInstance = true
+        configuration.arguments = RelaunchSupport.launchArguments(
+            from: ProcessInfo.processInfo.arguments,
+            openSettingsArguments: ["--settings", "-settings", "--open-settings"],
+            nextAutomaticRelaunchAttempt: nil
+        )
 
-        do {
-            try task.run()
+        NSWorkspace.shared.openApplication(at: bundleURL, configuration: configuration) { [diagnostics] _, error in
+            if let error {
+                diagnostics.logMessage(AppStrings.relaunchFailed(errorDescription: error.localizedDescription), forceVisible: true)
+                return
+            }
+
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                 NSApp.terminate(nil)
             }
-        } catch {
-            diagnostics.logMessage(AppStrings.relaunchFailed(errorDescription: error.localizedDescription), forceVisible: true)
         }
     }
 

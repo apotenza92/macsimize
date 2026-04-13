@@ -159,6 +159,11 @@ enum AXHelpers {
     }
 
     @discardableResult
+    static func set(boolAttribute attribute: String, value: Bool, on element: AXUIElement) -> AXError {
+        AXUIElementSetAttributeValue(element, attribute as CFString, value ? kCFBooleanTrue : kCFBooleanFalse)
+    }
+
+    @discardableResult
     static func perform(action: String, on element: AXUIElement) -> AXError {
         AXUIElementPerformAction(element, action as CFString)
     }

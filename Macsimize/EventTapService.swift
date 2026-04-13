@@ -23,9 +23,11 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
     private var holdTimer: DispatchSourceTimer?
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
-    private let interceptionSuppressionStore = InterceptionSuppressionStore()
+    private let interceptionTransactionStore = InterceptionTransactionStore()
     private let deferredReplayStore = DeferredReplayStore()
-    private let postActionSuppressionDuration: TimeInterval = 0.6
+    private lazy var windowMutationMonitor = WindowMutationMonitor(diagnostics: diagnostics) { [weak self] event in
+        self?.handleWindowMutation(event)
+    }
 
     init(
         settings: SettingsStore,
@@ -44,6 +46,7 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
         )
         self.titleBarController = TitleBarInterceptionController(
             contextResolver: accessibilityService,
+            managedStateChecker: maximizeStrategy,
             diagnostics: diagnostics
         )
         self.actionPerformer = actionEngine
@@ -162,8 +165,9 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
             bufferedEvents.removeAll()
             controller.reset()
             titleBarController.reset()
-            interceptionSuppressionStore.removeAll()
+            interceptionTransactionStore.removeAll()
             deferredReplayStore.removeAll()
+            windowMutationMonitor.removeAll()
         }
 
         updateRunningState(false, failure: reason)
@@ -193,8 +197,9 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
                 bufferedEvents.removeAll()
                 controller.reset()
                 titleBarController.reset()
-                self.interceptionSuppressionStore.removeAll()
+                self.interceptionTransactionStore.removeAll()
                 deferredReplayStore.removeAll()
+                self.windowMutationMonitor.removeAll()
             }
             if let eventTap {
                 CGEvent.tapEnable(tap: eventTap, enable: true)
@@ -228,22 +233,25 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
         }
 
         let timestamp = ProcessInfo.processInfo.systemUptime
-        let greenButtonDecision: MouseInterceptionDecision
-        if shouldSuppressGreenButtonInterception(now: timestamp) {
-            greenButtonDecision = .passThrough
-        } else {
-            greenButtonDecision = controller.handleMouseDown(
-                location: event.location,
-                timestamp: timestamp,
-                optionPressed: event.flags.contains(.maskAlternate),
-                configuration: configuration
-            )
-        }
+        let greenButtonDecision = controller.handleMouseDown(
+            location: event.location,
+            timestamp: timestamp,
+            optionPressed: event.flags.contains(.maskAlternate),
+            configuration: configuration
+        )
 
         switch greenButtonDecision {
         case .passThrough:
             break
-        case .consume:
+        case .consume(let context):
+            if interceptionTransactionStore.hasActiveTransaction(for: .greenButton, key: context.interceptionKey) {
+                diagnostics.logMessage(
+                    "Suppressed green-button re-entry for \(context.windowIdentifier) while a maximize transaction is still active."
+                )
+                controller.reset()
+                return nil
+            }
+
             guard let copiedEvent = event.copy() else {
                 return Unmanaged.passUnretained(event)
             }
@@ -280,7 +288,12 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
             switch titleBarController.handleMouseDragged(location: event.location) {
             case .dragRestore(let context, let cursorLocation):
                 let result = dragRestorePerformer.performDragRestore(on: context, cursorLocation: cursorLocation)
-                if !result.restored {
+                if result.restored {
+                    clearManagedWindowTracking(
+                        for: context.interceptionKey,
+                        reason: "Cleared managed-window tracking for \(context.windowIdentifier) after drag-restore."
+                    )
+                } else {
                     diagnostics.logMessage(result.notes.first ?? AppStrings.titleBarDragRestoreSkipped)
                 }
                 return Unmanaged.passUnretained(event)
@@ -294,7 +307,7 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
         }
 
         switch controller.handleMouseDragged(location: event.location) {
-        case .consume:
+        case .consume(_):
             return nil
         case .flushBufferedEvents:
             flushBufferedEvents()
@@ -328,7 +341,7 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
             cancelHoldTimer()
             bufferedEvents.removeAll()
             return Unmanaged.passUnretained(event)
-        case .consume:
+        case .consume(_):
             return nil
         case .flushBufferedEvents:
             if let copiedEvent = event.copy() {
@@ -375,7 +388,7 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
         switch controller.handleHoldTimeout(timestamp: ProcessInfo.processInfo.systemUptime) {
         case .flushBufferedEvents:
             flushBufferedEvents()
-        case .consume:
+        case .consume(_):
             break
         case .passThrough:
             cancelHoldTimer()
@@ -395,7 +408,6 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
     private func performWindowActionAsync(_ pendingAction: PendingWindowAction, replayToken: UUID) {
         let mode = pendingAction.mode
         let context = pendingAction.context
-        let windowPID = pendingAction.context.pid
         actionQueue.async { [weak self] in
             guard let self else {
                 return
@@ -405,7 +417,7 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
             if outcome.handled {
                 self.callbackQueue.async { [weak self] in
                     self?.clearDeferredReplaySequence(for: replayToken)
-                    self?.recordGreenButtonSuppression(for: windowPID, now: ProcessInfo.processInfo.systemUptime)
+                    self?.recordHandledWindowAction(outcome: outcome, context: context)
                 }
                 return
             }
@@ -433,6 +445,12 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
 
             let outcome = self.actionPerformer.perform(mode: .maximize, context: context)
             if outcome.handled {
+                self.callbackQueue.async { [weak self] in
+                    self?.clearManagedWindowTracking(
+                        for: context.interceptionKey,
+                        reason: "Cleared managed-window tracking for \(context.windowIdentifier) after a titlebar-managed window action."
+                    )
+                }
                 return
             }
         }
@@ -468,20 +486,86 @@ final class EventTapService: ObservableObject, @unchecked Sendable {
         return location.y > screen.visibleFrame.maxY
     }
 
-    private func shouldSuppressGreenButtonInterception(now: TimeInterval) -> Bool {
-        interceptionSuppressionStore.shouldSuppress(
+    private func recordHandledWindowAction(outcome: WindowActionOutcome, context: ClickedWindowContext) {
+        guard let interceptionKey = outcome.interceptionKey,
+              let mutationExpectation = outcome.mutationExpectation else {
+            return
+        }
+
+        guard Self.shouldTrackManagedWindowTransaction(for: mutationExpectation) else {
+            diagnostics.logMessage(
+                "Skipped green-button transaction tracking for \(context.windowIdentifier) because the managed frame was already settled at \(mutationExpectation.observedFrame.map { NSStringFromRect($0) } ?? "-")."
+            )
+            return
+        }
+
+        guard windowMutationMonitor.observeWindow(
+            windowElement: context.windowElement,
+            key: interceptionKey,
+            mutationExpectation: mutationExpectation
+        ) else {
+            diagnostics.logMessage(
+                "Window mutation monitor could not observe \(context.windowIdentifier); leaving green-button re-entry unmodified for this action."
+            )
+            return
+        }
+
+        interceptionTransactionStore.recordDispatched(
             for: .greenButton,
-            frontmostPID: NSWorkspace.shared.frontmostApplication?.processIdentifier,
-            now: now
+            key: interceptionKey,
+            mutationExpectation: mutationExpectation
+        )
+        diagnostics.logMessage(
+            "Tracking green-button transaction for \(context.windowIdentifier): source=\(NSStringFromRect(mutationExpectation.sourceFrame)) destination=\(NSStringFromRect(mutationExpectation.destinationFrame)) restored=\(mutationExpectation.restored)"
         )
     }
 
-    private func recordGreenButtonSuppression(for pid: pid_t, now: TimeInterval) {
-        interceptionSuppressionStore.recordGreenButtonSuppression(
-            for: pid,
-            now: now,
-            duration: postActionSuppressionDuration
-        )
+    private func handleWindowMutation(_ event: WindowMutationEvent) {
+        callbackQueue.async { [weak self] in
+            guard let self,
+                  let transaction = self.interceptionTransactionStore.transaction(for: event.source, key: event.key),
+                  let mutationExpectation = transaction.mutationExpectation else {
+                return
+            }
+
+            guard Self.isSettledMutation(event.currentFrame, expectation: mutationExpectation) else {
+                return
+            }
+
+            self.interceptionTransactionStore.markSettled(for: event.source, key: event.key)
+            self.interceptionTransactionStore.removeTransaction(for: event.source, key: event.key)
+            self.windowMutationMonitor.removeObservation(for: event.key)
+            self.diagnostics.logMessage(
+                "Settled \(event.source == .greenButton ? "green-button" : "titlebar") transaction for \(event.key.windowIdentifier) after \(event.notification): frame=\(NSStringFromRect(event.currentFrame))"
+            )
+        }
+    }
+
+    private func clearManagedWindowTracking(for key: WindowInterceptionKey, reason: String? = nil) {
+        let removedGreenButtonTransaction = interceptionTransactionStore.removeTransaction(for: .greenButton, key: key)
+        let removedTitleBarTransaction = interceptionTransactionStore.removeTransaction(for: .titleBar, key: key)
+        let removedObservation = windowMutationMonitor.removeObservation(for: key)
+        guard removedGreenButtonTransaction || removedTitleBarTransaction || removedObservation else {
+            return
+        }
+
+        if let reason {
+            diagnostics.logMessage(reason)
+        }
+    }
+
+    private static func isSettledMutation(
+        _ currentFrame: CGRect,
+        expectation: ManagedWindowMutationExpectation
+    ) -> Bool {
+        MaximizeStrategy.framesNearlyEqual(currentFrame, expectation.destinationFrame)
+    }
+
+    static func shouldTrackManagedWindowTransaction(for expectation: ManagedWindowMutationExpectation) -> Bool {
+        guard let observedFrame = expectation.observedFrame else {
+            return true
+        }
+        return !MaximizeStrategy.framesNearlyEqual(observedFrame, expectation.destinationFrame)
     }
 
     static func replaySequence(for mode: WindowActionMode, originalEvents: [CGEvent]) -> [CGEvent] {
@@ -514,9 +598,275 @@ protocol DragRestorePerforming {
     func performDragRestore(on context: ClickedWindowContext, cursorLocation: CGPoint) -> DragRestoreResult
 }
 
-enum InterceptionSource {
+enum InterceptionSource: Hashable {
     case greenButton
     case titleBar
+}
+
+enum InterceptionTransactionPhase: Equatable {
+    case dispatched
+    case settled
+}
+
+struct InterceptionTransaction: Equatable {
+    let source: InterceptionSource
+    let key: WindowInterceptionKey
+    let mutationExpectation: ManagedWindowMutationExpectation?
+    let phase: InterceptionTransactionPhase
+}
+
+final class InterceptionTransactionStore {
+    private var transactions: [InterceptionSource: [WindowInterceptionKey: InterceptionTransaction]] = [:]
+
+    func recordDispatched(
+        for source: InterceptionSource,
+        key: WindowInterceptionKey,
+        mutationExpectation: ManagedWindowMutationExpectation?
+    ) {
+        var transactionsForSource = transactions[source] ?? [:]
+        transactionsForSource[key] = InterceptionTransaction(
+            source: source,
+            key: key,
+            mutationExpectation: mutationExpectation,
+            phase: .dispatched
+        )
+        transactions[source] = transactionsForSource
+    }
+
+    func transaction(for source: InterceptionSource, key: WindowInterceptionKey) -> InterceptionTransaction? {
+        transactions[source]?[key]
+    }
+
+    func hasActiveTransaction(for source: InterceptionSource, key: WindowInterceptionKey) -> Bool {
+        guard let transaction = transaction(for: source, key: key) else {
+            return false
+        }
+        return transaction.phase != .settled
+    }
+
+    func markSettled(for source: InterceptionSource, key: WindowInterceptionKey) {
+        guard var transactionsForSource = transactions[source],
+              let transaction = transactionsForSource[key] else {
+            return
+        }
+
+        transactionsForSource[key] = InterceptionTransaction(
+            source: transaction.source,
+            key: transaction.key,
+            mutationExpectation: transaction.mutationExpectation,
+            phase: .settled
+        )
+        transactions[source] = transactionsForSource
+    }
+
+    @discardableResult
+    func removeTransaction(for source: InterceptionSource, key: WindowInterceptionKey) -> Bool {
+        guard var transactionsForSource = transactions[source],
+              transactionsForSource.removeValue(forKey: key) != nil else {
+            return false
+        }
+
+        if transactionsForSource.isEmpty {
+            transactions.removeValue(forKey: source)
+        } else {
+            transactions[source] = transactionsForSource
+        }
+        return true
+    }
+
+    func removeAll() {
+        transactions.removeAll()
+    }
+
+    var isEmpty: Bool {
+        transactions.isEmpty
+    }
+}
+
+struct WindowMutationEvent {
+    let source: InterceptionSource
+    let key: WindowInterceptionKey
+    let notification: String
+    let currentFrame: CGRect
+}
+
+final class WindowMutationMonitor {
+    private struct Observation {
+        let key: WindowInterceptionKey
+        let source: InterceptionSource
+        let windowElement: AXUIElement
+        let mutationExpectation: ManagedWindowMutationExpectation
+    }
+
+    private let diagnostics: DebugDiagnostics
+    private let handler: (WindowMutationEvent) -> Void
+    private var observersByPID: [pid_t: AXObserver] = [:]
+    private var observationsByKey: [WindowInterceptionKey: Observation] = [:]
+    private var observedKeysByPID: [pid_t: Set<WindowInterceptionKey>] = [:]
+
+    init(
+        diagnostics: DebugDiagnostics,
+        handler: @escaping (WindowMutationEvent) -> Void
+    ) {
+        self.diagnostics = diagnostics
+        self.handler = handler
+    }
+
+    func observeWindow(
+        windowElement: AXUIElement,
+        key: WindowInterceptionKey,
+        mutationExpectation: ManagedWindowMutationExpectation,
+        source: InterceptionSource = .greenButton
+    ) -> Bool {
+        removeObservation(for: key)
+
+        let pid = key.pid
+        guard let observer = observer(for: pid) else {
+            diagnostics.logMessage("AX observer unavailable for pid=\(pid) while tracking \(key.windowIdentifier).")
+            return false
+        }
+
+        let notifications = [
+            kAXMovedNotification as String,
+            kAXResizedNotification as String,
+            kAXUIElementDestroyedNotification as String
+        ]
+
+        var addedNotification = false
+        for notification in notifications {
+            let error = AXObserverAddNotification(
+                observer,
+                windowElement,
+                notification as CFString,
+                UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque())
+            )
+            switch error {
+            case .success, .notificationAlreadyRegistered:
+                addedNotification = true
+            case .notificationUnsupported:
+                continue
+            default:
+                diagnostics.logMessage(
+                    "AX observer add failed for pid=\(pid) window=\(key.windowIdentifier) notification=\(notification) code=\(error.rawValue)."
+                )
+            }
+        }
+
+        guard addedNotification else {
+            return false
+        }
+
+        observationsByKey[key] = Observation(
+            key: key,
+            source: source,
+            windowElement: windowElement,
+            mutationExpectation: mutationExpectation
+        )
+        var observedKeys = observedKeysByPID[pid] ?? []
+        observedKeys.insert(key)
+        observedKeysByPID[pid] = observedKeys
+        return true
+    }
+
+    @discardableResult
+    func removeObservation(for key: WindowInterceptionKey) -> Bool {
+        guard let observation = observationsByKey.removeValue(forKey: key) else {
+            return false
+        }
+
+
+        if let observer = observersByPID[key.pid] {
+            for notification in [
+                kAXMovedNotification as String,
+                kAXResizedNotification as String,
+                kAXUIElementDestroyedNotification as String
+            ] {
+                _ = AXObserverRemoveNotification(observer, observation.windowElement, notification as CFString)
+            }
+        }
+
+        if var observedKeys = observedKeysByPID[key.pid] {
+            observedKeys.remove(key)
+            if observedKeys.isEmpty {
+                observedKeysByPID.removeValue(forKey: key.pid)
+            } else {
+                observedKeysByPID[key.pid] = observedKeys
+            }
+        }
+        return true
+    }
+
+    func removeAll() {
+        let keys = Array(observationsByKey.keys)
+        keys.forEach { key in
+            _ = removeObservation(for: key)
+        }
+
+        for observer in observersByPID.values {
+            let source = AXObserverGetRunLoopSource(observer)
+            removeRunLoopSource(source)
+        }
+        observersByPID.removeAll()
+        observedKeysByPID.removeAll()
+    }
+
+    private func observer(for pid: pid_t) -> AXObserver? {
+        if let observer = observersByPID[pid] {
+            return observer
+        }
+
+        var createdObserver: AXObserver?
+        let error = AXObserverCreate(pid, { _, element, notification, refcon in
+            guard let refcon else {
+                return
+            }
+            let monitor = Unmanaged<WindowMutationMonitor>.fromOpaque(refcon).takeUnretainedValue()
+            monitor.handleObserverNotification(element: element, notification: notification as String)
+        }, &createdObserver)
+        guard error == .success, let createdObserver else {
+            diagnostics.logMessage("AX observer create failed for pid=\(pid) code=\(error.rawValue).")
+            return nil
+        }
+
+        let source = AXObserverGetRunLoopSource(createdObserver)
+        addRunLoopSource(source)
+        observersByPID[pid] = createdObserver
+        return createdObserver
+    }
+
+    private func handleObserverNotification(element: AXUIElement, notification: String) {
+        guard let observation = observationsByKey.values.first(where: { observation in
+            AXHelpers.elementsEqual(observation.windowElement, element)
+        }) else {
+            return
+        }
+
+        if notification == kAXUIElementDestroyedNotification as String {
+            removeObservation(for: observation.key)
+            return
+        }
+
+        guard let currentFrame = AXHelpers.cgRect(of: observation.windowElement) else {
+            return
+        }
+
+        handler(
+            WindowMutationEvent(
+                source: observation.source,
+                key: observation.key,
+                notification: notification,
+                currentFrame: currentFrame
+            )
+        )
+    }
+
+    private func addRunLoopSource(_ source: CFRunLoopSource) {
+        CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
+    }
+
+    private func removeRunLoopSource(_ source: CFRunLoopSource) {
+        CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .commonModes)
+    }
 }
 
 final class InterceptionSuppressionStore {

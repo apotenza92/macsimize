@@ -8,7 +8,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private lazy var settingsWindowController = SettingsWindowController(appState: appState)
     private var menuBarController: MenuBarController?
+    private let automaticTerminationReason = "Macsimize keeps global interception active while running headless"
     private let openSettingsLaunchArguments: Set<String> = ["--settings", "-settings", "--open-settings"]
+    private let maxAutomaticRelaunchAttempts = 2
     private let openSettingsDistributedNotification = Notification.Name("pzc.Macsimize.openSettings")
     private var openSettingsObserver: NSObjectProtocol?
     private var updateManager: UpdateManager { appState.updateManager }
@@ -17,6 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        ProcessInfo.processInfo.disableAutomaticTermination(automaticTerminationReason)
         RuntimeLogger.log("Launched bundle at \(Bundle.main.bundleURL.path), bundleId \(Bundle.main.bundleIdentifier ?? "nil"), pid \(ProcessInfo.processInfo.processIdentifier), LSUIElement \(Bundle.main.object(forInfoDictionaryKey: "LSUIElement") as? Bool ?? false)")
 
         startObservingOpenSettingsRequests()
@@ -66,6 +69,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self.openSettingsObserver = nil
         }
         appState.eventTapService.stop(reason: nil)
+        ProcessInfo.processInfo.enableAutomaticTermination(automaticTerminationReason)
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
@@ -156,7 +160,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let survivorsAfterKill = waitForOtherInstancesToExit(bundleId: bundleId)
         if !survivorsAfterKill.isEmpty {
-            RuntimeLogger.log("Aborting launch because old instances are still alive: \(survivorsAfterKill.map { $0.processIdentifier })")
+            let survivorPIDs = survivorsAfterKill.map(\.processIdentifier)
+            let currentAttempt = RelaunchSupport.automaticRelaunchAttempt(arguments: ProcessInfo.processInfo.arguments)
+            RuntimeLogger.log("Old instances still alive after cleanup attempt \(currentAttempt): \(survivorPIDs)")
+
+            if scheduleAutomaticRelaunchIfPossible(currentAttempt: currentAttempt, survivorPIDs: survivorPIDs) {
+                return true
+            }
+
+            RuntimeLogger.log("Aborting launch because old instances are still alive: \(survivorPIDs)")
             NSApp.terminate(nil)
             return true
         }
@@ -235,5 +247,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             userInfo: nil,
             deliverImmediately: true
         )
+    }
+
+    private func scheduleAutomaticRelaunchIfPossible(currentAttempt: Int, survivorPIDs: [pid_t]) -> Bool {
+        guard currentAttempt < maxAutomaticRelaunchAttempts else {
+            return false
+        }
+
+        let nextAttempt = currentAttempt + 1
+        RuntimeLogger.log("Scheduling automatic relaunch attempt \(nextAttempt) after stale instances survived cleanup: \(survivorPIDs)")
+
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = false
+        configuration.createsNewApplicationInstance = true
+        configuration.arguments = RelaunchSupport.launchArguments(
+            from: ProcessInfo.processInfo.arguments,
+            openSettingsArguments: openSettingsLaunchArguments,
+            nextAutomaticRelaunchAttempt: nextAttempt
+        )
+
+        NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: configuration) { _, error in
+            if let error {
+                RuntimeLogger.log("Automatic relaunch attempt \(nextAttempt) failed: \(error.localizedDescription)")
+                NSApp.terminate(nil)
+                return
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                NSApp.terminate(nil)
+            }
+        }
+
+        return true
     }
 }

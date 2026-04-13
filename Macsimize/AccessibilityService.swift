@@ -30,7 +30,7 @@ final class AccessibilityService: @unchecked Sendable {
         let activationRect: CGRect
     }
 
-    private struct TitleBarHitAncestor {
+    struct TitleBarHitAncestor {
         let role: String?
         let actions: [String]
         let frame: CGRect?
@@ -62,6 +62,30 @@ final class AccessibilityService: @unchecked Sendable {
             return nil
         }
 
+        let candidatePoints = candidateHitTestPoints(for: location)
+        let systemWideElement = AXUIElementCreateSystemWide()
+        for candidatePoint in candidatePoints {
+            var hitElement: AXUIElement?
+            let hitError = AXUIElementCopyElementAtPosition(systemWideElement, Float(candidatePoint.x), Float(candidatePoint.y), &hitElement)
+            guard hitError == .success, let hitElement else {
+                continue
+            }
+
+            guard let buttonElement = resolveGreenButton(from: hitElement, clickLocation: candidatePoint),
+                  let app = runningApplication(for: buttonElement) ?? runningApplication(for: hitElement) else {
+                continue
+            }
+            if app.processIdentifier == ProcessInfo.processInfo.processIdentifier {
+                diagnostics.logMessage("AX hit-test skipped for Macsimize itself.")
+                return nil
+            }
+
+            if candidatePoint != location {
+                diagnostics.logMessage("AX hit-test succeeded using flipped screen coordinates.")
+            }
+            return context(for: buttonElement, app: app, clickLocation: location)
+        }
+
         guard let app = NSWorkspace.shared.frontmostApplication else {
             diagnostics.logMessage("AX hit-test skipped: no frontmost app.")
             return nil
@@ -73,22 +97,6 @@ final class AccessibilityService: @unchecked Sendable {
         }
 
         let appElement = AXUIElementCreateApplication(app.processIdentifier)
-        let candidatePoints = candidateHitTestPoints(for: location)
-        for candidatePoint in candidatePoints {
-            var hitElement: AXUIElement?
-            let hitError = AXUIElementCopyElementAtPosition(appElement, Float(candidatePoint.x), Float(candidatePoint.y), &hitElement)
-            guard hitError == .success, let hitElement else {
-                continue
-            }
-
-            if let buttonElement = resolveGreenButton(from: hitElement, clickLocation: candidatePoint) {
-                if candidatePoint != location {
-                    diagnostics.logMessage("AX hit-test succeeded using flipped screen coordinates.")
-                }
-                return context(for: buttonElement, app: app, clickLocation: location)
-            }
-        }
-
         for candidatePoint in candidatePoints {
             if let resolved = resolveUsingFocusedWindowButtonLookup(
                 app: app,
@@ -133,11 +141,14 @@ final class AccessibilityService: @unchecked Sendable {
 
         let appElement = AXUIElementCreateApplication(app.processIdentifier)
         for window in focusedOrMainWindows(in: appElement) {
-            guard let interactionRects = titleBarInteractionRects(for: window),
+            guard let windowFrame = AXHelpers.cgRect(of: window),
+                  hasReliableFallbackTitleBarEvidence(in: window, windowFrame: windowFrame, preferredLocation: location),
+                  let interactionRects = titleBarInteractionRects(for: window),
                   Self.shouldAcceptFallbackTitleBarInteraction(
                     originalLocation: location,
-                    windowFrame: AXHelpers.cgRect(of: window),
-                    draggableRect: interactionRects.draggableRect
+                    windowFrame: windowFrame,
+                    draggableRect: interactionRects.draggableRect,
+                    hasReliableFallbackEvidence: true
                   ) else {
                 continue
             }
@@ -152,9 +163,13 @@ final class AccessibilityService: @unchecked Sendable {
             ) else {
                 continue
             }
+            diagnostics.logMessage(
+                "Resolved titlebar interaction via fallback titlebar evidence for pid=\(app.processIdentifier) at \(NSStringFromPoint(location))."
+            )
             return TitleBarInteractionContext(
                 draggableRect: interactionRects.draggableRect,
                 activationRect: interactionRects.activationRect,
+                allowsActivationOutsideDraggableRect: false,
                 windowContext: context
             )
         }
@@ -474,6 +489,14 @@ final class AccessibilityService: @unchecked Sendable {
         return candidates
     }
 
+    private func runningApplication(for element: AXUIElement) -> NSRunningApplication? {
+        let pid = AXHelpers.pid(of: element)
+        guard pid != 0 else {
+            return nil
+        }
+        return NSRunningApplication(processIdentifier: pid)
+    }
+
     private func isLikelyInMenuBar(_ location: CGPoint) -> Bool {
         guard let screen = NSScreen.screens.first(where: { $0.frame.contains(location) }) else {
             return false
@@ -531,16 +554,23 @@ final class AccessibilityService: @unchecked Sendable {
                 continue
             }
 
-            if shouldIgnoreTitleBarHitElement(hitElement, window: windowElement) {
+            guard let windowFrame = AXHelpers.cgRect(of: windowElement) else {
+                continue
+            }
+
+            if shouldIgnoreTitleBarHitElement(
+                hitElement,
+                window: windowElement,
+                windowFrame: windowFrame
+            ) {
                 return .blocked
             }
 
-            guard let windowFrame = AXHelpers.cgRect(of: windowElement),
-                  let interactionRects = titleBarInteractionRects(for: windowElement, sourceElement: hitElement),
+            guard let interactionResolution = titleBarInteractionResolution(for: windowElement, sourceElement: hitElement),
                   Self.shouldAcceptHitTestResolvedTitleBarInteraction(
                     originalLocation: location,
                     windowFrame: windowFrame,
-                    activationRect: interactionRects.activationRect
+                    activationRect: interactionResolution.rects.activationRect
                   ) else {
                 continue
             }
@@ -558,8 +588,9 @@ final class AccessibilityService: @unchecked Sendable {
             }
 
             return .resolved(TitleBarInteractionContext(
-                draggableRect: interactionRects.draggableRect,
-                activationRect: interactionRects.activationRect,
+                draggableRect: interactionResolution.rects.draggableRect,
+                activationRect: interactionResolution.rects.activationRect,
+                allowsActivationOutsideDraggableRect: interactionResolution.allowsActivationOutsideDraggableRect,
                 windowContext: context
             ))
         }
@@ -753,7 +784,38 @@ final class AccessibilityService: @unchecked Sendable {
         return TitleBarInteractionRects(draggableRect: draggableRect, activationRect: activationRect)
     }
 
+    private func titleBarInteractionResolution(
+        for window: AXUIElement,
+        sourceElement: AXUIElement
+    ) -> (rects: TitleBarInteractionRects, allowsActivationOutsideDraggableRect: Bool)? {
+        guard let rects = titleBarInteractionRects(for: window, sourceElement: sourceElement),
+              let windowFrame = AXHelpers.cgRect(of: window) else {
+            return nil
+        }
+
+        let supplementaryFrames = supplementaryFramesAlongAncestorChain(
+            from: sourceElement,
+            to: window,
+            windowFrame: windowFrame
+        )
+        let sourceFrame = AXHelpers.cgRect(of: sourceElement)
+        let sourceEscapesDraggableRect = sourceFrame.map { !rects.draggableRect.contains($0) } ?? false
+        let allowsActivationOutsideDraggableRect =
+            !supplementaryFrames.isEmpty
+            && sourceEscapesDraggableRect
+
+        return (
+            rects: rects,
+            allowsActivationOutsideDraggableRect: allowsActivationOutsideDraggableRect
+        )
+    }
+
     private func titleBarReferenceFrame(in window: AXUIElement) -> CGRect? {
+        guard let windowFrame = AXHelpers.cgRect(of: window) else {
+            return nil
+        }
+
+        var candidates: [CGRect] = []
         for attribute in [
             kAXCloseButtonAttribute as String,
             kAXZoomButtonAttribute as String,
@@ -762,10 +824,18 @@ final class AccessibilityService: @unchecked Sendable {
         ] {
             if let element = AXHelpers.elementAttribute(attribute, on: window),
                let frame = AXHelpers.cgRect(of: element) {
-                return frame
+                candidates.append(frame)
             }
         }
-        return nil
+
+        return candidates
+            .filter { Self.isLikelyTitleBarControlFrame($0, in: windowFrame, fallbackTitleBarHeight: fallbackTitleBarHeight) }
+            .min { lhs, rhs in
+                if abs(lhs.minY - rhs.minY) > 1 {
+                    return lhs.minY < rhs.minY
+                }
+                return lhs.minX < rhs.minX
+            }
     }
 
     private func toolbarFrame(in window: AXUIElement, windowFrame: CGRect) -> CGRect? {
@@ -817,6 +887,57 @@ final class AccessibilityService: @unchecked Sendable {
         return frames
     }
 
+    private func hasTrustedFallbackTitleBarEvidence(
+        in window: AXUIElement,
+        windowFrame: CGRect,
+        preferredLocation: CGPoint
+    ) -> Bool {
+        let systemWideElement = AXUIElementCreateSystemWide()
+
+        let samplePoints = Self.fallbackTitleBarProbePoints(for: windowFrame)
+            .sorted { lhs, rhs in
+                hypot(lhs.x - preferredLocation.x, lhs.y - preferredLocation.y)
+                    < hypot(rhs.x - preferredLocation.x, rhs.y - preferredLocation.y)
+            }
+
+        for point in samplePoints.prefix(1) {
+            var hitElement: AXUIElement?
+            guard AXUIElementCopyElementAtPosition(systemWideElement, Float(point.x), Float(point.y), &hitElement) == .success,
+                  let hitElement,
+                  let hitWindow = AXHelpers.window(of: hitElement),
+                  AXHelpers.elementsEqual(hitWindow, window) else {
+                continue
+            }
+
+            let ancestors = titleBarHitAncestors(from: hitElement, to: window)
+            if Self.isTrustedFallbackTitleBarHitPath(
+                ancestors,
+                in: windowFrame,
+                fallbackTitleBarHeight: fallbackTitleBarHeight
+            ) {
+                return true
+            }
+        }
+
+        return false
+    }
+
+    private func hasReliableFallbackTitleBarEvidence(
+        in window: AXUIElement,
+        windowFrame: CGRect,
+        preferredLocation: CGPoint
+    ) -> Bool {
+        if titleBarReferenceFrame(in: window) != nil {
+            return true
+        }
+
+        return hasTrustedFallbackTitleBarEvidence(
+            in: window,
+            windowFrame: windowFrame,
+            preferredLocation: preferredLocation
+        )
+    }
+
     private func supplementaryFramesAlongAncestorChain(
         from element: AXUIElement,
         to window: AXUIElement,
@@ -841,7 +962,12 @@ final class AccessibilityService: @unchecked Sendable {
         return frames
     }
 
-    private func shouldIgnoreTitleBarHitElement(_ element: AXUIElement, window: AXUIElement) -> Bool {
+    private func shouldIgnoreTitleBarHitElement(
+        _ element: AXUIElement,
+        window: AXUIElement,
+        windowFrame: CGRect
+    ) -> Bool {
+        _ = windowFrame
         let ancestors = titleBarHitAncestors(from: element, to: window)
 
         if Self.isLikelyTabStripTab(roles: ancestors.map(\.role), frames: ancestors.map(\.frame)) {
@@ -910,6 +1036,34 @@ final class AccessibilityService: @unchecked Sendable {
         return bottomExtent <= maxReasonableHeight + 24
     }
 
+    static func isLikelyTitleBarControlFrame(
+        _ frame: CGRect,
+        in windowFrame: CGRect,
+        fallbackTitleBarHeight: CGFloat = 56
+    ) -> Bool {
+        guard !frame.isNull,
+              !frame.isInfinite,
+              frame.width > 0,
+              frame.height > 0 else {
+            return false
+        }
+
+        let maxControlWidth = max(96, fallbackTitleBarHeight * 1.5)
+        let maxControlHeight = max(32, fallbackTitleBarHeight)
+        guard frame.width <= maxControlWidth,
+              frame.height <= maxControlHeight else {
+            return false
+        }
+
+        let topInset = frame.minY - windowFrame.minY
+        guard topInset >= -4, topInset <= max(24, fallbackTitleBarHeight * 0.75) else {
+            return false
+        }
+
+        let bottomExtent = frame.maxY - windowFrame.minY
+        return bottomExtent <= max(fallbackTitleBarHeight * 1.25, 84)
+    }
+
     static func titleBarRect(forWindowFrame windowFrame: CGRect, controlFrame: CGRect) -> CGRect {
         let topInset = max(0, controlFrame.minY - windowFrame.minY)
         let height = min(
@@ -948,12 +1102,63 @@ final class AccessibilityService: @unchecked Sendable {
     static func shouldAcceptFallbackTitleBarInteraction(
         originalLocation: CGPoint,
         windowFrame: CGRect?,
-        draggableRect: CGRect
+        draggableRect: CGRect,
+        hasReliableFallbackEvidence: Bool
     ) -> Bool {
-        guard let windowFrame else {
+        guard hasReliableFallbackEvidence, let windowFrame else {
             return false
         }
         return windowFrame.contains(originalLocation) && draggableRect.contains(originalLocation)
+    }
+
+    static func fallbackTitleBarProbePoints(for windowFrame: CGRect) -> [CGPoint] {
+        let yInset = min(26, max(12, min(windowFrame.height * 0.14, 72)))
+        let y = windowFrame.minY + yInset
+        return [0.22, 0.5, 0.78].map { xFraction in
+            CGPoint(x: windowFrame.minX + (windowFrame.width * xFraction), y: y)
+        }
+    }
+
+    static func isTrustedFallbackTitleBarHitPath(
+        _ ancestors: [TitleBarHitAncestor],
+        in windowFrame: CGRect,
+        fallbackTitleBarHeight: CGFloat = 56
+    ) -> Bool {
+        let roles = ancestors.map(\.role)
+        let frames = ancestors.map(\.frame)
+
+        if isLikelyTabStripTab(roles: roles, frames: frames) {
+            return false
+        }
+
+        if ancestors.contains(where: { isInteractiveTitleBarElement(role: $0.role, actions: $0.actions) }) {
+            return false
+        }
+
+        if roles.first == kAXWindowRole as String {
+            return true
+        }
+
+        if roles.contains(kAXStaticTextRole as String) || roles.contains(kAXImageRole as String) {
+            return true
+        }
+
+        if roles.contains(kAXToolbarRole as String) {
+            return true
+        }
+
+        return ancestors.contains { ancestor in
+            guard let role = ancestor.role,
+                  role == (kAXGroupRole as String) || role == "AXSplitGroup",
+                  let frame = ancestor.frame else {
+                return false
+            }
+            return isLikelyTitleBarSupplementaryFrame(
+                frame,
+                in: windowFrame,
+                fallbackTitleBarHeight: fallbackTitleBarHeight
+            )
+        }
     }
 
     static func isInteractiveTitleBarElement(role: String?, actions: [String]) -> Bool {

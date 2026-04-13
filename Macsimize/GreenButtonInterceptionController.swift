@@ -17,7 +17,7 @@ struct PendingWindowAction {
 
 enum MouseInterceptionDecision {
     case passThrough
-    case consume
+    case consume(ClickedWindowContext)
     case flushBufferedEvents
     case performAction(PendingWindowAction)
 }
@@ -91,7 +91,7 @@ final class GreenButtonInterceptionController {
             diagnostics.logClickContext(context, chosenPath: "captured-down")
         }
 
-        return .consume
+        return .consume(context)
     }
 
     func handleMouseDragged(location: CGPoint) -> MouseInterceptionDecision {
@@ -101,7 +101,7 @@ final class GreenButtonInterceptionController {
 
         let movedDistance = hypot(location.x - pendingIntercept.location.x, location.y - pendingIntercept.location.y)
         guard movedDistance > maxMovement else {
-            return .consume
+            return .consume(pendingIntercept.context)
         }
 
         self.pendingIntercept = nil
@@ -115,7 +115,7 @@ final class GreenButtonInterceptionController {
         }
 
         guard timestamp - pendingIntercept.timestamp > maxClickDuration else {
-            return .consume
+            return .consume(pendingIntercept.context)
         }
 
         self.pendingIntercept = nil

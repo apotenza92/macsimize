@@ -84,6 +84,97 @@ final class DeferredReplayStoreTests: XCTestCase {
         XCTAssertTrue(store.isEmpty)
     }
 
+    func testInterceptionTransactionStoreRecordsPerWindowDispatchedState() {
+        let store = InterceptionTransactionStore()
+        let key = WindowInterceptionKey(pid: 42, windowIdentifier: "window-a", windowNumber: 1)
+        let expectation = ManagedWindowMutationExpectation(
+            sourceFrame: CGRect(x: 10, y: 20, width: 800, height: 600),
+            destinationFrame: CGRect(x: 0, y: 30, width: 1440, height: 840),
+            observedFrame: nil,
+            restored: false
+        )
+
+        store.recordDispatched(for: .greenButton, key: key, mutationExpectation: expectation)
+
+        XCTAssertEqual(
+            store.transaction(for: .greenButton, key: key),
+            InterceptionTransaction(
+                source: .greenButton,
+                key: key,
+                mutationExpectation: expectation,
+                phase: .dispatched
+            )
+        )
+        XCTAssertTrue(store.hasActiveTransaction(for: .greenButton, key: key))
+    }
+
+    func testInterceptionTransactionStoreDoesNotTreatDifferentWindowInSamePIDAsActive() {
+        let store = InterceptionTransactionStore()
+        let firstKey = WindowInterceptionKey(pid: 42, windowIdentifier: "window-a", windowNumber: 1)
+        let secondKey = WindowInterceptionKey(pid: 42, windowIdentifier: "window-b", windowNumber: 2)
+
+        store.recordDispatched(for: .greenButton, key: firstKey, mutationExpectation: nil)
+
+        XCTAssertFalse(store.hasActiveTransaction(for: .greenButton, key: secondKey))
+    }
+
+    func testInterceptionTransactionStoreMarkSettledRetainsTransactionButClearsActiveState() {
+        let store = InterceptionTransactionStore()
+        let key = WindowInterceptionKey(pid: 42, windowIdentifier: "window-a", windowNumber: 1)
+
+        store.recordDispatched(for: .greenButton, key: key, mutationExpectation: nil)
+        store.markSettled(for: .greenButton, key: key)
+
+        XCTAssertEqual(store.transaction(for: .greenButton, key: key)?.phase, .settled)
+        XCTAssertFalse(store.hasActiveTransaction(for: .greenButton, key: key))
+    }
+
+    func testInterceptionTransactionStoreRemoveTransactionClearsMatchingKeyOnly() {
+        let store = InterceptionTransactionStore()
+        let firstKey = WindowInterceptionKey(pid: 42, windowIdentifier: "window-a", windowNumber: 1)
+        let secondKey = WindowInterceptionKey(pid: 42, windowIdentifier: "window-b", windowNumber: 2)
+
+        store.recordDispatched(for: .greenButton, key: firstKey, mutationExpectation: nil)
+        store.recordDispatched(for: .greenButton, key: secondKey, mutationExpectation: nil)
+        store.removeTransaction(for: .greenButton, key: firstKey)
+
+        XCTAssertNil(store.transaction(for: .greenButton, key: firstKey))
+        XCTAssertNotNil(store.transaction(for: .greenButton, key: secondKey))
+    }
+
+    func testShouldTrackManagedWindowTransactionReturnsFalseWhenObservedFrameAlreadyMatchesDestination() {
+        let expectation = ManagedWindowMutationExpectation(
+            sourceFrame: CGRect(x: 10, y: 20, width: 800, height: 600),
+            destinationFrame: CGRect(x: 0, y: 30, width: 1440, height: 840),
+            observedFrame: CGRect(x: 0, y: 30, width: 1440, height: 840),
+            restored: false
+        )
+
+        XCTAssertFalse(EventTapService.shouldTrackManagedWindowTransaction(for: expectation))
+    }
+
+    func testShouldTrackManagedWindowTransactionReturnsTrueWhenObservedFrameIsMissing() {
+        let expectation = ManagedWindowMutationExpectation(
+            sourceFrame: CGRect(x: 10, y: 20, width: 800, height: 600),
+            destinationFrame: CGRect(x: 0, y: 30, width: 1440, height: 840),
+            observedFrame: nil,
+            restored: false
+        )
+
+        XCTAssertTrue(EventTapService.shouldTrackManagedWindowTransaction(for: expectation))
+    }
+
+    func testShouldTrackManagedWindowTransactionReturnsTrueWhenObservedFrameStillDiffers() {
+        let expectation = ManagedWindowMutationExpectation(
+            sourceFrame: CGRect(x: 10, y: 20, width: 800, height: 600),
+            destinationFrame: CGRect(x: 0, y: 30, width: 1440, height: 840),
+            observedFrame: CGRect(x: 12, y: 45, width: 1410, height: 820),
+            restored: false
+        )
+
+        XCTAssertTrue(EventTapService.shouldTrackManagedWindowTransaction(for: expectation))
+    }
+
     private func makeMouseEvent() -> CGEvent {
         let source = CGEventSource(stateID: .hidSystemState)!
         return CGEvent(

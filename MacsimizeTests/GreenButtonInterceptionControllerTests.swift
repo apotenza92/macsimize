@@ -87,7 +87,7 @@ final class GreenButtonInterceptionControllerTests: XCTestCase {
         )
         let mouseUp = controller.handleMouseUp(location: CGPoint(x: 101, y: 200), timestamp: 10.2)
 
-        assertDecision(mouseDown, equals: .consume)
+        assertConsumes(mouseDown)
         guard case .performAction(let pendingAction) = mouseUp else {
             return XCTFail("Expected performAction decision")
         }
@@ -173,7 +173,7 @@ final class GreenButtonInterceptionControllerTests: XCTestCase {
 
         let dragDecision = controller.handleMouseDragged(location: CGPoint(x: 102, y: 101))
 
-        assertDecision(dragDecision, equals: .consume)
+        assertConsumes(dragDecision)
     }
 
     func testOptionClickInFullScreenModeCapturesAndPerformsMaximize() {
@@ -196,7 +196,7 @@ final class GreenButtonInterceptionControllerTests: XCTestCase {
         )
         let mouseUp = controller.handleMouseUp(location: CGPoint(x: 100, y: 200), timestamp: 10.1)
 
-        assertDecision(mouseDown, equals: .consume)
+        assertConsumes(mouseDown)
         guard case .performAction(let pendingAction) = mouseUp else {
             return XCTFail("Expected performAction decision")
         }
@@ -223,7 +223,7 @@ final class GreenButtonInterceptionControllerTests: XCTestCase {
         )
         let mouseUp = controller.handleMouseUp(location: CGPoint(x: 100, y: 200), timestamp: 10.1)
 
-        assertDecision(mouseDown, equals: .consume)
+        assertConsumes(mouseDown)
         guard case .performAction(let pendingAction) = mouseUp else {
             return XCTFail("Expected performAction decision")
         }
@@ -281,11 +281,16 @@ final class GreenButtonInterceptionControllerTests: XCTestCase {
     private func assertDecision(_ decision: MouseInterceptionDecision, equals expected: MouseInterceptionDecision) {
         switch (decision, expected) {
         case (.passThrough, .passThrough),
-             (.consume, .consume),
              (.flushBufferedEvents, .flushBufferedEvents):
             return
         default:
             XCTFail("Unexpected decision \(decision) != \(expected)")
+        }
+    }
+
+    private func assertConsumes(_ decision: MouseInterceptionDecision) {
+        guard case .consume(_) = decision else {
+            return XCTFail("Expected consume decision, got \(decision)")
         }
     }
 

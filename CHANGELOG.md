@@ -4,7 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-- No unreleased changes yet.
+## [v0.3.8]
+
+- Fixed green-button maximise reliability for Chromium-style and custom-chrome apps by resolving clicks through system-wide AX hit-testing, tightening per-window transaction handling, and preventing stale managed-window state from blocking later restore clicks.
+- Made maximise land in a single visible step more consistently by simplifying the managed frame-apply path, removing old repair-loop heuristics, and keeping direct visible-frame maximise behaviour as the default.
+- Kept title-bar double-click maximise working independently of the green-button preference and restored drag-to-restore for title-bar-managed maximised windows even when the green button is configured for full screen.
+- Hardened development relaunch handling with deterministic stop-running and stable dev launch scripts, plus bounded relaunch retries when stale instances survive cleanup.
 
 ## [v0.3.7]
 

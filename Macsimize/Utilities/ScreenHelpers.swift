@@ -26,16 +26,19 @@ enum ScreenHelpers {
         }
 
         let bestByIntersection = screens.max { lhs, rhs in
-            intersectionArea(windowFrame, lhs.frame) < intersectionArea(windowFrame, rhs.frame)
+            intersectionArea(windowFrame, accessibilityRect(forScreen: lhs, in: screens))
+                < intersectionArea(windowFrame, accessibilityRect(forScreen: rhs, in: screens))
         }
 
-        if let bestByIntersection, intersectionArea(windowFrame, bestByIntersection.frame) > 0 {
+        if let bestByIntersection,
+           intersectionArea(windowFrame, accessibilityRect(forScreen: bestByIntersection, in: screens)) > 0 {
             return bestByIntersection
         }
 
         let windowCenter = CGPoint(x: windowFrame.midX, y: windowFrame.midY)
         return screens.min { lhs, rhs in
-            distanceSquared(windowCenter, center(of: lhs.frame)) < distanceSquared(windowCenter, center(of: rhs.frame))
+            distanceSquared(windowCenter, center(of: accessibilityRect(forScreen: lhs, in: screens)))
+                < distanceSquared(windowCenter, center(of: accessibilityRect(forScreen: rhs, in: screens)))
         }
     }
 
@@ -54,6 +57,18 @@ enum ScreenHelpers {
                 y: desktopTopEdge - visibleFrame.maxY,
                 width: visibleFrame.width,
                 height: visibleFrame.height
+            )
+        )
+    }
+
+    static func accessibilityRect(forScreen screen: ScreenDescriptor, in screens: [ScreenDescriptor]) -> CGRect {
+        let desktopTopEdge = screens.map(\.frame.maxY).max() ?? screen.frame.maxY
+        return normalized(
+            rect: CGRect(
+                x: screen.frame.minX,
+                y: desktopTopEdge - screen.frame.maxY,
+                width: screen.frame.width,
+                height: screen.frame.height
             )
         )
     }

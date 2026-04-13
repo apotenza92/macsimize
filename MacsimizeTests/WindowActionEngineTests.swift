@@ -24,6 +24,8 @@ final class WindowActionEngineTests: XCTestCase {
         XCTAssertTrue(outcome.handled)
         XCTAssertEqual(outcome.chosenPath, .fullScreen)
         XCTAssertEqual(outcome.failureDisposition, .dropInterceptedClick)
+        XCTAssertNil(outcome.interceptionKey)
+        XCTAssertNil(outcome.mutationExpectation)
         XCTAssertEqual(strategy.performCallCount, 0)
         XCTAssertEqual(fullScreenStrategy.performCallCount, 1)
     }
@@ -46,6 +48,8 @@ final class WindowActionEngineTests: XCTestCase {
         XCTAssertFalse(outcome.handled)
         XCTAssertEqual(outcome.chosenPath, .fullScreen)
         XCTAssertEqual(outcome.failureDisposition, .replayOriginalClick)
+        XCTAssertNil(outcome.interceptionKey)
+        XCTAssertNil(outcome.mutationExpectation)
         XCTAssertEqual(strategy.performCallCount, 0)
         XCTAssertEqual(fullScreenStrategy.performCallCount, 1)
     }
@@ -61,6 +65,8 @@ final class WindowActionEngineTests: XCTestCase {
         XCTAssertTrue(outcome.handled)
         XCTAssertEqual(outcome.chosenPath, .maximize)
         XCTAssertEqual(outcome.failureDisposition, .dropInterceptedClick)
+        XCTAssertEqual(outcome.interceptionKey, Self.makeContext().interceptionKey)
+        XCTAssertEqual(outcome.mutationExpectation, Self.successResult().mutationExpectation)
         XCTAssertEqual(strategy.performCallCount, 1)
     }
 
@@ -73,6 +79,8 @@ final class WindowActionEngineTests: XCTestCase {
         XCTAssertFalse(outcome.handled)
         XCTAssertNil(outcome.chosenPath)
         XCTAssertEqual(outcome.failureDisposition, .dropInterceptedClick)
+        XCTAssertNil(outcome.interceptionKey)
+        XCTAssertNil(outcome.mutationExpectation)
         XCTAssertEqual(strategy.performCallCount, 0)
         XCTAssertTrue(outcome.notes.contains { $0.contains("not appear to be resizable") })
     }
@@ -84,6 +92,7 @@ final class WindowActionEngineTests: XCTestCase {
             restored: false,
             positionApplied: false,
             postApplyFrame: nil,
+            mutationExpectation: nil,
             notes: ["Window frame unavailable."]
         ))
         let engine = WindowActionEngine(maximizeStrategy: strategy, diagnostics: DebugDiagnostics())
@@ -93,6 +102,8 @@ final class WindowActionEngineTests: XCTestCase {
         XCTAssertFalse(outcome.handled)
         XCTAssertEqual(outcome.chosenPath, .maximize)
         XCTAssertEqual(outcome.failureDisposition, .dropInterceptedClick)
+        XCTAssertNil(outcome.interceptionKey)
+        XCTAssertNil(outcome.mutationExpectation)
         XCTAssertEqual(strategy.performCallCount, 1)
         XCTAssertEqual(outcome.notes, ["Window frame unavailable."])
     }
@@ -104,6 +115,12 @@ final class WindowActionEngineTests: XCTestCase {
             restored: false,
             positionApplied: true,
             postApplyFrame: CGRect(x: 0, y: 0, width: 1200, height: 800),
+            mutationExpectation: ManagedWindowMutationExpectation(
+                sourceFrame: CGRect(x: 10, y: 10, width: 500, height: 400),
+                destinationFrame: CGRect(x: 0, y: 0, width: 1200, height: 800),
+                observedFrame: CGRect(x: 0, y: 0, width: 1200, height: 800),
+                restored: false
+            ),
             notes: ["maximize succeeded"]
         )
     }

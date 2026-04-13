@@ -232,6 +232,30 @@ final class AccessibilityServiceCurrentSpaceTests: XCTestCase {
         )
     }
 
+    func testTitleBarControlFrameAcceptsTopAttachedTrafficLight() {
+        let windowFrame = CGRect(x: 100, y: 200, width: 900, height: 700)
+        let frame = CGRect(x: 112, y: 215, width: 14, height: 14)
+
+        XCTAssertTrue(
+            AccessibilityService.isLikelyTitleBarControlFrame(
+                frame,
+                in: windowFrame
+            )
+        )
+    }
+
+    func testTitleBarControlFrameRejectsBottomAttachedGhostButton() {
+        let windowFrame = CGRect(x: 131, y: 538, width: 1252, height: 902)
+        let frame = CGRect(x: 1, y: 1425, width: 12, height: 14)
+
+        XCTAssertFalse(
+            AccessibilityService.isLikelyTitleBarControlFrame(
+                frame,
+                in: windowFrame
+            )
+        )
+    }
+
     func testHitTestResolvedTitleBarInteractionAcceptsOriginalLocationInsideTitleBar() {
         let windowFrame = CGRect(x: 100, y: 100, width: 800, height: 600)
         let activationRect = CGRect(x: 100, y: 100, width: 800, height: 48)
@@ -279,7 +303,8 @@ final class AccessibilityServiceCurrentSpaceTests: XCTestCase {
             AccessibilityService.shouldAcceptFallbackTitleBarInteraction(
                 originalLocation: CGPoint(x: 220, y: 120),
                 windowFrame: windowFrame,
-                draggableRect: draggableRect
+                draggableRect: draggableRect,
+                hasReliableFallbackEvidence: true
             )
         )
     }
@@ -292,7 +317,8 @@ final class AccessibilityServiceCurrentSpaceTests: XCTestCase {
             AccessibilityService.shouldAcceptFallbackTitleBarInteraction(
                 originalLocation: CGPoint(x: 220, y: 170),
                 windowFrame: windowFrame,
-                draggableRect: draggableRect
+                draggableRect: draggableRect,
+                hasReliableFallbackEvidence: true
             )
         )
     }
@@ -302,7 +328,60 @@ final class AccessibilityServiceCurrentSpaceTests: XCTestCase {
             AccessibilityService.shouldAcceptFallbackTitleBarInteraction(
                 originalLocation: CGPoint(x: 220, y: 120),
                 windowFrame: nil,
-                draggableRect: CGRect(x: 100, y: 100, width: 800, height: 48)
+                draggableRect: CGRect(x: 100, y: 100, width: 800, height: 48),
+                hasReliableFallbackEvidence: true
+            )
+        )
+    }
+
+    func testFallbackTitleBarInteractionRejectsWhenReliableFallbackEvidenceIsMissing() {
+        XCTAssertFalse(
+            AccessibilityService.shouldAcceptFallbackTitleBarInteraction(
+                originalLocation: CGPoint(x: 220, y: 120),
+                windowFrame: CGRect(x: 100, y: 100, width: 800, height: 600),
+                draggableRect: CGRect(x: 100, y: 100, width: 800, height: 48),
+                hasReliableFallbackEvidence: false
+            )
+        )
+    }
+
+    func testFallbackTitleBarProbePointsStayInTopBand() {
+        let windowFrame = CGRect(x: 100, y: 200, width: 900, height: 700)
+
+        let points = AccessibilityService.fallbackTitleBarProbePoints(for: windowFrame)
+
+        XCTAssertEqual(points.count, 3)
+        XCTAssertEqual(points[0].x, 298, accuracy: 0.001)
+        XCTAssertEqual(points[1].x, 550, accuracy: 0.001)
+        XCTAssertEqual(points[2].x, 802, accuracy: 0.001)
+        XCTAssertEqual(points[0].y, 226, accuracy: 0.001)
+    }
+
+    func testTrustedFallbackTitleBarHitPathAcceptsWindowHit() {
+        let ancestors = [
+            Self.makeTitleBarHitAncestor(role: kAXWindowRole as String, actions: [], frame: CGRect(x: 100, y: 100, width: 800, height: 600))
+        ]
+
+        XCTAssertTrue(
+            AccessibilityService.isTrustedFallbackTitleBarHitPath(
+                ancestors,
+                in: CGRect(x: 100, y: 100, width: 800, height: 600)
+            )
+        )
+    }
+
+    func testTrustedFallbackTitleBarHitPathRejectsUnknownFullWindowGroupChain() {
+        let windowFrame = CGRect(x: 100, y: 100, width: 800, height: 600)
+        let ancestors = [
+            Self.makeTitleBarHitAncestor(role: kAXGroupRole as String, actions: [], frame: windowFrame),
+            Self.makeTitleBarHitAncestor(role: kAXGroupRole as String, actions: [], frame: windowFrame),
+            Self.makeTitleBarHitAncestor(role: kAXWindowRole as String, actions: [kAXRaiseAction as String], frame: windowFrame)
+        ]
+
+        XCTAssertFalse(
+            AccessibilityService.isTrustedFallbackTitleBarHitPath(
+                ancestors,
+                in: windowFrame
             )
         )
     }
@@ -404,5 +483,9 @@ final class AccessibilityServiceCurrentSpaceTests: XCTestCase {
             spaceIDs: spaceIDs,
             isMinimized: isMinimized
         )
+    }
+
+    private static func makeTitleBarHitAncestor(role: String?, actions: [String], frame: CGRect?) -> AccessibilityService.TitleBarHitAncestor {
+        AccessibilityService.TitleBarHitAncestor(role: role, actions: actions, frame: frame)
     }
 }

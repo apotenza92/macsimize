@@ -16,6 +16,8 @@ struct WindowActionOutcome: Equatable {
     let chosenPath: WindowActionStep?
     let notes: [String]
     let failureDisposition: WindowActionFailureDisposition
+    let interceptionKey: WindowInterceptionKey?
+    let mutationExpectation: ManagedWindowMutationExpectation?
 }
 
 struct FullScreenResult: Equatable {
@@ -102,7 +104,9 @@ final class WindowActionEngine {
                     handled: true,
                     chosenPath: .fullScreen,
                     notes: result.notes,
-                    failureDisposition: .dropInterceptedClick
+                    failureDisposition: .dropInterceptedClick,
+                    interceptionKey: nil,
+                    mutationExpectation: nil
                 )
             }
 
@@ -111,7 +115,9 @@ final class WindowActionEngine {
                 handled: false,
                 chosenPath: .fullScreen,
                 notes: result.notes,
-                failureDisposition: result.failureDisposition
+                failureDisposition: result.failureDisposition,
+                interceptionKey: nil,
+                mutationExpectation: nil
             )
         case .maximize:
             guard context.isResizable else {
@@ -121,7 +127,9 @@ final class WindowActionEngine {
                     handled: false,
                     chosenPath: nil,
                     notes: notes,
-                    failureDisposition: .dropInterceptedClick
+                    failureDisposition: .dropInterceptedClick,
+                    interceptionKey: nil,
+                    mutationExpectation: nil
                 )
             }
 
@@ -132,7 +140,9 @@ final class WindowActionEngine {
                     handled: true,
                     chosenPath: .maximize,
                     notes: result.notes,
-                    failureDisposition: .dropInterceptedClick
+                    failureDisposition: .dropInterceptedClick,
+                    interceptionKey: context.interceptionKey,
+                    mutationExpectation: result.mutationExpectation
                 )
             }
 
@@ -141,7 +151,9 @@ final class WindowActionEngine {
                 handled: false,
                 chosenPath: .maximize,
                 notes: result.notes,
-                failureDisposition: .dropInterceptedClick
+                failureDisposition: .dropInterceptedClick,
+                interceptionKey: nil,
+                mutationExpectation: nil
             )
         }
     }

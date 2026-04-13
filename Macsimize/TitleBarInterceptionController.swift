@@ -5,6 +5,10 @@ protocol TitleBarContextResolving {
     func resolveTitleBarInteraction(at location: CGPoint) -> TitleBarInteractionContext?
 }
 
+protocol ManagedMaximizedStateChecking {
+    func isCurrentlyManagedMaximized(_ context: ClickedWindowContext) -> Bool
+}
+
 enum TitleBarInterceptionDecision {
     case passThrough
     case consume
@@ -19,6 +23,7 @@ final class TitleBarInterceptionController {
     }
 
     private let contextResolver: TitleBarContextResolving
+    private let managedStateChecker: ManagedMaximizedStateChecking
     private let diagnostics: DebugDiagnostics
     private let maxMovement: CGFloat
 
@@ -27,10 +32,12 @@ final class TitleBarInterceptionController {
 
     init(
         contextResolver: TitleBarContextResolving,
+        managedStateChecker: ManagedMaximizedStateChecking,
         diagnostics: DebugDiagnostics,
         maxMovement: CGFloat = 4
     ) {
         self.contextResolver = contextResolver
+        self.managedStateChecker = managedStateChecker
         self.diagnostics = diagnostics
         self.maxMovement = maxMovement
     }
@@ -45,17 +52,20 @@ final class TitleBarInterceptionController {
         clickCount: Int64,
         configuration: InterceptionConfiguration
     ) -> TitleBarInterceptionDecision {
-        guard configuration.selectedAction == .maximize else {
-            reset()
-            return .passThrough
-        }
-
         guard let context = contextResolver.resolveTitleBarInteraction(at: location) else {
             pendingDrag = nil
             return .passThrough
         }
 
         if clickCount >= 2 {
+            let isEligibleDoubleClick =
+                context.draggableRect.contains(location)
+                || (context.allowsActivationOutsideDraggableRect && context.activationRect.contains(location))
+            guard isEligibleDoubleClick else {
+                pendingDrag = nil
+                shouldConsumeMouseUp = false
+                return .passThrough
+            }
             pendingDrag = nil
             shouldConsumeMouseUp = true
             diagnostics.logMessage(AppStrings.titleBarDoubleClickCaptured)
@@ -63,6 +73,13 @@ final class TitleBarInterceptionController {
         }
 
         guard context.draggableRect.contains(location) else {
+            pendingDrag = nil
+            return .passThrough
+        }
+
+        let shouldArmDragRestore = configuration.selectedAction == .maximize
+            || managedStateChecker.isCurrentlyManagedMaximized(context.windowContext)
+        guard shouldArmDragRestore else {
             pendingDrag = nil
             return .passThrough
         }
@@ -97,3 +114,4 @@ final class TitleBarInterceptionController {
 }
 
 extension AccessibilityService: TitleBarContextResolving {}
+extension MaximizeStrategy: ManagedMaximizedStateChecking {}
