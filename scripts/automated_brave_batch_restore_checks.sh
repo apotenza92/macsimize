@@ -17,7 +17,7 @@ ensure_no_other_macsimize_instances() {
 }
 
 list_brave_windows() {
-  python3 /Users/alex/.codex/skills/screenshot/scripts/take_screenshot.py --list-windows --app "$BRAVE_APP_NAME"
+  swift "$SCRIPT_DIR/list_app_windows.swift" "$BRAVE_APP_NAME"
 }
 
 save_brave_windows() {
@@ -107,6 +107,7 @@ trap cleanup EXIT
 echo "== Macsimize Brave batch restore regression checks =="
 run_test_preflight false
 require_tool python3
+require_tool swift
 resolve_app_paths
 ensure_no_other_macsimize_instances
 
