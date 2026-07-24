@@ -682,12 +682,12 @@ jobs:
             exit 1
           fi
 
-  update-sparkle-appcasts:
+  prepare-sparkle-publication:
     needs:
       - prepare
       - publish-release
     permissions:
-      contents: write
+      contents: read
     environment: sparkle-signing
     runs-on: ubuntu-24.04
     steps:
@@ -697,12 +697,6 @@ jobs:
           ref: ${{ needs.prepare.outputs.tag }}
           path: release-source
           persist-credentials: false
-
-      - name: Checkout appcast branch
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          ref: main
-          path: feed
 
       - name: Install public signature dependency
         run: python3 -m pip install --quiet 'cryptography==45.0.7'
@@ -715,36 +709,45 @@ jobs:
           set -euo pipefail
           python3 release-source/scripts/release/update_sparkle_appcasts.py \
             --repo "${{ github.repository }}" \
-            --output-dir feed/appcasts \
+            --output-dir publication/appcasts \
             --changelog release-source/CHANGELOG.md \
             --public-key-plist release-source/Macsimize/Info.plist \
             --github-token "$GITHUB_TOKEN" \
             --require-signatures
 
-      - name: Commit and push appcast updates
+      - name: Seal appcast publication bundle
         env:
           TAG: ${{ needs.prepare.outputs.tag }}
         run: |
           set -euo pipefail
-
-          cd feed
-          if git diff --quiet -- appcasts; then
-            echo "No Sparkle appcast changes to commit."
-            exit 0
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git add appcasts/*.xml
-          git commit -m "chore: update Sparkle appcasts for ${TAG}"
-          git push origin HEAD:main
+          files="$(find publication/appcasts -maxdepth 1 -type f -name '*.xml' -exec basename {} \; | LC_ALL=C sort | paste -sd ' ' -)"
+          [[ "$files" == 'beta-arm64.xml beta-x64.xml stable-arm64.xml stable-x64.xml' ]]
+          (
+            cd publication
+            find appcasts -type f -name '*.xml' -print0 |
+              LC_ALL=C sort -z |
+              xargs -0 sha256sum > SHA256SUMS
+          )
+          printf '%s\n' \
+            "Macsimize appcast publication bundle" \
+            "release-tag=${TAG}" \
+            "release-commit=${{ github.sha }}" \
+            "destination=appcasts/" \
+            "Apply these exact reviewed bytes manually after the release approval gate." \
+            > publication/PUBLICATION.txt
+      - name: Upload appcast publication bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: macsimize-appcast-publication-${{ needs.prepare.outputs.tag }}
+          path: publication
+          if-no-files-found: error
+          retention-days: 14
 
   generate-homebrew-casks:
     needs:
       - prepare
       - publish-release
-      - update-sparkle-appcasts
+      - prepare-sparkle-publication
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout Macsimize
@@ -865,60 +868,45 @@ jobs:
             test ! -e "$app"
           done
 
-  publish-homebrew-tap:
+  prepare-homebrew-publication:
     needs:
       - prepare
       - generate-homebrew-casks
       - validate-homebrew-casks
-    environment: homebrew-release
-    runs-on: macos-15
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
     steps:
-      - name: Checkout Homebrew tap
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-        with:
-          repository: apotenza92/homebrew-tap
-          path: homebrew-tap
-          persist-credentials: false
-
       - name: Download exact casks validated on both native runners
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: reviewed-homebrew-casks
-          path: reviewed-casks
+          path: publication/Casks
 
-      - name: Copy only the reviewed cask bytes into the tap
-        run: |
-          set -euo pipefail
-          casks="$(find reviewed-casks -maxdepth 1 -type f -exec basename {} \; | LC_ALL=C sort | paste -sd ' ' -)"
-          [[ "$casks" == 'macsimize.rb macsimize@beta.rb' ]]
-          cp reviewed-casks/macsimize.rb homebrew-tap/Casks/macsimize.rb
-          cp reviewed-casks/macsimize@beta.rb homebrew-tap/Casks/macsimize@beta.rb
-
-      - name: Commit and push tap updates
+      - name: Seal Homebrew publication bundle
         env:
-          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-        shell: bash
+          TAG: ${{ needs.prepare.outputs.tag }}
         run: |
           set -euo pipefail
-          cd homebrew-tap
-
-          git add Casks/macsimize.rb Casks/macsimize@beta.rb
-
-          if git diff --cached --quiet -- Casks/macsimize.rb Casks/macsimize@beta.rb; then exit 0; fi
-
-          git config user.name "macsimize-release-bot"
-          git config user.email "actions@users.noreply.github.com"
-          git commit -m "Update Macsimize casks from release metadata"
-          ASKPASS="$RUNNER_TEMP/macsimize-homebrew-askpass"
-          cleanup() { rm -f "$ASKPASS"; }
-          trap cleanup EXIT
-          cat > "$ASKPASS" <<'SH'
-          #!/bin/sh
-          case "$1" in
-            *Username*) printf '%s\n' x-access-token ;;
-            *Password*) printf '%s\n' "$HOMEBREW_TAP_TOKEN" ;;
-            *) exit 1 ;;
-          esac
-          SH
-          chmod 700 "$ASKPASS"
-          GIT_ASKPASS="$ASKPASS" GIT_TERMINAL_PROMPT=0 git -c credential.helper= push origin main
+          casks="$(find publication/Casks -maxdepth 1 -type f -exec basename {} \; | LC_ALL=C sort | paste -sd ' ' -)"
+          [[ "$casks" == 'macsimize.rb macsimize@beta.rb' ]]
+          (
+            cd publication
+            find Casks -type f -name '*.rb' -print0 |
+              LC_ALL=C sort -z |
+              xargs -0 sha256sum > SHA256SUMS
+          )
+          printf '%s\n' \
+            "Macsimize Homebrew publication bundle" \
+            "release-tag=${TAG}" \
+            "release-commit=${{ github.sha }}" \
+            "destination=apotenza92/homebrew-tap:Casks/" \
+            "Apply these exact natively validated bytes manually after the release approval gate." \
+            > publication/PUBLICATION.txt
+      - name: Upload Homebrew publication bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: macsimize-homebrew-publication-${{ needs.prepare.outputs.tag }}
+          path: publication
+          if-no-files-found: error
+          retention-days: 14
