@@ -228,7 +228,10 @@ class ReleaseContractTests(unittest.TestCase):
         )
         release_triggers = release.split("permissions:", 1)[0]
 
-        self.assertIn("  pull_request:", ci)
+        ci_triggers = ci.split("permissions:", 1)[0]
+        self.assertIn("  workflow_dispatch:", ci_triggers)
+        self.assertNotIn("  push:", ci_triggers)
+        self.assertNotIn("  pull_request:", ci_triggers)
         self.assertNotIn("environment:", ci)
         self.assertNotIn("secrets.", ci)
         self.assertNotIn("contents: write", ci)

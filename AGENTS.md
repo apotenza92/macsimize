@@ -1,5 +1,10 @@
 # Macsimize repository instructions
 
+## Verification workflow
+
+- `.github/workflows/ci.yml` is manually invoked with `workflow_dispatch`; routine pushes and pull requests do not start GitHub-hosted CI.
+- `.github/workflows/release.yml` remains restricted to deliberate `v*` tag pushes.
+
 ## Release credential boundaries
 
 - `release-signing` contains the Developer ID P12, its password, and the App Store Connect P8. Only native package jobs may use it.
