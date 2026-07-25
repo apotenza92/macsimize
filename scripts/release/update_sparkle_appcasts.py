@@ -23,11 +23,8 @@ import urllib.request
 from email.utils import format_datetime
 from pathlib import Path
 
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-
-
 STABLE_TAG_RE = re.compile(r"^v(\d+)\.(\d+)\.(\d+)$")
-PRERELEASE_TAG_RE = re.compile(r"^v(\d+)\.(\d+)\.(\d+)-([0-9A-Za-z.-]+)$")
+PRERELEASE_TAG_RE = re.compile(r"^v(\d+)\.(\d+)\.(\d+)-beta\.([1-9]\d*)$")
 
 
 @dataclasses.dataclass(frozen=True)
@@ -145,7 +142,6 @@ def extract_notes(changelog_path: Path, tag: str) -> str:
 
 
 def fetch_releases(repo: str, github_token: str | None) -> list[Release]:
-    url = f"https://api.github.com/repos/{repo}/releases"
     headers = {
         "Accept": "application/vnd.github+json",
         "User-Agent": "macsimize-sparkle-appcast-sync",
@@ -153,19 +149,33 @@ def fetch_releases(repo: str, github_token: str | None) -> list[Release]:
     if github_token:
         headers["Authorization"] = f"Bearer {github_token}"
 
-    req = urllib.request.Request(url, headers=headers)
-
-    try:
-        with urllib.request.urlopen(req, timeout=30) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-    except urllib.error.URLError as exc:
-        raise RuntimeError(f"Failed to fetch releases from {repo}: {exc}") from exc
+    payload: list[dict[str, object]] = []
+    page = 1
+    while True:
+        url = f"https://api.github.com/repos/{repo}/releases?per_page=100&page={page}"
+        req = urllib.request.Request(url, headers=headers)
+        try:
+            with urllib.request.urlopen(req, timeout=30) as response:
+                batch = json.loads(response.read().decode("utf-8"))
+        except urllib.error.URLError as exc:
+            raise RuntimeError(f"Failed to fetch releases from {repo}: {exc}") from exc
+        if not isinstance(batch, list):
+            raise RuntimeError("GitHub releases API returned a non-list response")
+        payload.extend(batch)
+        if len(batch) < 100:
+            break
+        page += 1
 
     releases: list[Release] = []
     for item in payload:
         parsed = parse_tag(item.get("tag_name", ""))
         if parsed is None:
             continue
+        expected_prerelease = parsed.prerelease is not None
+        if bool(item.get("prerelease", False)) != expected_prerelease:
+            raise RuntimeError(
+                f"Release {item.get('tag_name', '')} has a prerelease flag inconsistent with its tag"
+            )
 
         assets = tuple(
             ReleaseAsset(
@@ -212,7 +222,7 @@ def to_rfc2822(iso_timestamp: str) -> str:
     return format_datetime(parsed)
 
 
-def load_signing_key(signing_secret: str | None) -> Ed25519PrivateKey | None:
+def load_signing_key(signing_secret: str | None):
     if signing_secret is None:
         return None
     normalized = signing_secret.strip()
@@ -220,14 +230,32 @@ def load_signing_key(signing_secret: str | None) -> Ed25519PrivateKey | None:
         return None
 
     decoded = base64.b64decode(normalized)
-    if len(decoded) == 32:
-        return Ed25519PrivateKey.from_private_bytes(decoded)
-    if len(decoded) == 64:
-        return Ed25519PrivateKey.from_private_bytes(decoded[:32])
+    if len(decoded) not in {32, 64}:
+        raise RuntimeError(
+            "Unsupported Sparkle private key format. Expected a base64-encoded 32-byte seed or 64-byte expanded key."
+        )
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-    raise RuntimeError(
-        "Unsupported Sparkle private key format. Expected base64-encoded 32-byte seed."
+    return Ed25519PrivateKey.from_private_bytes(decoded[:32])
+
+
+def public_key_base64(private_key) -> str:
+    from cryptography.hazmat.primitives import serialization
+
+    public_bytes = private_key.public_key().public_bytes(
+        encoding=serialization.Encoding.Raw,
+        format=serialization.PublicFormat.Raw,
     )
+    return base64.b64encode(public_bytes).decode("ascii")
+
+
+def verify_asset_signature(path: Path, signature: str, public_key_base64_value: str) -> None:
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+
+    public_key = Ed25519PublicKey.from_public_bytes(
+        base64.b64decode(public_key_base64_value, validate=True)
+    )
+    public_key.verify(base64.b64decode(signature, validate=True), path.read_bytes())
 
 
 def download_asset(
@@ -253,7 +281,7 @@ def download_asset(
 
 def sign_asset(
     asset: ReleaseAsset,
-    private_key: Ed25519PrivateKey,
+    private_key,
     cache_dir: Path,
     github_token: str | None = None,
 ) -> str:
@@ -352,6 +380,12 @@ def main() -> int:
         action="store_true",
         help="Fail if no Sparkle private key is available",
     )
+    parser.add_argument(
+        "--public-key-plist",
+        type=Path,
+        default=Path("Macsimize/Info.plist"),
+        help="Reviewed source plist containing the bundled SUPublicEDKey",
+    )
     args = parser.parse_args()
 
     github_token = args.github_token or os.environ.get("GITHUB_TOKEN")
@@ -360,9 +394,20 @@ def main() -> int:
     )
     private_key = load_signing_key(signing_secret)
 
+    import plistlib
+
+    with args.public_key_plist.open("rb") as handle:
+        bundled_public_key = str(plistlib.load(handle).get("SUPublicEDKey", ""))
+    if not bundled_public_key:
+        raise RuntimeError(f"SUPublicEDKey is missing from {args.public_key_plist}")
+
     if args.require_signatures and private_key is None:
         raise RuntimeError(
             "Missing Sparkle private key. Set SPARKLE_PRIVATE_ED_KEY or --sparkle-private-key."
+        )
+    if private_key is not None and public_key_base64(private_key) != bundled_public_key:
+        raise RuntimeError(
+            "Sparkle private key does not match the SUPublicEDKey in the reviewed source plist"
         )
 
     releases = fetch_releases(args.repo, github_token)
@@ -428,6 +473,11 @@ def main() -> int:
             for asset in unique_assets.values():
                 signatures[asset.name] = sign_asset(
                     asset, private_key, cache_dir, github_token=github_token
+                )
+                verify_asset_signature(
+                    cache_dir / asset.name,
+                    signatures[asset.name],
+                    bundled_public_key,
                 )
 
     appcasts = {

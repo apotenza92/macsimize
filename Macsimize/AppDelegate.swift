@@ -59,7 +59,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
             guard let self else { return }
-            self.updateManager.configureForLaunch(isAutomatedMode: false)
+            self.updateManager.configureForLaunch(isAutomatedMode: self.isAutomatedTestSuite)
         }
     }
 

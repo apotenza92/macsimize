@@ -23,7 +23,7 @@ from pathlib import Path
 
 
 STABLE_TAG_RE = re.compile(r"^v(\d+)\.(\d+)\.(\d+)$")
-PRERELEASE_TAG_RE = re.compile(r"^v(\d+)\.(\d+)\.(\d+)-([0-9A-Za-z.-]+)$")
+PRERELEASE_TAG_RE = re.compile(r"^v(\d+)\.(\d+)\.(\d+)-beta\.([1-9]\d*)$")
 
 
 @dataclasses.dataclass(frozen=True)
@@ -110,19 +110,27 @@ def build_api_headers(user_agent: str, github_token: str | None) -> dict[str, st
 
 
 def fetch_releases(repo: str, github_token: str | None) -> list[Release]:
-    url = f"https://api.github.com/repos/{repo}/releases"
-    request = urllib.request.Request(
-        url,
-        headers=build_api_headers(
-            user_agent="macsimize-homebrew-sync", github_token=github_token
-        ),
-    )
-
-    try:
-        with urllib.request.urlopen(request, timeout=20) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-    except urllib.error.URLError as exc:
-        raise RuntimeError(f"Failed to fetch releases from {repo}: {exc}") from exc
+    payload: list[dict[str, object]] = []
+    page = 1
+    while True:
+        url = f"https://api.github.com/repos/{repo}/releases?per_page=100&page={page}"
+        request = urllib.request.Request(
+            url,
+            headers=build_api_headers(
+                user_agent="macsimize-homebrew-sync", github_token=github_token
+            ),
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=20) as response:
+                batch = json.loads(response.read().decode("utf-8"))
+        except urllib.error.URLError as exc:
+            raise RuntimeError(f"Failed to fetch releases from {repo}: {exc}") from exc
+        if not isinstance(batch, list):
+            raise RuntimeError("GitHub releases API returned a non-list response")
+        payload.extend(batch)
+        if len(batch) < 100:
+            break
+        page += 1
 
     output: list[Release] = []
     for item in payload:
@@ -130,6 +138,11 @@ def fetch_releases(repo: str, github_token: str | None) -> list[Release]:
         parsed = parse_tag(tag)
         if parsed is None:
             continue
+        expected_prerelease = parsed.prerelease is not None
+        if bool(item.get("prerelease", False)) != expected_prerelease:
+            raise RuntimeError(
+                f"Release {tag} has a prerelease flag inconsistent with its tag"
+            )
 
         assets = tuple(
             ReleaseAsset(
@@ -212,27 +225,32 @@ def render_stable_cask(
     intel_url: str,
     intel_sha256: str,
 ) -> str:
+    arm_url = versioned_cask_url(arm_url, version)
+    intel_url = versioned_cask_url(intel_url, version)
     return f'''cask "macsimize" do
   version "{version}"
 
   on_arm do
-    url "{arm_url}"
     sha256 "{arm_sha256}"
-  end
 
+    url "{arm_url}"
+  end
   on_intel do
-    url "{intel_url}"
     sha256 "{intel_sha256}"
+
+    url "{intel_url}"
   end
 
   name "Macsimize"
-  desc "Green-button maximize and full-screen remapper for macOS"
+  desc "Green-button maximize and full-screen remapper"
   homepage "https://github.com/{repo}"
 
   livecheck do
     url :url
     strategy :github_latest
   end
+
+  depends_on macos: :sonoma
 
   app "Macsimize.app"
 
@@ -254,17 +272,20 @@ def render_beta_cask(
     intel_url: str,
     intel_sha256: str,
 ) -> str:
+    arm_url = versioned_cask_url(arm_url, version)
+    intel_url = versioned_cask_url(intel_url, version)
     return f'''cask "macsimize@beta" do
   version "{version}"
 
   on_arm do
-    url "{arm_url}"
     sha256 "{arm_sha256}"
-  end
 
+    url "{arm_url}"
+  end
   on_intel do
-    url "{intel_url}"
     sha256 "{intel_sha256}"
+
+    url "{intel_url}"
   end
 
   name "Macsimize Beta"
@@ -276,9 +297,11 @@ def render_beta_cask(
     strategy :json do |json|
       json
         .reject {{ |release| release["draft"] }}
-        .map {{ |release| release["tag_name"] }}
+        .map {{ |release| release["tag_name"].delete_prefix("v") }}
     end
   end
+
+  depends_on macos: :sonoma
 
   app "Macsimize Beta.app"
 
@@ -290,6 +313,15 @@ def render_beta_cask(
   ]
 end
 '''
+
+
+def versioned_cask_url(url: str, version: str) -> str:
+    version_token = f"v{version}"
+    if url.count(version_token) != 2:
+        raise ValueError(
+            f"release URL must contain {version_token!r} in its tag and artifact name: {url}"
+        )
+    return url.replace(version_token, "v#{version}")
 
 
 def write_if_changed(path: Path, content: str) -> bool:

@@ -11,8 +11,8 @@ if [[ -z "$VERSION" ]]; then
   exit 1
 fi
 
-if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
-  echo "Error: invalid semver version '$VERSION'"
+if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ && ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+-beta\.[1-9][0-9]*$ ]]; then
+  echo "Error: version must match X.Y.Z or X.Y.Z-beta.N (N >= 1): '$VERSION'"
   exit 1
 fi
 

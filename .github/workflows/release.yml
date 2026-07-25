@@ -4,28 +4,52 @@ on:
   push:
     tags:
       - "v*"
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: "Tag to release (example: v0.2.0 or v0.2.0-beta.1)"
-        required: true
-        type: string
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: macsimize-release
+  cancel-in-progress: false
 
 jobs:
   prepare:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
       version: ${{ steps.meta.outputs.version }}
       version_core: ${{ steps.meta.outputs.version_core }}
       prerelease: ${{ steps.meta.outputs.prerelease }}
       build_number: ${{ steps.meta.outputs.build_number }}
+      release_matrix: ${{ steps.meta.outputs.release_matrix }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref }}
+          persist-credentials: false
+
+      - name: Prove tag commit belongs to the approved release source
+        env:
+          APPROVED_RELEASE_BRANCH: main
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          RELEASE_SHA: ${{ github.sha }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$DEFAULT_BRANCH" != "$APPROVED_RELEASE_BRANCH" ]]; then
+            echo "::error::Repository default branch $DEFAULT_BRANCH is not approved release source $APPROVED_RELEASE_BRANCH"
+            exit 1
+          fi
+          [[ "$(git rev-parse HEAD)" == "$RELEASE_SHA" ]]
+          [[ "$(git rev-parse "${RELEASE_TAG}^{commit}")" == "$RELEASE_SHA" ]]
+          git show-ref --verify --quiet "refs/remotes/origin/$APPROVED_RELEASE_BRANCH"
+          if ! git merge-base --is-ancestor "$RELEASE_SHA" "refs/remotes/origin/$APPROVED_RELEASE_BRANCH"; then
+            echo "::error::Release tag $RELEASE_TAG does not belong to $APPROVED_RELEASE_BRANCH"
+            exit 1
+          fi
 
       - name: Parse tag metadata
         id: meta
@@ -33,22 +57,18 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            TAG="${{ inputs.tag }}"
-          else
-            TAG="${GITHUB_REF_NAME}"
-          fi
+          TAG="${GITHUB_REF_NAME}"
 
           if [[ "$TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
             VERSION="${BASH_REMATCH[1]}"
             CORE_VERSION="$VERSION"
             PRERELEASE="false"
-          elif [[ "$TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)-([0-9A-Za-z.-]+)$ ]]; then
-            VERSION="${BASH_REMATCH[1]}-${BASH_REMATCH[2]}"
+          elif [[ "$TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)-beta\.([1-9][0-9]*)$ ]]; then
+            VERSION="${BASH_REMATCH[1]}-beta.${BASH_REMATCH[2]}"
             CORE_VERSION="${BASH_REMATCH[1]}"
             PRERELEASE="true"
           else
-            echo "::error::Tag must match vX.Y.Z or vX.Y.Z-<prerelease>"
+            echo "::error::Tag must match vX.Y.Z or vX.Y.Z-beta.N"
             exit 1
           fi
 
@@ -60,12 +80,16 @@ jobs:
           fi
 
           BUILD_NUMBER="$(python3 -c 'import re,sys; tag=sys.argv[1]; m=re.fullmatch(r"v(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?", tag); assert m; major,minor,patch=int(m.group(1)),int(m.group(2)),int(m.group(3)); prerelease=m.group(4); core=(major*1_000_000)+(minor*1_000)+patch; beta_match=(re.search(r"(?:beta|b)[.-]?(\d+)$", prerelease, flags=re.IGNORECASE) if prerelease else None); stage=(90_000 if prerelease is None else (min(max(int(beta_match.group(1)),1),89_999) if beta_match else 50_000)); print((core*100_000)+stage)' "$TAG")"
+          RELEASE_MATRIX="$(python3 scripts/release/release_matrix.py --prerelease "$PRERELEASE")"
 
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "version_core=$CORE_VERSION" >> "$GITHUB_OUTPUT"
-          echo "prerelease=$PRERELEASE" >> "$GITHUB_OUTPUT"
-          echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
+          {
+            echo "tag=$TAG"
+            echo "version=$VERSION"
+            echo "version_core=$CORE_VERSION"
+            echo "prerelease=$PRERELEASE"
+            echo "build_number=$BUILD_NUMBER"
+            echo "release_matrix=$RELEASE_MATRIX"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Verify changelog entry exists
         shell: bash
@@ -73,84 +97,87 @@ jobs:
           set -euo pipefail
           python3 scripts/release_notes_from_changelog.py --tag "${{ steps.meta.outputs.tag }}" > /dev/null
 
-  build-macos:
+  release-gate:
     needs: prepare
     strategy:
       fail-fast: false
       matrix:
         include:
           - runner: macos-15
-            arch: arm64
+            host_arch: arm64
             xcode_arch: arm64
-            channel: stable
-            product_name: Macsimize
-            package_prefix: Macsimize
-            bundle_id: pzc.Macsimize
-            app_icon: AppIcon
-          - runner: macos-15
-            arch: x64
+          - runner: macos-15-intel
+            host_arch: x86_64
             xcode_arch: x86_64
-            channel: stable
-            product_name: Macsimize
-            package_prefix: Macsimize
-            bundle_id: pzc.Macsimize
-            app_icon: AppIcon
-          - runner: macos-15
-            arch: arm64
-            xcode_arch: arm64
-            channel: beta
-            product_name: Macsimize Beta
-            package_prefix: Macsimize-Beta
-            bundle_id: pzc.Macsimize.beta
-            app_icon: AppIconBeta
-          - runner: macos-15
-            arch: x64
-            xcode_arch: x86_64
-            channel: beta
-            product_name: Macsimize Beta
-            package_prefix: Macsimize-Beta
-            bundle_id: pzc.Macsimize.beta
-            app_icon: AppIconBeta
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+          persist-credentials: false
+
+      - name: Verify native runner
+        run: test "$(uname -m)" = "${{ matrix.host_arch }}"
+
+      - name: Install public release-test dependency
+        run: python3 -m pip install --quiet 'cryptography==45.0.7'
+
+      - name: Run deterministic release tests
+        run: |
+          python3 -m unittest discover -s scripts/release -p 'test_*.py'
+          python3 -m py_compile scripts/release/*.py
+          xcodebuild test \
+            -project Macsimize.xcodeproj \
+            -scheme Macsimize \
+            -destination 'platform=macOS' \
+            ARCHS="${{ matrix.xcode_arch }}" \
+            ONLY_ACTIVE_ARCH=YES \
+            CODE_SIGNING_ALLOWED=NO
+
+  build-macos:
+    needs:
+      - prepare
+      - release-gate
+    environment: release-signing
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.release_matrix) }}
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           ref: ${{ needs.prepare.outputs.tag }}
+          persist-credentials: false
+
+      - name: Verify native runner
+        shell: bash
+        run: |
+          expected="${{ matrix.xcode_arch }}"
+          test "$(uname -m)" = "$expected"
 
       - name: Import signing certificate
         shell: bash
         env:
           APPLE_SIGNING_CERTIFICATE_P12_BASE64: ${{ secrets.APPLE_SIGNING_CERTIFICATE_P12_BASE64 }}
           APPLE_SIGNING_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_SIGNING_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_CERTIFICATE_SHA256: ${{ vars.APPLE_SIGNING_CERTIFICATE_SHA256 }}
+          APPLE_SIGNING_IDENTITY: ${{ vars.APPLE_SIGNING_IDENTITY }}
+          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
         run: |
           set -euo pipefail
-
-          test -n "$APPLE_SIGNING_CERTIFICATE_P12_BASE64"
-          test -n "$APPLE_SIGNING_CERTIFICATE_PASSWORD"
-
-          CERT_PATH="$RUNNER_TEMP/macsimize-signing.p12"
-          KEYCHAIN_PATH="$RUNNER_TEMP/macsimize.keychain-db"
-          KEYCHAIN_PASSWORD="$(openssl rand -hex 16)"
-
-          python3 -c 'import base64, pathlib, sys; pathlib.Path(sys.argv[1]).write_bytes(base64.b64decode(sys.argv[2]))' "$CERT_PATH" "$APPLE_SIGNING_CERTIFICATE_P12_BASE64"
-
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-          security list-keychains -d user -s "$KEYCHAIN_PATH"
-          security import "$CERT_PATH" \
-            -k "$KEYCHAIN_PATH" \
-            -P "$APPLE_SIGNING_CERTIFICATE_PASSWORD" \
-            -T /usr/bin/codesign \
-            -T /usr/bin/security
-          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          python3 scripts/release/import_apple_signing.py install
 
       - name: Build signed app archive
         shell: bash
         env:
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_SIGNING_IDENTITY: ${{ vars.APPLE_SIGNING_IDENTITY }}
+          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
           VERSION_CORE: ${{ needs.prepare.outputs.version_core }}
           BUILD_NUMBER: ${{ needs.prepare.outputs.build_number }}
         run: |
@@ -264,120 +291,193 @@ jobs:
       - name: Notarize and staple with notarytool
         shell: bash
         env:
-          APPLE_NOTARYTOOL_KEY_ID: ${{ secrets.APPLE_NOTARYTOOL_KEY_ID }}
-          APPLE_NOTARYTOOL_ISSUER_ID: ${{ secrets.APPLE_NOTARYTOOL_ISSUER_ID }}
+          APPLE_NOTARYTOOL_KEY_ID: ${{ vars.APPLE_NOTARYTOOL_KEY_ID }}
+          APPLE_NOTARYTOOL_ISSUER_ID: ${{ vars.APPLE_NOTARYTOOL_ISSUER_ID }}
           APPLE_NOTARYTOOL_KEY_P8_BASE64: ${{ secrets.APPLE_NOTARYTOOL_KEY_P8_BASE64 }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           set -euo pipefail
+          test -n "$APPLE_NOTARYTOOL_KEY_ID"
+          test -n "$APPLE_NOTARYTOOL_ISSUER_ID"
+          test -n "$APPLE_NOTARYTOOL_KEY_P8_BASE64"
 
-          MODE=""
-          if [[ -n "${APPLE_NOTARYTOOL_KEY_ID:-}" && -n "${APPLE_NOTARYTOOL_ISSUER_ID:-}" && -n "${APPLE_NOTARYTOOL_KEY_P8_BASE64:-}" ]]; then
-            MODE="api_key"
-          elif [[ -n "${APPLE_ID:-}" && -n "${APPLE_APP_SPECIFIC_PASSWORD:-}" && -n "${APPLE_TEAM_ID:-}" ]]; then
-            MODE="apple_id"
-          else
-            echo "::error::Missing notarization credentials. Configure either notarytool API key secrets or APPLE_ID + APPLE_APP_SPECIFIC_PASSWORD + APPLE_TEAM_ID."
-            exit 1
-          fi
+          NOTARY_DIR="$(mktemp -d "$RUNNER_TEMP/macsimize-notary.XXXXXX")"
+          chmod 700 "$NOTARY_DIR"
+          KEY_PATH="$NOTARY_DIR/AuthKey_${APPLE_NOTARYTOOL_KEY_ID}.p8"
+          export KEY_PATH
+          python3 - <<'PY'
+          import base64
+          import os
+          from pathlib import Path
 
-          KEY_PATH=""
-          if [[ "$MODE" == "api_key" ]]; then
-            KEY_PATH="$RUNNER_TEMP/AuthKey_${APPLE_NOTARYTOOL_KEY_ID}.p8"
-            python3 -c 'import base64, pathlib, sys; pathlib.Path(sys.argv[1]).write_bytes(base64.b64decode(sys.argv[2]))' "$KEY_PATH" "$APPLE_NOTARYTOOL_KEY_P8_BASE64"
-          fi
+          path = Path(os.environ["KEY_PATH"])
+          path.write_bytes(base64.b64decode(os.environ["APPLE_NOTARYTOOL_KEY_P8_BASE64"], validate=True))
+          path.chmod(0o600)
+          PY
 
           APP_PATH="dist/${{ matrix.product_name }}.app"
-          UPLOAD_ZIP="$RUNNER_TEMP/notary-upload.zip"
+          UPLOAD_ZIP="$NOTARY_DIR/notary-upload.zip"
+          SUBMIT_JSON_PATH="$NOTARY_DIR/submit.json"
+          NOTARY_LOG_PATH="$RUNNER_TEMP/notary-${{ matrix.channel }}-${{ matrix.arch }}.json"
 
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$UPLOAD_ZIP"
+          xcrun notarytool submit "$UPLOAD_ZIP" \
+            --key "$KEY_PATH" \
+            --key-id "$APPLE_NOTARYTOOL_KEY_ID" \
+            --issuer "$APPLE_NOTARYTOOL_ISSUER_ID" \
+            --wait \
+            --output-format json > "$SUBMIT_JSON_PATH"
 
-          SUBMIT_JSON=""
-
-          if [[ "$MODE" == "api_key" ]]; then
-            SUBMIT_JSON="$(xcrun notarytool submit "$UPLOAD_ZIP" \
-              --key "$KEY_PATH" \
-              --key-id "$APPLE_NOTARYTOOL_KEY_ID" \
-              --issuer "$APPLE_NOTARYTOOL_ISSUER_ID" \
-              --wait \
-              --output-format json)"
-          else
-            SUBMIT_JSON="$(xcrun notarytool submit "$UPLOAD_ZIP" \
-              --apple-id "$APPLE_ID" \
-              --team-id "$APPLE_TEAM_ID" \
-              --password "$APPLE_APP_SPECIFIC_PASSWORD" \
-              --wait \
-              --output-format json)"
-          fi
-
-          echo "$SUBMIT_JSON"
-
-          SUBMISSION_ID="$(python3 -c 'import json,sys; data=json.loads(sys.argv[1]); print(data.get("id", ""))' "$SUBMIT_JSON")"
-          SUBMISSION_STATUS="$(python3 -c 'import json,sys; data=json.loads(sys.argv[1]); print(data.get("status", ""))' "$SUBMIT_JSON")"
+          SUBMISSION_ID="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8")).get("id", ""))' "$SUBMIT_JSON_PATH")"
+          SUBMISSION_STATUS="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8")).get("status", ""))' "$SUBMIT_JSON_PATH")"
 
           if [[ -z "$SUBMISSION_ID" ]]; then
             echo "::error::Failed to parse notary submission ID"
+            rm -rf "$NOTARY_DIR"
             exit 1
           fi
 
+          xcrun notarytool log "$SUBMISSION_ID" \
+            --key "$KEY_PATH" \
+            --key-id "$APPLE_NOTARYTOOL_KEY_ID" \
+            --issuer "$APPLE_NOTARYTOOL_ISSUER_ID" \
+            --output-format json > "$NOTARY_LOG_PATH"
+
+          python3 - "$NOTARY_LOG_PATH" <<'PY'
+          import json
+          import sys
+
+          data = json.load(open(sys.argv[1], encoding="utf-8"))
+          issues = data.get("issues") or []
+          for issue in issues:
+              severity = str(issue.get("severity", "warning")).lower()
+              message = str(issue.get("message", "Unknown notarization issue"))
+              print(f"::{severity if severity in {'warning', 'error'} else 'warning'}::{message}")
+          if any(str(issue.get("severity", "")).lower() == "error" for issue in issues):
+              raise SystemExit("Notarization log contains errors")
+          PY
+
           if [[ "$SUBMISSION_STATUS" != "Accepted" ]]; then
             echo "::error::Notary submission status is '$SUBMISSION_STATUS' (expected 'Accepted')."
-            if [[ "$MODE" == "api_key" ]]; then
-              xcrun notarytool log "$SUBMISSION_ID" \
-                --key "$KEY_PATH" \
-                --key-id "$APPLE_NOTARYTOOL_KEY_ID" \
-                --issuer "$APPLE_NOTARYTOOL_ISSUER_ID" \
-                --output-format json || true
-            else
-              xcrun notarytool log "$SUBMISSION_ID" \
-                --apple-id "$APPLE_ID" \
-                --team-id "$APPLE_TEAM_ID" \
-                --password "$APPLE_APP_SPECIFIC_PASSWORD" \
-                --output-format json || true
-            fi
+            rm -rf "$NOTARY_DIR"
             exit 1
           fi
 
           xcrun stapler staple -v "$APP_PATH"
+          xcrun stapler validate -v "$APP_PATH"
+          spctl --assess --type execute --verbose=4 "$APP_PATH"
+          rm -rf "$NOTARY_DIR"
 
       - name: Package release zip
         shell: bash
         env:
           VERSION: ${{ needs.prepare.outputs.version }}
+          BUILD_NUMBER: ${{ needs.prepare.outputs.build_number }}
+          APPLE_SIGNING_CERTIFICATE_SHA256: ${{ vars.APPLE_SIGNING_CERTIFICATE_SHA256 }}
+          APPLE_SIGNING_IDENTITY: ${{ vars.APPLE_SIGNING_IDENTITY }}
+          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
         run: |
           set -euo pipefail
 
           mkdir -p out
           PACKAGE="${{ matrix.package_prefix }}-v${VERSION}-macos-${{ matrix.arch }}.zip"
           ditto -c -k --sequesterRsrc --keepParent "dist/${{ matrix.product_name }}.app" "out/$PACKAGE"
+          unzip -tq "out/$PACKAGE"
+          (cd out && shasum -a 256 "$PACKAGE" > "$PACKAGE.sha256")
+          python3 scripts/release/verify_macos_release.py \
+            --zip-path "out/$PACKAGE" \
+            --product-name "${{ matrix.product_name }}" \
+            --bundle-id "${{ matrix.bundle_id }}" \
+            --version "$VERSION" \
+            --build-number "$BUILD_NUMBER" \
+            --arch "${{ matrix.arch }}" \
+            --app-icon "${{ matrix.app_icon }}" \
+            --feed-url "https://raw.githubusercontent.com/apotenza92/macsimize/main/appcasts/${{ matrix.channel }}-${{ matrix.arch }}.xml" \
+            --sparkle-public-key "N7RX+t85/TW2Qu4q6zTzyxT63d5v5VUN11AECEWsbcE=" \
+            --signing-identity "$APPLE_SIGNING_IDENTITY" \
+            --team-id "$APPLE_TEAM_ID" \
+            --certificate-sha256 "$APPLE_SIGNING_CERTIFICATE_SHA256"
           ls -lah out
 
+      - name: Attest release package provenance
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-path: out/*.zip
+
       - name: Upload artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: release-macos-${{ matrix.channel }}-${{ matrix.arch }}
-          path: out/*
+          path: |
+            out/*.zip
+            out/*.sha256
           if-no-files-found: error
 
-  publish-release:
+      - name: Upload notarization evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: notarization-${{ matrix.channel }}-${{ matrix.arch }}
+          path: ${{ runner.temp }}/notary-${{ matrix.channel }}-${{ matrix.arch }}.json
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Remove ephemeral signing material
+        if: ${{ always() }}
+        run: python3 scripts/release/import_apple_signing.py cleanup
+
+  verify-release-policy:
+    name: Require immutable releases
+    needs:
+      - prepare
+    runs-on: ubuntu-24.04
+    environment: release-policy
+    permissions:
+      contents: read
+    steps:
+      - name: Verify immutable releases are enabled
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.IMMUTABLE_RELEASES_READ_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$GH_TOKEN"
+          if ! enabled="$(gh api \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2026-03-10' \
+            "repos/$GH_REPO/immutable-releases" \
+            --jq '.enabled')"; then
+            echo '::error::Unable to confirm immutable releases with the Administration:read policy token'
+            exit 1
+          fi
+          if [[ "$enabled" != true ]]; then
+            echo '::error::Immutable releases must be enabled before publication'
+            exit 1
+          fi
+
+  create-draft-release:
     needs:
       - prepare
       - build-macos
-    runs-on: ubuntu-latest
+      - verify-release-policy
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+          persist-credentials: false
 
       - name: Download release artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           pattern: release-macos-*
           merge-multiple: true
           path: dist
 
-      - name: Publish GitHub release
+      - name: Create immutable draft and verify uploaded assets
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -390,28 +490,216 @@ jobs:
           NOTES_FILE="$RUNNER_TEMP/release-notes.md"
           python3 scripts/release_notes_from_changelog.py --tag "$TAG" > "$NOTES_FILE"
 
+          VERSION="${TAG#v}"
+          PREFIXES=(Macsimize-Beta)
+          if [[ "$PRERELEASE" != "true" ]]; then
+            PREFIXES=(Macsimize "${PREFIXES[@]}")
+          fi
+          EXPECTED=()
+          for prefix in "${PREFIXES[@]}"; do
+            for arch in arm64 x64; do
+              EXPECTED+=("${prefix}-v${VERSION}-macos-${arch}.zip")
+              EXPECTED+=("${prefix}-v${VERSION}-macos-${arch}.zip.sha256")
+            done
+          done
+          mapfile -t ACTUAL < <(find dist -maxdepth 1 -type f -exec basename {} \; | LC_ALL=C sort)
+          mapfile -t SORTED_EXPECTED < <(printf '%s\n' "${EXPECTED[@]}" | LC_ALL=C sort)
+          if [[ "$(printf '%s\n' "${ACTUAL[@]}")" != "$(printf '%s\n' "${SORTED_EXPECTED[@]}")" ]]; then
+            printf 'Expected assets:\n%s\nActual assets:\n%s\n' \
+              "$(printf '%s\n' "${SORTED_EXPECTED[@]}")" "$(printf '%s\n' "${ACTUAL[@]}")"
+            exit 1
+          fi
+
+          (cd dist && shasum -a 256 -c -- *.zip.sha256)
           if gh release view "$TAG" --repo "$GH_REPO" >/dev/null 2>&1; then
-            gh release edit "$TAG" --notes-file "$NOTES_FILE" --repo "$GH_REPO"
-            gh release upload "$TAG" dist/* --clobber --repo "$GH_REPO"
-            exit 0
+            echo "::error::Release $TAG already exists. Release assets are immutable; use a new tag."
+            exit 1
           fi
-
           if [[ "$PRERELEASE" == "true" ]]; then
-            gh release create "$TAG" dist/* --title "$TAG" --notes-file "$NOTES_FILE" --prerelease --repo "$GH_REPO"
+            gh release create "$TAG" --draft --title "$TAG" --notes-file "$NOTES_FILE" --prerelease --repo "$GH_REPO"
           else
-            gh release create "$TAG" dist/* --title "$TAG" --notes-file "$NOTES_FILE" --repo "$GH_REPO"
+            gh release create "$TAG" --draft --title "$TAG" --notes-file "$NOTES_FILE" --repo "$GH_REPO"
+          fi
+          gh release upload "$TAG" "${EXPECTED[@]/#/dist/}" --repo "$GH_REPO"
+
+          mapfile -t REMOTE < <(gh release view "$TAG" --repo "$GH_REPO" --json assets --jq '.assets[].name' | LC_ALL=C sort)
+          if [[ "$(printf '%s\n' "${REMOTE[@]}")" != "$(printf '%s\n' "${SORTED_EXPECTED[@]}")" ]]; then
+            echo "::error::Draft asset allowlist mismatch after upload."
+            exit 1
           fi
 
-  update-sparkle-appcasts:
+          mkdir -p reviewed
+          gh release download "$TAG" --repo "$GH_REPO" --dir reviewed
+          mapfile -t REVIEWED < <(find reviewed -maxdepth 1 -type f -exec basename {} \; | LC_ALL=C sort)
+          if [[ "$(printf '%s\n' "${REVIEWED[@]}")" != "$(printf '%s\n' "${SORTED_EXPECTED[@]}")" ]]; then
+            echo "::error::Re-downloaded asset allowlist mismatch."
+            exit 1
+          fi
+          for asset in "${EXPECTED[@]}"; do
+            cmp "dist/$asset" "reviewed/$asset"
+          done
+          (cd reviewed && shasum -a 256 -c -- *.zip.sha256)
+
+      - name: Preserve reviewed release assets
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: reviewed-release-assets
+          path: reviewed/*
+          if-no-files-found: error
+
+  sparkle-update-e2e:
+    needs:
+      - prepare
+      - create-draft-release
+    environment: sparkle-signing
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.release_matrix) }}
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout reviewed release source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+          persist-credentials: false
+
+      - name: Verify native runner
+        run: test "$(uname -m)" = "${{ matrix.host_arch }}"
+
+      - name: Download reviewed candidate assets
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: reviewed-release-assets
+          path: reviewed
+
+      - name: Resolve pinned Sparkle source and build official CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -resolvePackageDependencies -project Macsimize.xcodeproj
+          SPARKLE_SOURCE="$(find "$HOME/Library/Developer/Xcode/DerivedData" -path '*/SourcePackages/checkouts/Sparkle' -type d -print -quit)"
+          test -n "$SPARKLE_SOURCE"
+          test "$(git -C "$SPARKLE_SOURCE" rev-parse HEAD)" = "5581748cef2bae787496fe6d61139aebe0a451f6"
+          xcodebuild \
+            -project "$SPARKLE_SOURCE/Sparkle.xcodeproj" \
+            -scheme sparkle-cli \
+            -configuration Release \
+            -derivedDataPath "$RUNNER_TEMP/sparkle-cli-build" \
+            ARCHS="${{ matrix.host_arch }}" \
+            ONLY_ACTIVE_ARCH=YES \
+            MACOSX_DEPLOYMENT_TARGET=14.0 \
+            build
+          PRODUCTS="$RUNNER_TEMP/sparkle-cli-build/Build/Products/Release"
+          cp -R "$PRODUCTS/sparkle.app" "$RUNNER_TEMP/sparkle-cli.app"
+          test "$(lipo -archs "$RUNNER_TEMP/sparkle-cli.app/Contents/MacOS/sparkle")" = "${{ matrix.host_arch }}"
+
+      - name: Install public appcast verification dependency
+        run: python3 -m pip install --quiet 'cryptography==45.0.7'
+
+      - name: Resolve and download published N-1 package
+        id: previous
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python3 scripts/release/resolve_previous_release.py \
+            --repo "${{ github.repository }}" \
+            --tag "${{ needs.prepare.outputs.tag }}" \
+            --channel "${{ matrix.channel }}" \
+            --arch "${{ matrix.arch }}" \
+            --output "$RUNNER_TEMP/previous.zip" \
+            --bootstrap-tag "${{ vars.SPARKLE_UPDATE_BOOTSTRAP_TAG }}" \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Reject tampering, install candidate, and prove relaunch
+        env:
+          SPARKLE_PRIVATE_ED_KEY: ${{ secrets.SPARKLE_PRIVATE_ED_KEY }}
+          APPLE_SIGNING_CERTIFICATE_SHA256: ${{ vars.APPLE_SIGNING_CERTIFICATE_SHA256 }}
+          APPLE_PRIOR_SIGNING_CERTIFICATE_SHA256: ${{ vars.APPLE_PRIOR_SIGNING_CERTIFICATE_SHA256 }}
+          APPLE_SIGNING_IDENTITY: ${{ vars.APPLE_SIGNING_IDENTITY }}
+          APPLE_TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$APPLE_SIGNING_CERTIFICATE_SHA256"
+          test -n "$APPLE_SIGNING_IDENTITY"
+          test -n "$APPLE_TEAM_ID"
+          ARGS=(
+            --sparkle-cli "$RUNNER_TEMP/sparkle-cli.app/Contents/MacOS/sparkle"
+            --candidate-zip "reviewed/${{ matrix.package_prefix }}-v${{ needs.prepare.outputs.version }}-macos-${{ matrix.arch }}.zip"
+            --product-name "${{ matrix.product_name }}"
+            --bundle-id "${{ matrix.bundle_id }}"
+            --arch "${{ matrix.arch }}"
+            --tag "${{ needs.prepare.outputs.tag }}"
+            --signing-identity "$APPLE_SIGNING_IDENTITY"
+            --team-id "$APPLE_TEAM_ID"
+            --candidate-certificate-sha256 "$APPLE_SIGNING_CERTIFICATE_SHA256"
+          )
+          if [[ "${{ steps.previous.outputs.bootstrap }}" == "true" ]]; then
+            ARGS+=(--bootstrap)
+          else
+            test -n "$APPLE_PRIOR_SIGNING_CERTIFICATE_SHA256"
+            ARGS+=(
+              --previous-zip "$RUNNER_TEMP/previous.zip"
+              --previous-certificate-sha256 "$APPLE_PRIOR_SIGNING_CERTIFICATE_SHA256"
+            )
+          fi
+          python3 scripts/release/sparkle_update_e2e.py "${ARGS[@]}"
+
+  publish-release:
+    needs:
+      - prepare
+      - create-draft-release
+      - sparkle-update-e2e
+      - verify-release-policy
+    permissions:
+      contents: write
+    environment: ${{ needs.prepare.outputs.prerelease == 'true' && 'beta-release' || 'stable-release' }}
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Publish the verified draft without changing assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+          PRERELEASE: ${{ needs.prepare.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          test "$(gh release view "$TAG" --repo "$GH_REPO" --json isDraft --jq .isDraft)" = "true"
+          gh release edit "$TAG" \
+            --draft=false \
+            --prerelease="$PRERELEASE" \
+            --latest="$([[ "$PRERELEASE" == "true" ]] && echo false || echo true)" \
+            --repo "$GH_REPO"
+
+          immutable=false
+          for _ in {1..12}; do
+            immutable="$(gh api "repos/$GH_REPO/releases/tags/$TAG" --jq .immutable)"
+            [[ "$immutable" == true ]] && break
+            sleep 5
+          done
+          if [[ "$immutable" != true ]]; then
+            echo "::error::Published release is not immutable; refusing to publish Sparkle or Homebrew references."
+            exit 1
+          fi
+
+  prepare-sparkle-publication:
     needs:
       - prepare
       - publish-release
-    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    environment: sparkle-signing
+    runs-on: ubuntu-24.04
     steps:
-      - name: Checkout main branch
-        uses: actions/checkout@v5
+      - name: Checkout reviewed release source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          ref: main
+          ref: ${{ needs.prepare.outputs.tag }}
+          path: release-source
+          persist-credentials: false
+
+      - name: Install public signature dependency
+        run: python3 -m pip install --quiet 'cryptography==45.0.7'
 
       - name: Update Sparkle appcast files
         env:
@@ -419,86 +707,206 @@ jobs:
           SPARKLE_PRIVATE_ED_KEY: ${{ secrets.SPARKLE_PRIVATE_ED_KEY }}
         run: |
           set -euo pipefail
-          python3 -m pip install --quiet cryptography
-          python3 scripts/release/update_sparkle_appcasts.py \
+          python3 release-source/scripts/release/update_sparkle_appcasts.py \
             --repo "${{ github.repository }}" \
-            --output-dir appcasts \
+            --output-dir publication/appcasts \
+            --changelog release-source/CHANGELOG.md \
+            --public-key-plist release-source/Macsimize/Info.plist \
             --github-token "$GITHUB_TOKEN" \
             --require-signatures
 
-      - name: Commit and push appcast updates
+      - name: Seal appcast publication bundle
         env:
           TAG: ${{ needs.prepare.outputs.tag }}
         run: |
           set -euo pipefail
+          files="$(find publication/appcasts -maxdepth 1 -type f -name '*.xml' -exec basename {} \; | LC_ALL=C sort | paste -sd ' ' -)"
+          [[ "$files" == 'beta-arm64.xml beta-x64.xml stable-arm64.xml stable-x64.xml' ]]
+          (
+            cd publication
+            find appcasts -type f -name '*.xml' -print0 |
+              LC_ALL=C sort -z |
+              xargs -0 sha256sum > SHA256SUMS
+          )
+          printf '%s\n' \
+            "Macsimize appcast publication bundle" \
+            "release-tag=${TAG}" \
+            "release-commit=${{ github.sha }}" \
+            "destination=appcasts/" \
+            "Apply these exact reviewed bytes manually after the release approval gate." \
+            > publication/PUBLICATION.txt
+      - name: Upload appcast publication bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: macsimize-appcast-publication-${{ needs.prepare.outputs.tag }}
+          path: publication
+          if-no-files-found: error
+          retention-days: 14
 
-          if git diff --quiet -- appcasts; then
-            echo "No Sparkle appcast changes to commit."
-            exit 0
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git add appcasts/*.xml
-          git commit -m "chore: update Sparkle appcasts for ${TAG}"
-          git push origin HEAD:main
-
-  update-homebrew-tap:
+  generate-homebrew-casks:
     needs:
       - prepare
       - publish-release
-    runs-on: ubuntu-latest
+      - prepare-sparkle-publication
+    runs-on: ubuntu-24.04
     steps:
-      - name: Check Homebrew tap token
-        id: tap
-        env:
-          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-        shell: bash
-        run: |
-          if [[ -n "${HOMEBREW_TAP_TOKEN:-}" ]]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
-            echo "HOMEBREW_TAP_TOKEN not set; skipping tap update."
-          fi
-
       - name: Checkout Macsimize
-        if: ${{ steps.tap.outputs.enabled == 'true' }}
-        uses: actions/checkout@v5
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+          persist-credentials: false
 
-      - name: Clone homebrew tap
-        if: ${{ steps.tap.outputs.enabled == 'true' }}
-        env:
-          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/apotenza92/homebrew-tap.git" /tmp/homebrew-tap
-
-      - name: Update Macsimize casks
-        if: ${{ steps.tap.outputs.enabled == 'true' }}
+      - name: Generate exact candidate casks once
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          python3 scripts/release/update_homebrew_tap_casks.py --tap-path /tmp/homebrew-tap --repo apotenza92/macsimize
+          mkdir -p reviewed-homebrew/Casks
+          python3 scripts/release/update_homebrew_tap_casks.py \
+            --tap-path reviewed-homebrew --repo apotenza92/macsimize
+          casks="$(find reviewed-homebrew/Casks -maxdepth 1 -type f -exec basename {} \; | LC_ALL=C sort | paste -sd ' ' -)"
+          [[ "$casks" == 'macsimize.rb macsimize@beta.rb' ]]
 
-      - name: Commit and push tap updates
-        if: ${{ steps.tap.outputs.enabled == 'true' }}
+      - name: Upload exact candidate casks
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: reviewed-homebrew-casks
+          path: reviewed-homebrew/Casks
+          if-no-files-found: error
+
+  validate-homebrew-casks:
+    needs:
+      - prepare
+      - generate-homebrew-casks
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            host_arch: arm64
+          - runner: macos-15-intel
+            host_arch: x86_64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Verify native runner
+        run: test "$(uname -m)" = "${{ matrix.host_arch }}"
+
+      - name: Checkout Macsimize
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+          persist-credentials: false
+
+      - name: Download exact candidate casks
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: reviewed-homebrew-casks
+          path: reviewed-casks
+
+      - name: Install candidate bytes into a real Homebrew tap
+        run: |
+          set -euo pipefail
+          casks="$(find reviewed-casks -maxdepth 1 -type f -exec basename {} \; | LC_ALL=C sort | paste -sd ' ' -)"
+          [[ "$casks" == 'macsimize.rb macsimize@beta.rb' ]]
+          brew tap apotenza92/tap
+          tap_path="$(brew --repository apotenza92/tap)"
+          cp reviewed-casks/macsimize.rb "$tap_path/Casks/macsimize.rb"
+          cp reviewed-casks/macsimize@beta.rb "$tap_path/Casks/macsimize@beta.rb"
+          export HOMEBREW_NO_AUTO_UPDATE=1
+          brew style --cask apotenza92/tap/macsimize apotenza92/tap/macsimize@beta
+          brew audit --cask --online apotenza92/tap/macsimize apotenza92/tap/macsimize@beta
+
+      - name: Install, assess, launch, and uninstall both casks
         shell: bash
         run: |
           set -euo pipefail
-          cd /tmp/homebrew-tap
+          export HOMEBREW_NO_AUTO_UPDATE=1
+          installed_cask=''
+          cleanup() {
+            if [[ -n "$installed_cask" ]]; then
+              brew uninstall --cask "$installed_cask" >/dev/null 2>&1 || true
+            fi
+          }
+          trap cleanup EXIT
 
-          git add Casks/macsimize.rb Casks/macsimize@beta.rb
+          smoke_app() {
+            local app_path="$1"
+            local executable_name="$2"
+            local smoke_home
+            smoke_home="$(mktemp -d "$RUNNER_TEMP/macsimize-brew-smoke.XXXXXX")"
+            spctl --assess --type execute --verbose=4 "$app_path"
+            env -i \
+              HOME="$smoke_home" \
+              TMPDIR="$smoke_home" \
+              PATH="/usr/bin:/bin:/usr/sbin:/sbin" \
+              LANG="en_US.UTF-8" \
+              MACSIMIZE_TEST_SUITE=1 \
+              MACSIMIZE_DEBUG_LOG=0 \
+              "$app_path/Contents/MacOS/$executable_name" -ApplePersistenceIgnoreState YES &
+            local pid=$!
+            sleep 5
+            kill -0 "$pid"
+            kill -TERM "$pid"
+            wait "$pid" || true
+          }
 
-          if git diff --cached --quiet -- Casks/macsimize.rb Casks/macsimize@beta.rb; then
-            echo "No Homebrew cask changes to push."
-            exit 0
-          fi
+          for cask in macsimize macsimize@beta; do
+            installed_cask="apotenza92/tap/$cask"
+            brew install --cask "$installed_cask"
+            if [[ "$cask" == macsimize ]]; then
+              app="/Applications/Macsimize.app"
+              executable_name="Macsimize"
+            else
+              app="/Applications/Macsimize Beta.app"
+              executable_name="Macsimize Beta"
+            fi
+            test -d "$app"
+            xcrun stapler validate "$app"
+            smoke_app "$app" "$executable_name"
+            brew uninstall --cask "$installed_cask"
+            installed_cask=''
+            test ! -e "$app"
+          done
 
-          git config user.name "macsimize-release-bot"
-          git config user.email "actions@users.noreply.github.com"
-          git commit -m "Update Macsimize casks from release metadata"
-          git push origin main
+  prepare-homebrew-publication:
+    needs:
+      - prepare
+      - generate-homebrew-casks
+      - validate-homebrew-casks
+    permissions:
+      contents: read
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Download exact casks validated on both native runners
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: reviewed-homebrew-casks
+          path: publication/Casks
+
+      - name: Seal Homebrew publication bundle
+        env:
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          set -euo pipefail
+          casks="$(find publication/Casks -maxdepth 1 -type f -exec basename {} \; | LC_ALL=C sort | paste -sd ' ' -)"
+          [[ "$casks" == 'macsimize.rb macsimize@beta.rb' ]]
+          (
+            cd publication
+            find Casks -type f -name '*.rb' -print0 |
+              LC_ALL=C sort -z |
+              xargs -0 sha256sum > SHA256SUMS
+          )
+          printf '%s\n' \
+            "Macsimize Homebrew publication bundle" \
+            "release-tag=${TAG}" \
+            "release-commit=${{ github.sha }}" \
+            "destination=apotenza92/homebrew-tap:Casks/" \
+            "Apply these exact natively validated bytes manually after the release approval gate." \
+            > publication/PUBLICATION.txt
+      - name: Upload Homebrew publication bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: macsimize-homebrew-publication-${{ needs.prepare.outputs.tag }}
+          path: publication
+          if-no-files-found: error
+          retention-days: 14
