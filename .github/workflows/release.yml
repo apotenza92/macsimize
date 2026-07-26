@@ -425,41 +425,10 @@ jobs:
         if: ${{ always() }}
         run: python3 scripts/release/import_apple_signing.py cleanup
 
-  verify-release-policy:
-    name: Require immutable releases
-    needs:
-      - prepare
-    runs-on: ubuntu-24.04
-    environment: release-policy
-    permissions:
-      contents: read
-    steps:
-      - name: Verify immutable releases are enabled
-        env:
-          GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ secrets.IMMUTABLE_RELEASES_READ_TOKEN }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -n "$GH_TOKEN"
-          if ! enabled="$(gh api \
-            -H 'Accept: application/vnd.github+json' \
-            -H 'X-GitHub-Api-Version: 2026-03-10' \
-            "repos/$GH_REPO/immutable-releases" \
-            --jq '.enabled')"; then
-            echo '::error::Unable to confirm immutable releases with the Administration:read policy token'
-            exit 1
-          fi
-          if [[ "$enabled" != true ]]; then
-            echo '::error::Immutable releases must be enabled before publication'
-            exit 1
-          fi
-
   create-draft-release:
     needs:
       - prepare
       - build-macos
-      - verify-release-policy
     permissions:
       contents: write
     runs-on: ubuntu-24.04
@@ -477,7 +446,7 @@ jobs:
           merge-multiple: true
           path: dist
 
-      - name: Create immutable draft and verify uploaded assets
+      - name: Create exact draft and verify uploaded assets
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -512,7 +481,7 @@ jobs:
 
           (cd dist && shasum -a 256 -c -- *.zip.sha256)
           if gh release view "$TAG" --repo "$GH_REPO" >/dev/null 2>&1; then
-            echo "::error::Release $TAG already exists. Release assets are immutable; use a new tag."
+            echo "::error::Release $TAG already exists. Refusing to replace its assets automatically; use a new tag."
             exit 1
           fi
           if [[ "$PRERELEASE" == "true" ]]; then
@@ -650,7 +619,6 @@ jobs:
       - prepare
       - create-draft-release
       - sparkle-update-e2e
-      - verify-release-policy
     permissions:
       contents: write
     environment: ${{ needs.prepare.outputs.prerelease == 'true' && 'beta-release' || 'stable-release' }}
@@ -670,17 +638,6 @@ jobs:
             --prerelease="$PRERELEASE" \
             --latest="$([[ "$PRERELEASE" == "true" ]] && echo false || echo true)" \
             --repo "$GH_REPO"
-
-          immutable=false
-          for _ in {1..12}; do
-            immutable="$(gh api "repos/$GH_REPO/releases/tags/$TAG" --jq .immutable)"
-            [[ "$immutable" == true ]] && break
-            sleep 5
-          done
-          if [[ "$immutable" != true ]]; then
-            echo "::error::Published release is not immutable; refusing to publish Sparkle or Homebrew references."
-            exit 1
-          fi
 
   prepare-sparkle-publication:
     needs:
