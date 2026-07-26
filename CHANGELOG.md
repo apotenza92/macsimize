@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ## [v0.3.9-beta.1]
 
-- Hardened the hosted release pipeline for native Apple Silicon and Intel builds with deterministic XCTest, strict Developer ID and nested-code verification, notarisation, stapling, Gatekeeper assessment, checksums, immutable-release policy checks, and artifact provenance.
+- Hardened the hosted release pipeline for native Apple Silicon and Intel builds with deterministic XCTest, strict Developer ID and nested-code verification, notarisation, stapling, Gatekeeper assessment, checksums, and artifact provenance.
 - Added native stable and beta Sparkle update gates that verify the previous signed release, reject tampered inputs, install the candidate, and confirm the relaunched version on both architectures.
 - Kept stable and beta identities, appcasts, and Homebrew casks isolated while retaining the local Accessibility-dependent checks as an explicit pre-tag gate.
 
