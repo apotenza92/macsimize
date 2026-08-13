@@ -4,6 +4,7 @@
 
 - `.github/workflows/ci.yml` is manually invoked with `workflow_dispatch`; routine pushes and pull requests do not start GitHub-hosted CI.
 - `.github/workflows/release.yml` remains restricted to deliberate `v*` tag pushes.
+- Local pre-tag validation owns XCTest. The tag workflow starts signed package builds after tag-contract validation instead of repeating the same native test matrix first.
 
 ## Release credential boundaries
 
