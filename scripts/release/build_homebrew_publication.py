@@ -18,10 +18,11 @@ def build(channel: str, tag: str, commit: str, run_id: int, run_attempt: int,
     channels = ["beta"] if channel == "beta" else ["stable", "beta"]
     filenames = ["macsimize@beta.rb"] if channel == "beta" else ["macsimize.rb", "macsimize@beta.rb"]
     assets_by_name = {asset["name"]: asset for asset in release_assets["assets"]}
-    output_casks = output / "Casks"; output_casks.mkdir(parents=True)
+    output_casks = output / "Casks"; output_casks.mkdir(parents=True, exist_ok=True)
     artifacts = []
     for publication_channel, filename in zip(channels, filenames):
-        source = casks_dir / filename; text = source.read_text(); shutil.copyfile(source, output_casks / filename)
+        source = casks_dir / filename; destination = output_casks / filename; text = source.read_text()
+        if source.resolve() != destination.resolve(): shutil.copyfile(source, destination)
         version = re.search(r'^\s*version\s+"([^"]+)"', text, re.MULTILINE)
         if not version or f"v{version.group(1)}" != tag: raise ValueError(f"Cask version mismatch: {filename}")
         shas = re.findall(r'^\s*sha256\s+"([0-9a-f]{64})"', text, re.MULTILINE)

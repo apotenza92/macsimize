@@ -21,6 +21,8 @@ class HomebrewPublicationTests(unittest.TestCase):
             manifest = publication.build("stable", "v1.2.3", "c" * 40, 12, 2, casks, {"assets": assets}, output)
             self.assertEqual(["macsimize.rb", "macsimize@beta.rb"], manifest["casks"])
             self.assertEqual("14.0", manifest["minimum_macos"]); self.assertEqual(4, len(manifest["artifacts"]))
+            rebuilt = publication.build("stable", "v1.2.3", "c" * 40, 12, 2, output / "Casks", {"assets": assets}, output)
+            self.assertEqual(manifest, rebuilt)
 
     def test_rejects_missing_public_assets(self):
         with tempfile.TemporaryDirectory() as directory:
