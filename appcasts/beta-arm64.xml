@@ -5,20 +5,18 @@
     <description>Macsimize update feed (beta channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.3.15</title>
-      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.3.15</link>
-      <sparkle:version>301590000</sparkle:version>
-      <sparkle:shortVersionString>0.3.15</sparkle:shortVersionString>
+      <title>Version 0.3.16</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.3.16</link>
+      <sparkle:version>301690000</sparkle:version>
+      <sparkle:shortVersionString>0.3.16</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Rebuilt first-run onboarding as a four-step native SwiftUI flow with required permission gating, shared settings controls, content-derived sizing, and centered first-launch placement on the active display.
-- Reworked Settings around a modern native sidebar with vertically composed General, green-button behaviour, Permissions, Updates, and About destinations that resize to their content.
-- Updated permission wording for macOS 27’s Device Control and Data Access settings while retaining Accessibility terminology on earlier macOS releases.
-- Made updater and Homebrew publication verification deterministic across current GitHub-hosted runners, including canonical checksum ordering.]]></description>
-      <pubDate>Thu, 03 Sep 2026 11:59:37 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.3.15/Macsimize-Beta-v0.3.15-macos-arm64.zip"
-                 sparkle:edSignature="yImnwgdBKTrCuF7DV23rkH/90wfWrDFdu1CcFv7P8eOySSHD16HQIZaKEuHvK18mXSo6BA0iCor0U8yuGhPXBQ=="
-                 length="2689734"
+      <description sparkle:format="plain-text"><![CDATA[- Kept the Settings window’s top-left corner fixed while content-driven resizing changes its right and bottom edges between sidebar destinations.
+- Automated checksum-verified Sparkle appcast publication so completed releases cannot leave installed stable or beta builds on stale update feeds.]]></description>
+      <pubDate>Thu, 03 Sep 2026 14:32:29 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.3.16/Macsimize-Beta-v0.3.16-macos-arm64.zip"
+                 sparkle:edSignature="KKNTaK0fOSTZg3xAPNNOgA0JUB5BW+X1HNo3gm7P9P7eVVyU0zDXXbXspOncNPumqugANOZut1pk2FT2GgUpAA=="
+                 length="2689836"
                  type="application/octet-stream" />
     </item>
   </channel>
