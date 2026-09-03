@@ -535,7 +535,12 @@ jobs:
           test "$(lipo -archs "$RUNNER_TEMP/sparkle-cli.app/Contents/MacOS/sparkle")" = "${{ matrix.host_arch }}"
 
       - name: Install public appcast verification dependency
-        run: python3 -m pip install --quiet 'cryptography==45.0.7'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/appcast-python"
+          "$RUNNER_TEMP/appcast-python/bin/python" -m pip install --quiet 'cryptography==45.0.7'
+          echo "$RUNNER_TEMP/appcast-python/bin" >> "$GITHUB_PATH"
 
       - name: Resolve and download published N-1 package
         id: previous
@@ -628,7 +633,12 @@ jobs:
           persist-credentials: false
 
       - name: Install public signature dependency
-        run: python3 -m pip install --quiet 'cryptography==45.0.7'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m venv "$RUNNER_TEMP/appcast-python"
+          "$RUNNER_TEMP/appcast-python/bin/python" -m pip install --quiet 'cryptography==45.0.7'
+          echo "$RUNNER_TEMP/appcast-python/bin" >> "$GITHUB_PATH"
 
       - name: Update Sparkle appcast files
         env:

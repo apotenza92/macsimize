@@ -335,6 +335,17 @@ class ReleaseContractTests(unittest.TestCase):
             appcast.index("SPARKLE_PRIVATE_ED_KEY"),
         )
 
+    def test_python_release_dependencies_use_isolated_virtual_environments(self) -> None:
+        workflow = (ROOT.parent.parent / ".github/workflows/release.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertEqual(workflow.count('python3 -m venv "$RUNNER_TEMP/appcast-python"'), 2)
+        self.assertEqual(
+            workflow.count('echo "$RUNNER_TEMP/appcast-python/bin" >> "$GITHUB_PATH"'),
+            2,
+        )
+        self.assertNotIn("python3 -m pip install --quiet 'cryptography==45.0.7'", workflow)
+
     def test_publication_jobs_never_commit_or_push(self) -> None:
         workflow = (ROOT.parent.parent / ".github/workflows/release.yml").read_text(encoding="utf-8")
         appcast = workflow.split("  prepare-sparkle-publication:", 1)[1].split(
