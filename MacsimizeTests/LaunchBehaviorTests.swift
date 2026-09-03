@@ -65,6 +65,20 @@ final class LaunchBehaviorTests: XCTestCase {
         XCTAssertEqual(frame.midY, visibleFrame.midY)
     }
 
+    @MainActor
+    func testSettingsResizeKeepsTopLeftCornerFixed() {
+        let currentFrame = NSRect(x: 240, y: 180, width: 760, height: 620)
+
+        let frame = SettingsWindowController.topLeftAnchoredFrame(
+            size: NSSize(width: 840, height: 480),
+            relativeTo: currentFrame
+        )
+
+        XCTAssertEqual(frame.minX, currentFrame.minX)
+        XCTAssertEqual(frame.maxY, currentFrame.maxY)
+        XCTAssertEqual(frame.size, NSSize(width: 840, height: 480))
+    }
+
     func testFreshLaunchRequestsOnboarding() {
         let decision = LaunchBehavior.decide(
             LaunchBehaviorInput(

@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v0.3.16]
+
+- Kept the Settings window’s top-left corner fixed while content-driven resizing changes its right and bottom edges between sidebar destinations.
+- Automated checksum-verified Sparkle appcast publication so completed releases cannot leave installed stable or beta builds on stale update feeds.
+
 ## [v0.3.15]
 
 - Rebuilt first-run onboarding as a four-step native SwiftUI flow with required permission gating, shared settings controls, content-derived sizing, and centered first-launch placement on the active display.

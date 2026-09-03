@@ -150,11 +150,18 @@ final class SettingsWindowController: NSWindowController {
 
         if window.isVisible {
             let currentFrame = window.frame
-            let origin = NSPoint(
-                x: currentFrame.midX - (newFrame.width / 2),
-                y: currentFrame.midY - (newFrame.height / 2)
-            )
-            window.setFrame(NSRect(origin: origin, size: newFrame.size), display: true, animate: animated)
+            let targetFrame = switch currentMode {
+            case .onboarding:
+                NSRect(
+                    x: currentFrame.midX - (newFrame.width / 2),
+                    y: currentFrame.midY - (newFrame.height / 2),
+                    width: newFrame.width,
+                    height: newFrame.height
+                )
+            case .settings:
+                Self.topLeftAnchoredFrame(size: newFrame.size, relativeTo: currentFrame)
+            }
+            window.setFrame(targetFrame, display: true, animate: animated)
         } else {
             if let screen {
                 window.setFrame(
@@ -177,6 +184,15 @@ final class SettingsWindowController: NSWindowController {
         NSRect(
             x: visibleFrame.midX - (size.width / 2),
             y: visibleFrame.midY - (size.height / 2),
+            width: size.width,
+            height: size.height
+        )
+    }
+
+    static func topLeftAnchoredFrame(size: NSSize, relativeTo currentFrame: NSRect) -> NSRect {
+        NSRect(
+            x: currentFrame.minX,
+            y: currentFrame.maxY - size.height,
             width: size.width,
             height: size.height
         )
