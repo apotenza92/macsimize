@@ -393,6 +393,8 @@ class ReleaseContractTests(unittest.TestCase):
             2,
         )
         self.assertNotIn("tar --sort=name", workflow)
+        self.assertIn("sha256sum manifest.json", publication)
+        self.assertNotIn("find manifest.json Casks", publication)
 
     def test_update_channels_require_the_public_release(self) -> None:
         workflow = (ROOT.parent.parent / ".github/workflows/release.yml").read_text(encoding="utf-8")

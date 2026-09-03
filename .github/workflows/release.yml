@@ -846,9 +846,12 @@ jobs:
             --output publication
           (
             cd publication
-            find manifest.json Casks -type f -print0 |
-              LC_ALL=C sort -z |
-              xargs -0 sha256sum > SHA256SUMS
+            {
+              sha256sum manifest.json
+              find Casks -type f -print0 |
+                LC_ALL=C sort -z |
+                xargs -0 sha256sum
+            } > SHA256SUMS
             sha256sum --check --strict SHA256SUMS
           )
           python3 scripts/create-homebrew-archive.py publication homebrew-publication.tar.gz
