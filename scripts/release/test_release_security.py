@@ -284,7 +284,7 @@ class ReleaseContractTests(unittest.TestCase):
             "  publish-release:", 1
         )[0]
         appcast = workflow.split("  prepare-sparkle-publication:", 1)[1].split(
-            "  generate-homebrew-casks:", 1
+            "  publish-appcasts:", 1
         )[0]
         self.assertIn("environment: sparkle-signing", updater)
         self.assertIn("secrets.SPARKLE_PRIVATE_ED_KEY", updater)
@@ -325,9 +325,9 @@ class ReleaseContractTests(unittest.TestCase):
     def test_appcast_precedes_homebrew_and_uses_tag_source(self) -> None:
         workflow = (ROOT.parent.parent / ".github/workflows/release.yml").read_text(encoding="utf-8")
         homebrew = workflow.split("  generate-homebrew-casks:", 1)[1]
-        self.assertIn("- prepare-sparkle-publication", homebrew)
+        self.assertIn("- publish-appcasts", homebrew)
         appcast = workflow.split("  prepare-sparkle-publication:", 1)[1].split(
-            "  generate-homebrew-casks:", 1
+            "  publish-appcasts:", 1
         )[0]
         self.assertIn("release-source/scripts/release/update_sparkle_appcasts.py", appcast)
         self.assertLess(
@@ -346,9 +346,12 @@ class ReleaseContractTests(unittest.TestCase):
         )
         self.assertNotIn("python3 -m pip install --quiet 'cryptography==45.0.7'", workflow)
 
-    def test_publication_jobs_never_commit_or_push(self) -> None:
+    def test_publication_jobs_preserve_exact_byte_boundaries(self) -> None:
         workflow = (ROOT.parent.parent / ".github/workflows/release.yml").read_text(encoding="utf-8")
         appcast = workflow.split("  prepare-sparkle-publication:", 1)[1].split(
+            "  publish-appcasts:", 1
+        )[0]
+        appcast_publish = workflow.split("  publish-appcasts:", 1)[1].split(
             "  generate-homebrew-casks:", 1
         )[0]
         homebrew = workflow.split("  prepare-homebrew-publication:", 1)[1]
@@ -357,10 +360,19 @@ class ReleaseContractTests(unittest.TestCase):
         )[0]
         self.assertIn("actions/upload-artifact", appcast)
         self.assertIn("SHA256SUMS", appcast)
-        self.assertIn("Apply these exact", appcast)
+        self.assertIn("exact checksum-sealed bytes", appcast)
         self.assertNotIn("git commit", appcast)
         self.assertNotIn("git push", appcast)
         self.assertNotIn("contents: write", appcast)
+        self.assertIn("contents: write", appcast_publish)
+        self.assertIn("sha256sum --check --strict SHA256SUMS", appcast_publish)
+        self.assertIn("git -C repository merge-base --is-ancestor", appcast_publish)
+        self.assertIn("cmp \"publication/appcasts/$file\"", appcast_publish)
+        self.assertIn("Unexpected changed path", appcast_publish)
+        self.assertIn("git -C repository commit", appcast_publish)
+        self.assertIn("git -C repository push", appcast_publish)
+        self.assertNotIn("SPARKLE_PRIVATE_ED_KEY", appcast_publish)
+        self.assertNotIn("environment:", appcast_publish)
         self.assertIn("homebrew-publication.tar.gz", homebrew)
         self.assertIn("actions/attest", draft)
         self.assertIn("gh attestation verify", homebrew)
@@ -402,6 +414,9 @@ class ReleaseContractTests(unittest.TestCase):
             "  prepare-sparkle-publication:", 1
         )[0]
         appcast = workflow.split("  prepare-sparkle-publication:", 1)[1].split(
+            "  publish-appcasts:", 1
+        )[0]
+        appcast_publish = workflow.split("  publish-appcasts:", 1)[1].split(
             "  generate-homebrew-casks:", 1
         )[0]
         homebrew = workflow.split("  generate-homebrew-casks:", 1)[1].split(
@@ -409,7 +424,9 @@ class ReleaseContractTests(unittest.TestCase):
         )[0]
         self.assertIn("gh release edit", publish)
         self.assertIn("- publish-release", appcast)
-        self.assertIn("- prepare-sparkle-publication", homebrew)
+        self.assertIn("- publish-release", appcast_publish)
+        self.assertIn("- prepare-sparkle-publication", appcast_publish)
+        self.assertIn("- publish-appcasts", homebrew)
 
     def test_update_e2e_uses_distinct_current_and_prior_certificate_variables(self) -> None:
         workflow = (ROOT.parent.parent / ".github/workflows/release.yml").read_text(

@@ -672,7 +672,7 @@ jobs:
             "release-tag=${TAG}" \
             "release-commit=${{ github.sha }}" \
             "destination=appcasts/" \
-            "Apply these exact reviewed bytes manually after the release approval gate." \
+            "Publish only these exact checksum-sealed bytes after the release approval gate." \
             > publication/PUBLICATION.txt
       - name: Upload appcast publication bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -682,11 +682,77 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-  generate-homebrew-casks:
+  publish-appcasts:
     needs:
       - prepare
       - publish-release
       - prepare-sparkle-publication
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout current default branch
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: repository
+          fetch-depth: 0
+
+      - name: Download checksum-sealed appcasts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: macsimize-appcast-publication-${{ needs.prepare.outputs.tag }}
+          path: publication
+
+      - name: Publish exact reviewed appcast bytes
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          RELEASE_COMMIT: ${{ github.sha }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_files='beta-arm64.xml beta-x64.xml stable-arm64.xml stable-x64.xml'
+          files="$(find publication/appcasts -maxdepth 1 -type f -name '*.xml' -exec basename {} \; | LC_ALL=C sort | paste -sd ' ' -)"
+          [[ "$files" == "$expected_files" ]]
+          (
+            cd publication
+            sha256sum --check --strict SHA256SUMS
+          )
+          grep -Fx "release-tag=${TAG}" publication/PUBLICATION.txt
+          grep -Fx "release-commit=${RELEASE_COMMIT}" publication/PUBLICATION.txt
+          grep -Fx 'destination=appcasts/' publication/PUBLICATION.txt
+          test "$(git -C repository rev-parse "refs/tags/${TAG}^{commit}")" = "$RELEASE_COMMIT"
+          git -C repository merge-base --is-ancestor "$RELEASE_COMMIT" HEAD
+
+          for file in $expected_files; do
+            cp "publication/appcasts/$file" "repository/appcasts/$file"
+            cmp "publication/appcasts/$file" "repository/appcasts/$file"
+          done
+          git -C repository diff --check
+          changed="$(git -C repository diff --name-only -- appcasts | LC_ALL=C sort | paste -sd ' ' -)"
+          if [[ -z "$changed" ]]; then
+            echo 'Appcasts already contain the reviewed release bytes.'
+            exit 0
+          fi
+          while IFS= read -r file; do
+            case "$file" in
+              appcasts/beta-arm64.xml|appcasts/beta-x64.xml|appcasts/stable-arm64.xml|appcasts/stable-x64.xml) ;;
+              *) echo "Unexpected changed path: $file" >&2; exit 1 ;;
+            esac
+          done < <(git -C repository diff --name-only)
+
+          git -C repository config user.name 'github-actions[bot]'
+          git -C repository config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C repository add appcasts
+          git -C repository commit -m "Publish appcasts for ${TAG}"
+          git -C repository push origin "HEAD:${DEFAULT_BRANCH}"
+
+  generate-homebrew-casks:
+    needs:
+      - prepare
+      - publish-release
+      - publish-appcasts
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout Macsimize
