@@ -16,6 +16,7 @@
 		0C72948B6836D3F29DE95894 /* LaunchBehaviorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B04EA2F430D809B32F21436 /* LaunchBehaviorTests.swift */; };
 		0C72948B6836D3F29DE95895 /* SettingsStoreMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B04EA2F430D809B32F21437 /* SettingsStoreMigrationTests.swift */; };
 		0C72948B6836D3F29DE95896 /* AppIdentityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B04EA2F430D809B32F21438 /* AppIdentityTests.swift */; };
+		0C72948B6836D3F29DE95897 /* OnboardingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B04EA2F430D809B32F2143A /* OnboardingFlow.swift */; };
 		0D1E2F30415263748596A7B8 /* RelaunchSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D1E2F30415263748596A7B7 /* RelaunchSupport.swift */; };
 		0D1E2F30415263748596A7B9 /* RelaunchSupportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D1E2F30415263748596A7BA /* RelaunchSupportTests.swift */; };
 		0FA1A55B4B944A29A3A41531 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7EBA0D193235411C9188C66A /* Assets.xcassets */; };
@@ -98,6 +99,7 @@
 		7B04EA2F430D809B32F21437 /* SettingsStoreMigrationTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SettingsStoreMigrationTests.swift; sourceTree = "<group>"; };
 		7B04EA2F430D809B32F21438 /* AppIdentityTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppIdentityTests.swift; sourceTree = "<group>"; };
 		7B04EA2F430D809B32F21439 /* Info-Debug.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Info-Debug.plist"; sourceTree = "<group>"; };
+		7B04EA2F430D809B32F2143A /* OnboardingFlow.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = OnboardingFlow.swift; sourceTree = "<group>"; };
 		7EBA0D193235411C9188C66A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		85477C08043CBA13C681FD8E /* GreenButtonInterceptionControllerTests.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GreenButtonInterceptionControllerTests.swift; sourceTree = "<group>"; };
 		8A825EE6AF3223A8F3F1FFD1 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -200,6 +202,7 @@
 				C84A9F92F687B14DF66FC445 /* AppState.swift */,
 				77EFEEA6F298CB61FC79BB4C /* MenuBarController.swift */,
 				45C27532EEB4187EB32351B1 /* SettingsWindowController.swift */,
+				7B04EA2F430D809B32F2143A /* OnboardingFlow.swift */,
 				7B04EA2F430D809B32F21435 /* LaunchBehavior.swift */,
 				7B04EA2F430D809B32F21433 /* SettingsRootView.swift */,
 				7B04EA2F430D809B32F21434 /* OnboardingView.swift */,
@@ -408,6 +411,7 @@
 				A04B5547F5A64D0E8E6BC282 /* AppStrings.swift in Sources */,
 				C1C1A083CDE1BA596C1273FA /* MenuBarController.swift in Sources */,
 				6CEDDCC383DFD1F96EB1B537 /* SettingsWindowController.swift in Sources */,
+				0C72948B6836D3F29DE95897 /* OnboardingFlow.swift in Sources */,
 				0C72948B6836D3F29DE95893 /* LaunchBehavior.swift in Sources */,
 				0C72948B6836D3F29DE95891 /* SettingsRootView.swift in Sources */,
 				0C72948B6836D3F29DE95892 /* OnboardingView.swift in Sources */,
@@ -534,7 +538,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS = "";
-				MARKETING_VERSION = 0.3.9;
+				MARKETING_VERSION = 0.3.10;
 				PRODUCT_BUNDLE_IDENTIFIER = pzc.Macsimize.dev;
 				PRODUCT_MODULE_NAME = Macsimize;
 				PRODUCT_NAME = "Macsimize Dev";
@@ -566,7 +570,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS = "";
-				MARKETING_VERSION = 0.3.9;
+				MARKETING_VERSION = 0.3.10;
 				PRODUCT_BUNDLE_IDENTIFIER = pzc.Macsimize;
 				PRODUCT_MODULE_NAME = Macsimize;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -598,7 +602,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MACSIMIZE_EXPERIMENTAL_SWIFT_CONDITIONS = "";
-				MARKETING_VERSION = 0.3.9;
+				MARKETING_VERSION = 0.3.10;
 				PRODUCT_BUNDLE_IDENTIFIER = pzc.Macsimize.beta;
 				PRODUCT_MODULE_NAME = Macsimize;
 				PRODUCT_NAME = "Macsimize Beta";

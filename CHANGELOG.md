@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v0.3.10]
+
+- Rebuilt first-run onboarding as a four-step native SwiftUI flow with required permission gating, shared settings controls, content-derived sizing, and centered first-launch placement on the active display.
+- Reworked Settings around a modern native sidebar with vertically composed General, green-button behaviour, Permissions, Updates, and About destinations that resize to their content.
+- Updated permission wording for macOS 27’s Device Control and Data Access settings while retaining Accessibility terminology on earlier macOS releases.
+
 ## [v0.3.9-beta.1]
 
 - Hardened the hosted release pipeline for native Apple Silicon and Intel builds with deterministic XCTest, strict Developer ID and nested-code verification, notarisation, stapling, Gatekeeper assessment, checksums, and artifact provenance.

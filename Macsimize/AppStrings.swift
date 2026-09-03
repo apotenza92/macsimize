@@ -25,9 +25,13 @@ enum AppStrings {
         }
         return "Unknown"
     }
+    private static let defaultOperatingSystemVersionProvider: @Sendable () -> OperatingSystemVersion = {
+        ProcessInfo.processInfo.operatingSystemVersion
+    }
 
     nonisolated(unsafe) static var preferredLanguagesProvider: @Sendable () -> [String] = defaultPreferredLanguagesProvider
     nonisolated(unsafe) static var currentVersionProvider: @Sendable () -> String = defaultCurrentVersionProvider
+    nonisolated(unsafe) static var operatingSystemVersionProvider: @Sendable () -> OperatingSystemVersion = defaultOperatingSystemVersionProvider
 
     static func resetPreferredLanguagesProvider() {
         preferredLanguagesProvider = defaultPreferredLanguagesProvider
@@ -35,6 +39,14 @@ enum AppStrings {
 
     static func resetCurrentVersionProvider() {
         currentVersionProvider = defaultCurrentVersionProvider
+    }
+
+    static func resetOperatingSystemVersionProvider() {
+        operatingSystemVersionProvider = defaultOperatingSystemVersionProvider
+    }
+
+    private static var deviceControlPermissionTitle: String {
+        operatingSystemVersionProvider().majorVersion >= 27 ? "Device Control and Data Access" : "Accessibility"
     }
 
     private static var terms: Terms {
@@ -52,6 +64,7 @@ enum AppStrings {
     static var permissionsSectionTitle: String { "Permissions" }
     static var updatesSectionTitle: String { "Updates" }
     static var behaviorSectionTitle: String { terms.behaviorNoun }
+    static var greenButtonBehaviorSectionTitle: String { "Green Button \(terms.behaviorNoun)" }
 
     static var showMenuBarIcon: String { "Show menu bar icon" }
     static var showSettingsOnStartup: String { "Show settings on startup" }
@@ -61,7 +74,7 @@ enum AppStrings {
     static var aboutButtonTitle: String { "About" }
     static func openGitHubHelp(appName: String) -> String { "Open \(appName) on GitHub" }
 
-    static var accessibilityButtonTitle: String { "Accessibility" }
+    static var accessibilityButtonTitle: String { deviceControlPermissionTitle }
     static var inputMonitoringButtonTitle: String { "Input Monitoring" }
     static var openSettingsButtonTitle: String { "Open Settings" }
 
@@ -95,7 +108,7 @@ enum AppStrings {
     static var updateFrequencyDaily: String { "Daily" }
     static var updateFrequencyWeekly: String { "Weekly" }
 
-    static var permissionSummaryAccessibilityRequired: String { "Accessibility required" }
+    static var permissionSummaryAccessibilityRequired: String { "\(deviceControlPermissionTitle) required" }
     static var permissionSummaryInputMonitoringRequired: String { "Input Monitoring required" }
     static var permissionSummaryReady: String { "Ready" }
     static var permissionSummaryWaitingForEventTap: String { "Waiting for event tap" }
@@ -107,7 +120,7 @@ enum AppStrings {
         "Intercept green button clicks."
     }
     static var permissionDetailAccessibilityRequired: String {
-        "Grant Accessibility access in System Settings > Privacy & Security > Accessibility. Until then, Macsimize cannot intercept the green button, so macOS will keep using its normal \(terms.behaviorNoun.lowercased())."
+        "Grant access in System Settings > Privacy & Security > \(deviceControlPermissionTitle). Until then, Macsimize cannot intercept the green button, so macOS will keep using its normal \(terms.behaviorNoun.lowercased())."
     }
     static var permissionDetailInputMonitoringRequired: String {
         "Grant Input Monitoring access in System Settings > Privacy & Security > Input Monitoring. Until then, Macsimize cannot intercept the green button, so macOS will keep using its normal \(terms.behaviorNoun.lowercased())."

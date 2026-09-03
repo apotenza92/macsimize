@@ -9,21 +9,27 @@ struct SettingsRootView: View {
 
     let appState: AppState
     let contentMode: ContentMode
+    let contentDidChange: @MainActor () -> Void
 
-    init(appState: AppState, contentMode: ContentMode = .automatic) {
+    init(
+        appState: AppState,
+        contentMode: ContentMode = .automatic,
+        contentDidChange: @escaping @MainActor () -> Void = {}
+    ) {
         self.appState = appState
         self.contentMode = contentMode
+        self.contentDidChange = contentDidChange
     }
 
     var body: some View {
         Group {
             switch resolvedMode {
             case .onboarding:
-                OnboardingView(appState: appState)
+                OnboardingView(appState: appState, contentDidChange: contentDidChange)
             case .settings:
-                PreferencesView(appState: appState)
+                PreferencesView(appState: appState, contentDidChange: contentDidChange)
             case .automatic:
-                PreferencesView(appState: appState)
+                PreferencesView(appState: appState, contentDidChange: contentDidChange)
             }
         }
     }

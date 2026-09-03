@@ -3,7 +3,7 @@ import SwiftUI
 
 @MainActor
 final class SettingsWindowController: NSWindowController {
-    private enum WindowMode: Equatable {
+    enum WindowMode: Equatable {
         case onboarding
         case settings
 
@@ -16,58 +16,22 @@ final class SettingsWindowController: NSWindowController {
             }
         }
 
-        var fixedContentSize: NSSize? {
-            switch self {
-            case .onboarding:
-                return NSSize(width: 420, height: 640)
-            case .settings:
-                return nil
-            }
-        }
-
-        var minimumContentSize: NSSize {
-            switch self {
-            case .onboarding:
-                return fixedContentSize ?? NSSize(width: 420, height: 640)
-            case .settings:
-                return NSSize(width: 360, height: 560)
-            }
-        }
-
-        var allowsResizing: Bool {
-            switch self {
-            case .onboarding:
-                return false
-            case .settings:
-                return true
-            }
-        }
-
-        var frameAutosaveName: String {
-            switch self {
-            case .onboarding:
-                return "Macsimize.OnboardingWindowFrame"
-            case .settings:
-                return "Macsimize.SettingsWindowFrame"
-            }
-        }
     }
 
     private let appState: AppState
-    private let hostingController: SettingsHostingController<SettingsRootView>
+    private let hostingController: NSHostingController<SettingsRootView>
     private var currentMode: WindowMode
 
     init(appState: AppState) {
         self.appState = appState
         self.currentMode = appState.settings.shouldPresentOnboarding ? .onboarding : .settings
 
-        let hostingController = SettingsHostingController(rootView: SettingsRootView(appState: appState))
+        let hostingController = NSHostingController(rootView: SettingsRootView(appState: appState))
         self.hostingController = hostingController
         let window = NSWindow(contentViewController: hostingController)
 
-        window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+        window.styleMask = [.titled, .closable, .miniaturizable]
         window.isReleasedWhenClosed = false
-        window.toolbarStyle = .preference
 
         super.init(window: window)
 
@@ -110,12 +74,11 @@ final class SettingsWindowController: NSWindowController {
             }
         }
 
-        guard requestedMode != currentMode || window?.frameAutosaveName != requestedMode.frameAutosaveName else {
-            configureWindow(for: requestedMode, animated: animated)
+        guard requestedMode != currentMode else {
+            refitWindow(animated: animated)
             return
         }
 
-        window?.saveFrame(usingName: currentMode.frameAutosaveName)
         currentMode = requestedMode
         configureWindow(for: requestedMode, animated: animated)
     }
@@ -131,41 +94,58 @@ final class SettingsWindowController: NSWindowController {
         case .settings:
             .settings
         }
-        hostingController.rootView = SettingsRootView(appState: appState, contentMode: contentMode)
+        hostingController.rootView = SettingsRootView(
+            appState: appState,
+            contentMode: contentMode,
+            contentDidChange: { [weak self] in
+                self?.refitWindow(animated: self?.window?.isVisible == true)
+            }
+        )
         window.title = mode.title
 
-        var styleMask = window.styleMask
-        if mode.allowsResizing {
-            styleMask.insert(.resizable)
-        } else {
-            styleMask.remove(.resizable)
-        }
-        window.styleMask = styleMask
-
-        window.contentMinSize = mode.minimumContentSize
-        window.contentMaxSize = mode.fixedContentSize ?? NSSize(width: 10_000, height: 10_000)
-        window.setFrameAutosaveName(mode.frameAutosaveName)
-
-        let restoredFrame = window.setFrameUsingName(mode.frameAutosaveName)
-        if let fixedContentSize = mode.fixedContentSize {
-            apply(contentSize: fixedContentSize, to: window, animated: animated, centerIfNeeded: !restoredFrame)
-            return
+        switch mode {
+        case .onboarding:
+            window.styleMask.remove(.fullSizeContentView)
+            window.titleVisibility = .visible
+            window.titlebarAppearsTransparent = false
+            window.titlebarSeparatorStyle = .automatic
+        case .settings:
+            window.styleMask.insert(.fullSizeContentView)
+            window.titleVisibility = .hidden
+            window.titlebarAppearsTransparent = true
+            window.titlebarSeparatorStyle = .none
         }
 
-        if restoredFrame {
+        refitWindow(animated: animated)
+    }
+
+    private func refitWindow(animated: Bool) {
+        guard let window else {
             return
         }
 
         hostingController.view.layoutSubtreeIfNeeded()
         let fittingSize = hostingController.view.fittingSize
-        let contentSize = NSSize(
-            width: max(fittingSize.width, mode.minimumContentSize.width),
-            height: max(fittingSize.height, mode.minimumContentSize.height)
+        let screen = activeScreen()
+        let maximumContentSize = screen.map { window.contentRect(forFrameRect: $0.visibleFrame).size } ?? fittingSize
+        let contentSize = Self.contentSize(
+            fittingSize: fittingSize,
+            maximumSize: maximumContentSize
         )
-        apply(contentSize: contentSize, to: window, animated: animated, centerIfNeeded: true)
+        apply(
+            contentSize: contentSize,
+            to: window,
+            on: screen,
+            animated: animated
+        )
     }
 
-    private func apply(contentSize: NSSize, to window: NSWindow, animated: Bool, centerIfNeeded: Bool) {
+    private func apply(
+        contentSize: NSSize,
+        to window: NSWindow,
+        on screen: NSScreen?,
+        animated: Bool
+    ) {
         let newFrame = window.frameRect(forContentRect: NSRect(origin: .zero, size: contentSize))
 
         if window.isVisible {
@@ -176,12 +156,35 @@ final class SettingsWindowController: NSWindowController {
             )
             window.setFrame(NSRect(origin: origin, size: newFrame.size), display: true, animate: animated)
         } else {
-            let currentFrame = window.frame
-            window.setFrame(NSRect(origin: currentFrame.origin, size: newFrame.size), display: false)
-            if centerIfNeeded {
-                window.center()
+            if let screen {
+                window.setFrame(
+                    Self.centeredFrame(size: newFrame.size, in: screen.visibleFrame),
+                    display: false
+                )
+                return
             }
         }
+    }
+
+    static func contentSize(fittingSize: NSSize, maximumSize: NSSize) -> NSSize {
+        NSSize(
+            width: min(fittingSize.width, maximumSize.width),
+            height: min(fittingSize.height, maximumSize.height)
+        )
+    }
+
+    static func centeredFrame(size: NSSize, in visibleFrame: NSRect) -> NSRect {
+        NSRect(
+            x: visibleFrame.midX - (size.width / 2),
+            y: visibleFrame.midY - (size.height / 2),
+            width: size.width,
+            height: size.height
+        )
+    }
+
+    private func activeScreen() -> NSScreen? {
+        let mouseLocation = NSEvent.mouseLocation
+        return NSScreen.screens.first { NSMouseInRect(mouseLocation, $0.frame, false) } ?? NSScreen.main
     }
 
     private func bringToFront(_ window: NSWindow) {
@@ -194,35 +197,5 @@ final class SettingsWindowController: NSWindowController {
         window.makeKeyAndOrderFront(nil)
         window.makeMain()
         window.orderFrontRegardless()
-    }
-}
-
-@MainActor
-private final class SettingsHostingController<Content: View>: NSHostingController<Content> {
-    override func loadView() {
-        view = ZeroSafeAreaHostingView(rootView: rootView)
-    }
-}
-
-@MainActor
-private final class ZeroSafeAreaHostingView<Content: View>: NSHostingView<Content> {
-    private let zeroInsets = NSEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
-
-    override var safeAreaInsets: NSEdgeInsets {
-        zeroInsets
-    }
-
-    override var safeAreaRect: NSRect {
-        bounds
-    }
-
-    override var additionalSafeAreaInsets: NSEdgeInsets {
-        get { zeroInsets }
-        set {}
-    }
-
-    override func viewDidMoveToWindow() {
-        super.viewDidMoveToWindow()
-        layoutSubtreeIfNeeded()
     }
 }

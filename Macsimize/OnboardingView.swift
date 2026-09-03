@@ -7,11 +7,12 @@ struct OnboardingView: View {
     @ObservedObject private var updateManager: UpdateManager
 
     private let appState: AppState
-    @State private var showPermissionsRequiredPopover = false
-    @State private var showMenuBarHint = false
+    private let contentDidChange: @MainActor () -> Void
+    @State private var flow = OnboardingFlow()
 
-    init(appState: AppState) {
+    init(appState: AppState, contentDidChange: @escaping @MainActor () -> Void = {}) {
         self.appState = appState
+        self.contentDidChange = contentDidChange
         _settings = ObservedObject(wrappedValue: appState.settings)
         _permissions = ObservedObject(wrappedValue: appState.permissions)
         _updateManager = ObservedObject(wrappedValue: appState.updateManager)
@@ -25,145 +26,167 @@ struct OnboardingView: View {
         permissions.state.allRequiredPermissionsGranted
     }
 
-    private var missingPermissionsMessage: String {
-        var missing: [String] = []
-        if !permissions.state.accessibilityTrusted {
-            missing.append(AppStrings.accessibilityButtonTitle)
-        }
-        if !permissions.state.inputMonitoringGranted {
-            missing.append(AppStrings.inputMonitoringButtonTitle)
-        }
-        return "Enable \(missing.joined(separator: " and ")) to finish setup."
-    }
-
     var body: some View {
-        Group {
-            if showMenuBarHint {
-                completionView
-            } else {
-                VStack(alignment: .leading, spacing: 16) {
-                    header
-                    onboardingCard(
-                        title: AppStrings.permissionsSectionTitle,
-                        description: "\(appDisplayName) needs these permissions to intercept green-button clicks and resize windows."
-                    ) {
-                        SharedPermissionsSection(appState: appState)
-                    }
+        VStack(spacing: 0) {
+            stepContent
 
-                    onboardingCard(
-                        title: "Start at Login",
-                        description: "Choose whether \(appDisplayName) should start automatically when you sign in."
-                    ) {
-                        SharedLoginItemSection(settings: settings)
-                    }
+            Divider()
 
-                    onboardingCard(
-                        title: AppStrings.updatesSectionTitle,
-                        description: "Pick how often \(appDisplayName) should look for updates."
-                    ) {
-                        SharedUpdatesSection(settings: settings, updateManager: updateManager, style: .onboarding)
-                    }
+            navigationBar
+                .padding(.horizontal, 20)
+                .padding(.vertical, 14)
+        }
+        .fixedSize(horizontal: true, vertical: false)
+    }
 
-                    HStack {
-                        Spacer()
+    @ViewBuilder
+    private var stepContent: some View {
+        switch flow.step {
+        case .welcome:
+            welcomeStep
+        case .permissions:
+            permissionsStep
+        case .preferences:
+            preferencesStep
+        case .completion:
+            completionStep
+        }
+    }
 
-                        Button("Finish Setup") {
-                            if permissionsReady {
-                                showMenuBarHint = true
-                            } else {
-                                showPermissionsRequiredPopover = true
-                            }
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .keyboardShortcut(.defaultAction)
-                        .help(permissionsReady ? "Finish setup" : missingPermissionsMessage)
-                        .popover(isPresented: $showPermissionsRequiredPopover, arrowEdge: .top) {
-                            Text(missingPermissionsMessage)
-                                .padding(12)
-                                .frame(width: 280, alignment: .leading)
-                        }
-                    }
+    private var welcomeStep: some View {
+        SettingsPage(
+            title: "Welcome to \(appDisplayName)",
+            subtitle: "Make the green button maximize windows without giving up native full screen."
+        ) {
+            Image(nsImage: MacsimizeGlyphImage.image(pointSize: NSFont.systemFontSize * 3))
+                .renderingMode(.template)
+                .foregroundStyle(.tint)
+
+            SettingsSection(
+                title: "What you can do",
+                subtitle: "Use the green button naturally while keeping full screen available."
+            ) {
+                VStack(alignment: .leading, spacing: 12) {
+                    SettingsInfoRow(
+                        systemImage: "arrow.up.left.and.arrow.down.right",
+                        title: "Click to maximize",
+                        detail: "A normal green-button click fills the usable display."
+                    )
+
+                    Divider()
+
+                    SettingsInfoRow(
+                        systemImage: "option",
+                        title: "Option-click for full screen",
+                        detail: "Native macOS full screen stays one modifier key away."
+                    )
+
+                    Divider()
+
+                    SettingsInfoRow(
+                        systemImage: "arrow.uturn.backward",
+                        title: "Click again to restore",
+                        detail: "Return a window to the size and position it had before."
+                    )
                 }
-                .padding(20)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-            }
-        }
-        .onChange(of: permissionsReady) { _, ready in
-            if ready {
-                showPermissionsRequiredPopover = false
             }
         }
     }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Welcome to \(appDisplayName)")
-                .font(.title2.weight(.semibold))
+    private var permissionsStep: some View {
+        SettingsPage(
+            title: "Allow window control",
+            subtitle: "\(appDisplayName) needs two macOS permissions to detect green-button clicks and resize windows."
+        ) {
+            RequiredPermissionsList(appState: appState)
 
-            Text("Macsimize makes the green button maximize by default, while Option-click keeps native full screen available.")
-                .fixedSize(horizontal: false, vertical: true)
-                .foregroundStyle(.secondary)
+            Label(
+                permissionsReady ? "Required permissions are enabled." : "Enable both permissions to continue.",
+                systemImage: permissionsReady ? "checkmark.circle.fill" : "info.circle"
+            )
+            .foregroundStyle(permissionsReady ? .green : .secondary)
         }
     }
 
-    private var completionView: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            Text("You’re all set")
-                .font(.title2.weight(.semibold))
-
-            Text("Here is the icon in your menu bar for \(appDisplayName). Use it any time to open Settings or quit \(appDisplayName).")
-                .fixedSize(horizontal: false, vertical: true)
-                .foregroundStyle(.secondary)
-
-            HStack {
-                Spacer()
-
-                Image(nsImage: MacsimizeGlyphImage.image(pointSize: 42))
-                    .renderingMode(.template)
-                    .foregroundStyle(.primary)
-                    .frame(width: 42, height: 42)
-
-                Spacer()
+    private var preferencesStep: some View {
+        SettingsPage(
+            title: "Choose your defaults",
+            subtitle: "You can change these preferences at any time from the menu bar."
+        ) {
+            SettingsSection(
+                title: "Startup",
+                subtitle: "Choose whether \(appDisplayName) opens when you sign in."
+            ) {
+                SharedLoginItemSection(settings: settings)
             }
-            .padding(.top, 4)
+
+            Divider()
+
+            SettingsSection(
+                title: "Updates",
+                subtitle: "Keep \(appDisplayName) current automatically."
+            ) {
+                SharedUpdatesSection(
+                    settings: settings,
+                    updateManager: updateManager
+                )
+            }
+        }
+    }
+
+    private var completionStep: some View {
+        SettingsPage(
+            title: "You’re ready",
+            subtitle: "\(appDisplayName) is set up and ready to manage green-button clicks."
+        ) {
+            Image(nsImage: MacsimizeGlyphImage.image(pointSize: NSFont.systemFontSize * 3))
+                .renderingMode(.template)
+                .foregroundStyle(.primary)
+
+            SettingsInfoRow(
+                title: "Find \(appDisplayName) in the menu bar",
+                detail: "Open Settings, maximize all windows, restore windows, or quit from there."
+            )
+        }
+    }
+
+    private var navigationBar: some View {
+        HStack {
+            Text("Step \(flow.step.rawValue + 1) of \(OnboardingStep.allCases.count)")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
 
             Spacer()
 
-            HStack {
-                Spacer()
+            if flow.step != .welcome {
+                Button("Back") {
+                    if flow.retreat() {
+                        scheduleContentRefit()
+                    }
+                }
+            }
 
+            if flow.step == .completion {
                 Button("Done") {
                     settings.completeOnboarding()
                     NSApp.keyWindow?.close()
                 }
-                .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.defaultAction)
+            } else {
+                Button(flow.step == .welcome ? "Get Started" : "Continue") {
+                    if flow.advance(permissionsReady: permissionsReady) {
+                        scheduleContentRefit()
+                    }
+                }
+                .keyboardShortcut(.defaultAction)
+                .disabled(flow.step == .permissions && !permissionsReady)
             }
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
-    private func onboardingCard<Content: View>(
-        title: String,
-        description: String,
-        @ViewBuilder content: () -> Content
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(title)
-                .font(.title3.weight(.semibold))
-
-            Text(description)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-
-            content()
+    private func scheduleContentRefit() {
+        DispatchQueue.main.async {
+            contentDidChange()
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .topLeading)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color(nsColor: .controlBackgroundColor))
-        )
     }
 }

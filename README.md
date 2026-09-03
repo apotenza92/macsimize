@@ -19,12 +19,12 @@ Enjoying Macsimize?
 
 ## Required macOS Permissions
 
-- Accessibility
+- Device Control and Data Access (Accessibility on macOS 26 and earlier)
 - Input Monitoring
 
 System Settings paths:
 
-- `Privacy & Security > Accessibility`
+- `Privacy & Security > Device Control and Data Access` on macOS 27 or `Privacy & Security > Accessibility` on earlier versions
 - `Privacy & Security > Input Monitoring`
 
 ## Build
