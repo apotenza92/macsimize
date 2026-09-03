@@ -651,6 +651,27 @@ class ReleaseContractTests(unittest.TestCase):
                 [456],
             )
 
+    def test_update_e2e_finds_relaunch_at_resolved_executable_path(self) -> None:
+        process_list = update_e2e.subprocess.CompletedProcess(
+            args=["ps"],
+            returncode=0,
+            stdout=(
+                "123 /private/var/folders/test/Macsimize.app/Contents/MacOS/Macsimize "
+                "-ApplePersistenceIgnoreState YES\n"
+            ),
+        )
+        with mock.patch.object(update_e2e, "run", return_value=process_list), mock.patch.object(
+            update_e2e.os.path,
+            "realpath",
+            return_value="/private/var/folders/test/Macsimize.app/Contents/MacOS/Macsimize",
+        ):
+            self.assertEqual(
+                update_e2e.running_pids(
+                    Path("/var/folders/test/Macsimize.app/Contents/MacOS/Macsimize")
+                ),
+                [123],
+            )
+
     def test_update_e2e_relaunch_fails_when_only_original_process_remains(self) -> None:
         clock = iter((0.0, 0.1, 1.1))
         with mock.patch.object(update_e2e, "running_pids", return_value=[123]), mock.patch.object(

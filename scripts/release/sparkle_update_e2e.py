@@ -103,11 +103,14 @@ def local_server(directory: Path):
 
 def running_pids(executable: Path) -> list[int]:
     result = run("ps", "-axo", "pid=,command=", check=False)
-    prefix = f"{executable}"
+    prefixes = {str(executable), os.path.realpath(executable)}
     pids: list[int] = []
     for line in result.stdout.splitlines():
         fields = line.strip().split(maxsplit=1)
-        if len(fields) == 2 and (fields[1] == prefix or fields[1].startswith(prefix + " ")):
+        if len(fields) == 2 and any(
+            fields[1] == prefix or fields[1].startswith(prefix + " ")
+            for prefix in prefixes
+        ):
             pids.append(int(fields[0]))
     return pids
 
