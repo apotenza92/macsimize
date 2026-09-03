@@ -388,6 +388,11 @@ class ReleaseContractTests(unittest.TestCase):
         self.assertNotIn("update_homebrew_tap_casks.py", publication)
         self.assertIn("validate-homebrew-casks", publication)
         self.assertIn("macsimize-homebrew-publication-", publication)
+        self.assertEqual(
+            workflow.count("python3 scripts/create-homebrew-archive.py"),
+            2,
+        )
+        self.assertNotIn("tar --sort=name", workflow)
 
     def test_update_channels_require_the_public_release(self) -> None:
         workflow = (ROOT.parent.parent / ".github/workflows/release.yml").read_text(encoding="utf-8")

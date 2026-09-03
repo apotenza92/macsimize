@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v0.3.14]
+
+- Rebuilt first-run onboarding as a four-step native SwiftUI flow with required permission gating, shared settings controls, content-derived sizing, and centered first-launch placement on the active display.
+- Reworked Settings around a modern native sidebar with vertically composed General, green-button behaviour, Permissions, Updates, and About destinations that resize to their content.
+- Updated permission wording for macOS 27’s Device Control and Data Access settings while retaining Accessibility terminology on earlier macOS releases.
+- Made signed updater and Homebrew publication artifacts reproducible across current macOS and Ubuntu GitHub runners.
+
 ## [v0.3.13]
 
 - Rebuilt first-run onboarding as a four-step native SwiftUI flow with required permission gating, shared settings controls, content-derived sizing, and centered first-launch placement on the active display.
