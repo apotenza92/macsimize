@@ -4,9 +4,9 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-## [v0.3.18]
+## [v0.3.19]
 
-- Selected a Swift 6.2-compatible Xcode for native CI and release builds.
+- Updated native CI and release builds for PermissionFlow’s compiler and resource-bundle requirements.
 - Simplified Settings into one compact page with native text sizes, a fixed content-fitting window, and clearer permission controls.
 - Replaced multi-step onboarding with a single screen and added PermissionFlow drag-to-authorize guidance for required permissions.
 - Kept Get Started disabled until both permissions are granted and resumed unfinished onboarding after permission-related restarts.
