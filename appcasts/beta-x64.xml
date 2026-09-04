@@ -5,18 +5,21 @@
     <description>Macsimize update feed (beta channel)</description>
     <language>en</language>
     <item>
-      <title>Version 0.3.16</title>
-      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.3.16</link>
-      <sparkle:version>301690000</sparkle:version>
-      <sparkle:shortVersionString>0.3.16</sparkle:shortVersionString>
+      <title>Version 0.3.20</title>
+      <link>https://github.com/apotenza92/macsimize/releases/tag/v0.3.20</link>
+      <sparkle:version>302090000</sparkle:version>
+      <sparkle:shortVersionString>0.3.20</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
       <sparkle:fullReleaseNotesLink>https://github.com/apotenza92/macsimize/blob/main/CHANGELOG.md</sparkle:fullReleaseNotesLink>
-      <description sparkle:format="plain-text"><![CDATA[- Kept the Settings window’s top-left corner fixed while content-driven resizing changes its right and bottom edges between sidebar destinations.
-- Automated checksum-verified Sparkle appcast publication so completed releases cannot leave installed stable or beta builds on stale update feeds.]]></description>
-      <pubDate>Thu, 03 Sep 2026 14:32:29 +0000</pubDate>
-      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.3.16/Macsimize-Beta-v0.3.16-macos-x64.zip"
-                 sparkle:edSignature="X+YTxMiBq0wpeTldWrYDnFwDPxBnbqsI2x9JiqHTPbE95sR3wGO2ZgKeq9Ye+sE1DVB4LjrDAS0m0sFJkG2WCw=="
-                 length="2708005"
+      <description sparkle:format="plain-text"><![CDATA[- Updated native CI and release builds for PermissionFlow’s compiler, resource-bundle, and signing requirements.
+- Simplified Settings into one compact page with native text sizes, a fixed content-fitting window, and clearer permission controls.
+- Replaced multi-step onboarding with a single screen and added PermissionFlow drag-to-authorize guidance for required permissions.
+- Kept Get Started disabled until both permissions are granted and resumed unfinished onboarding after permission-related restarts.
+- Added an optional Open Settings when finished checkbox, off by default, and centred the first Settings presentation on the primary display.]]></description>
+      <pubDate>Fri, 04 Sep 2026 06:08:35 +0000</pubDate>
+      <enclosure url="https://github.com/apotenza92/macsimize/releases/download/v0.3.20/Macsimize-Beta-v0.3.20-macos-x64.zip"
+                 sparkle:edSignature="G0jYfSQazGq+0Zx4f/J0dM8ADrxsV/opNIEbzX103KG4e8dAUrJpx3tdu9hHtaPneCS/ouvrXMo62d8+E4YhAg=="
+                 length="2837631"
                  type="application/octet-stream" />
     </item>
   </channel>
