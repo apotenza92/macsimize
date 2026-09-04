@@ -18,17 +18,11 @@ final class AppStringsTests: XCTestCase {
         XCTAssertEqual(AppStrings.greenButtonBehaviorSectionTitle, "Green Button Behavior")
         XCTAssertEqual(
             AppStrings.maximizeModeHelp,
-            [
-                "Click again to restore the pre-maximized size.",
-                "⌥ Option-click does Full Screen instead."
-            ].joined(separator: "\n")
+            "Option-click enters Full Screen."
         )
         XCTAssertEqual(
             AppStrings.fullScreenModeHelp,
-            [
-                "Native macOS behavior.",
-                "⌥ Option-click does Maximize instead."
-            ].joined(separator: "\n")
+            "Option-click Maximizes."
         )
     }
 
@@ -41,17 +35,11 @@ final class AppStringsTests: XCTestCase {
         XCTAssertEqual(AppStrings.greenButtonBehaviorSectionTitle, "Green Button Behaviour")
         XCTAssertEqual(
             AppStrings.maximizeModeHelp,
-            [
-                "Click again to restore the pre-maximised size.",
-                "⌥ Option-click does Full Screen instead."
-            ].joined(separator: "\n")
+            "Option-click enters Full Screen."
         )
         XCTAssertEqual(
             AppStrings.fullScreenModeHelp,
-            [
-                "Native macOS behavior.",
-                "⌥ Option-click does Maximise instead."
-            ].joined(separator: "\n")
+            "Option-click Maximises."
         )
     }
 

@@ -144,6 +144,12 @@ final class SettingsStore: ObservableObject {
         userDefaults.removeObject(forKey: "excludedBundleIDs")
     }
 
+    func beginOnboarding() {
+        // Persist even when a temporary launch argument already reports false.
+        // System Settings can relaunch us without those arguments.
+        onboardingCompleted = false
+    }
+
     func completeOnboarding() {
         if !onboardingCompleted {
             onboardingCompleted = true

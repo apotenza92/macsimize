@@ -21,12 +21,17 @@ final class SettingsWindowController: NSWindowController {
     private let appState: AppState
     private let hostingController: NSHostingController<SettingsRootView>
     private var currentMode: WindowMode
+    private var needsInitialContentFit = true
+    private var measuredMaximumHeight = SettingsLayout.defaultSettingsHeight
+    private var needsSettingsCentering = false
 
     init(appState: AppState) {
         self.appState = appState
         self.currentMode = appState.settings.shouldPresentOnboarding ? .onboarding : .settings
 
         let hostingController = NSHostingController(rootView: SettingsRootView(appState: appState))
+        // Window sizing is owned here; SwiftUI must not replace its maximum size.
+        hostingController.sizingOptions = []
         self.hostingController = hostingController
         let window = NSWindow(contentViewController: hostingController)
 
@@ -35,7 +40,7 @@ final class SettingsWindowController: NSWindowController {
 
         super.init(window: window)
 
-        configureWindow(for: currentMode, animated: false)
+        configureWindow(for: currentMode)
     }
 
     @available(*, unavailable)
@@ -48,7 +53,14 @@ final class SettingsWindowController: NSWindowController {
             return
         }
 
-        applyWindowMode(for: request, animated: window.isVisible)
+        applyWindowMode(for: request)
+        if !needsInitialContentFit {
+            apply(
+                contentSize: NSSize(width: SettingsLayout.detailWidth, height: measuredMaximumHeight),
+                to: window,
+                on: activeScreen()
+            )
+        }
 
         RuntimeLogger.log("Showing \(currentMode == .onboarding ? "onboarding" : "settings") window")
         bringToFront(window)
@@ -59,7 +71,7 @@ final class SettingsWindowController: NSWindowController {
         }
     }
 
-    private func applyWindowMode(for request: InitialWindowRequest, animated: Bool) {
+    private func applyWindowMode(for request: InitialWindowRequest) {
         let requestedMode: WindowMode
         switch request {
         case .onboarding:
@@ -75,15 +87,14 @@ final class SettingsWindowController: NSWindowController {
         }
 
         guard requestedMode != currentMode else {
-            refitWindow(animated: animated)
             return
         }
 
         currentMode = requestedMode
-        configureWindow(for: requestedMode, animated: animated)
+        configureWindow(for: requestedMode)
     }
 
-    private func configureWindow(for mode: WindowMode, animated: Bool) {
+    private func configureWindow(for mode: WindowMode) {
         guard let window else {
             return
         }
@@ -94,38 +105,46 @@ final class SettingsWindowController: NSWindowController {
         case .settings:
             .settings
         }
+        needsInitialContentFit = true
+        needsSettingsCentering = mode == .settings
         hostingController.rootView = SettingsRootView(
             appState: appState,
             contentMode: contentMode,
-            contentDidChange: { [weak self] in
-                self?.refitWindow(animated: self?.window?.isVisible == true)
+            contentHeightDidChange: { [weak self] height in
+                guard let self, self.currentMode == mode else { return }
+                self.updateContentHeight(height)
+            },
+            onboardingCompleted: { [weak self] openSettings in
+                guard let self else { return }
+                if openSettings {
+                    self.show(request: .settings(explicit: true))
+                } else {
+                    self.close()
+                }
             }
         )
         window.title = mode.title
 
-        switch mode {
-        case .onboarding:
-            window.styleMask.remove(.fullSizeContentView)
-            window.titleVisibility = .visible
-            window.titlebarAppearsTransparent = false
-            window.titlebarSeparatorStyle = .automatic
-        case .settings:
-            window.styleMask.insert(.fullSizeContentView)
-            window.titleVisibility = .hidden
-            window.titlebarAppearsTransparent = true
-            window.titlebarSeparatorStyle = .none
-        }
+        window.styleMask.remove(.fullSizeContentView)
+        window.titleVisibility = .visible
+        window.titlebarAppearsTransparent = false
+        window.titlebarSeparatorStyle = .automatic
 
-        refitWindow(animated: animated)
+        window.styleMask.remove(.resizable)
+        window.collectionBehavior.insert(.fullScreenNone)
+        window.contentMinSize = NSSize(width: SettingsLayout.detailWidth, height: 180)
+        window.contentMaxSize = NSSize(width: SettingsLayout.detailWidth, height: CGFloat.greatestFiniteMagnitude)
+
+        refitWindow()
     }
 
-    private func refitWindow(animated: Bool) {
+    private func refitWindow() {
         guard let window else {
             return
         }
 
         hostingController.view.layoutSubtreeIfNeeded()
-        let fittingSize = hostingController.view.fittingSize
+        let fittingSize = NSSize(width: SettingsLayout.detailWidth, height: SettingsLayout.defaultSettingsHeight)
         let screen = activeScreen()
         let maximumContentSize = screen.map { window.contentRect(forFrameRect: $0.visibleFrame).size } ?? fittingSize
         let contentSize = Self.contentSize(
@@ -135,18 +154,51 @@ final class SettingsWindowController: NSWindowController {
         apply(
             contentSize: contentSize,
             to: window,
-            on: screen,
-            animated: animated
+            on: screen
         )
+    }
+
+    private func updateContentHeight(_ naturalHeight: CGFloat) {
+        guard let window, naturalHeight > 0 else { return }
+        let screen = activeScreen()
+        let availableHeight = screen.map { window.contentRect(forFrameRect: $0.visibleFrame).height } ?? naturalHeight
+        let maximumHeight = min(ceil(naturalHeight), availableHeight)
+        measuredMaximumHeight = maximumHeight
+        RuntimeLogger.log("Window content height: \(naturalHeight), maximum: \(maximumHeight)")
+        let currentHeight = window.contentRect(forFrameRect: window.frame).height
+        let targetHeight = maximumHeight
+        needsInitialContentFit = false
+        let fittedSize = NSSize(width: SettingsLayout.detailWidth, height: maximumHeight)
+        window.contentMinSize = .zero
+        window.contentMaxSize = fittedSize
+        window.contentMinSize = fittedSize
+        if needsSettingsCentering || abs(currentHeight - targetHeight) > 0.5 {
+            apply(
+                contentSize: NSSize(width: SettingsLayout.detailWidth, height: targetHeight),
+                to: window,
+                on: screen
+            )
+        }
+        needsSettingsCentering = false
     }
 
     private func apply(
         contentSize: NSSize,
         to window: NSWindow,
-        on screen: NSScreen?,
-        animated: Bool
+        on screen: NSScreen?
     ) {
         let newFrame = window.frameRect(forContentRect: NSRect(origin: .zero, size: contentSize))
+
+        // Keep the first Settings presentation centred through its final content fit,
+        // including when reusing the visible onboarding window on another display.
+        if needsSettingsCentering, let screen {
+            window.setFrame(
+                Self.centeredFrame(size: newFrame.size, in: screen.visibleFrame),
+                display: window.isVisible,
+                animate: false
+            )
+            return
+        }
 
         if window.isVisible {
             let currentFrame = window.frame
@@ -161,7 +213,7 @@ final class SettingsWindowController: NSWindowController {
             case .settings:
                 Self.topLeftAnchoredFrame(size: newFrame.size, relativeTo: currentFrame)
             }
-            window.setFrame(targetFrame, display: true, animate: animated)
+            window.setFrame(targetFrame, display: true, animate: false)
         } else {
             if let screen {
                 window.setFrame(
@@ -199,6 +251,12 @@ final class SettingsWindowController: NSWindowController {
     }
 
     private func activeScreen() -> NSScreen? {
+        if needsSettingsCentering {
+            return NSScreen.screens.first ?? NSScreen.main
+        }
+        if currentMode == .settings, let screen = window?.screen {
+            return screen
+        }
         let mouseLocation = NSEvent.mouseLocation
         return NSScreen.screens.first { NSMouseInRect(mouseLocation, $0.frame, false) } ?? NSScreen.main
     }

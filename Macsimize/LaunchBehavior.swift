@@ -25,6 +25,10 @@ struct LaunchBehaviorDecision: Equatable {
 }
 
 enum LaunchBehavior {
+    static func reopenWindowRequest(onboardingCompleted: Bool) -> InitialWindowRequest {
+        onboardingCompleted ? .settings(explicit: true) : .onboarding
+    }
+
     static func decide(_ input: LaunchBehaviorInput) -> LaunchBehaviorDecision {
         let explicitSettingsRequest = input.launchArgumentsRequestSettings
 

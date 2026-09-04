@@ -2,6 +2,22 @@ import XCTest
 @testable import Macsimize
 
 final class PermissionStateTests: XCTestCase {
+    func testOnboardingRequiresBothPermissions() {
+        let cases = [(false, false, false), (true, false, false), (false, true, false), (true, true, true)]
+        for (accessibility, inputMonitoring, expected) in cases {
+            let state = PermissionState(
+                accessibilityTrusted: accessibility,
+                inputMonitoringGranted: inputMonitoring,
+                secureEventInputEnabled: false,
+                eventTapRunning: false,
+                lastFailureReason: nil
+            )
+
+            XCTAssertEqual(state.allRequiredPermissionsGranted, expected,
+                           "Accessibility: \(accessibility), Input Monitoring: \(inputMonitoring)")
+        }
+    }
+
     func testSummaryPrefersAccessibilityFirst() {
         let state = PermissionState(
             accessibilityTrusted: false,

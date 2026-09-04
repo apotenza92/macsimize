@@ -2,6 +2,21 @@ import XCTest
 @testable import Macsimize
 
 final class SettingsStoreTests: XCTestCase {
+    func testStartedOnboardingSurvivesRelaunchUntilCompleted() {
+        let defaults = UserDefaults(suiteName: #function)!
+        defaults.removePersistentDomain(forName: #function)
+        defer { defaults.removePersistentDomain(forName: #function) }
+
+        let store = SettingsStore(userDefaults: defaults)
+        store.completeOnboarding()
+        store.beginOnboarding()
+
+        let relaunched = SettingsStore(userDefaults: defaults)
+        XCTAssertTrue(relaunched.shouldPresentOnboarding)
+        relaunched.completeOnboarding()
+        XCTAssertFalse(SettingsStore(userDefaults: defaults).shouldPresentOnboarding)
+    }
+
     func testDefaultSelectedActionIsMaximize() {
         let defaults = UserDefaults(suiteName: #function)!
         defaults.removePersistentDomain(forName: #function)

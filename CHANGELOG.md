@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [v0.3.17]
+
+- Simplified Settings into one compact page with native text sizes, a fixed content-fitting window, and clearer permission controls.
+- Replaced multi-step onboarding with a single screen and added PermissionFlow drag-to-authorize guidance for required permissions.
+- Kept Get Started disabled until both permissions are granted and resumed unfinished onboarding after permission-related restarts.
+- Added an optional Open Settings when finished checkbox, off by default, and centred the first Settings presentation on the primary display.
+
 ## [v0.3.16]
 
 - Kept the Settings window’s top-left corner fixed while content-driven resizing changes its right and bottom edges between sidebar destinations.

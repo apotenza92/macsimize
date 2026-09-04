@@ -2,36 +2,21 @@ import XCTest
 @testable import Macsimize
 
 final class LaunchBehaviorTests: XCTestCase {
-    func testOnboardingAdvancesThroughTheFourSteps() {
-        var flow = OnboardingFlow()
-
-        XCTAssertEqual(flow.step, .welcome)
-        XCTAssertTrue(flow.advance(permissionsReady: false))
-        XCTAssertEqual(flow.step, .permissions)
-        XCTAssertTrue(flow.advance(permissionsReady: true))
-        XCTAssertEqual(flow.step, .preferences)
-        XCTAssertTrue(flow.advance(permissionsReady: true))
-        XCTAssertEqual(flow.step, .completion)
-        XCTAssertFalse(flow.advance(permissionsReady: true))
+    func testReopenResumesOnboardingUntilGetStartedCompletesIt() {
+        XCTAssertEqual(LaunchBehavior.reopenWindowRequest(onboardingCompleted: false), .onboarding)
+        XCTAssertEqual(LaunchBehavior.reopenWindowRequest(onboardingCompleted: true), .settings(explicit: true))
     }
 
-    func testOnboardingCannotPassPermissionsUntilBothAreGranted() {
-        var flow = OnboardingFlow(step: .permissions)
-
-        XCTAssertFalse(flow.advance(permissionsReady: false))
-        XCTAssertEqual(flow.step, .permissions)
-    }
-
-    func testOnboardingBackNavigationReturnsFromCompletionToWelcome() {
-        var flow = OnboardingFlow(step: .completion)
-
-        XCTAssertTrue(flow.retreat())
-        XCTAssertEqual(flow.step, .preferences)
-        XCTAssertTrue(flow.retreat())
-        XCTAssertEqual(flow.step, .permissions)
-        XCTAssertTrue(flow.retreat())
-        XCTAssertEqual(flow.step, .welcome)
-        XCTAssertFalse(flow.retreat())
+    func testPermissionRelaunchStillShowsUnfinishedOnboardingWithAllPermissionsGranted() {
+        let decision = LaunchBehavior.decide(LaunchBehaviorInput(
+            isDevelopmentBuild: false,
+            onboardingCompleted: false,
+            showSettingsOnStartup: false,
+            launchArgumentsRequestSettings: false,
+            launchedFromFinder: false,
+            needsPermissions: false
+        ))
+        XCTAssertEqual(decision.initialWindowRequest, .onboarding)
     }
 
     @MainActor

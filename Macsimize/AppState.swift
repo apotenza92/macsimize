@@ -1,6 +1,7 @@
 import AppKit
 import Combine
 import Foundation
+import PermissionFlow
 
 @MainActor
 final class AppState: ObservableObject {
@@ -15,6 +16,7 @@ final class AppState: ObservableObject {
     let eventTapService: EventTapService
 
     private var cancellables = Set<AnyCancellable>()
+    private lazy var permissionGuide = PermissionFlowController()
 
     init(userDefaults: UserDefaults = .standard) {
         settings = SettingsStore(userDefaults: userDefaults)
@@ -77,17 +79,13 @@ final class AppState: ObservableObject {
     }
 
     func openAccessibilitySettings() {
-        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
-            NSWorkspace.shared.open(url)
-        }
+        permissionGuide.authorize(pane: .accessibility)
         permissions.startMonitoringForChanges()
         refreshPermissions(promptIfNeeded: false)
     }
 
     func openInputMonitoringSettings() {
-        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent") {
-            NSWorkspace.shared.open(url)
-        }
+        permissionGuide.authorize(pane: .inputMonitoring)
         permissions.startMonitoringForChanges()
         refreshPermissions(promptIfNeeded: false)
     }

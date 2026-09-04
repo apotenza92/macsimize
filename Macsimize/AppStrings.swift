@@ -94,10 +94,10 @@ enum AppStrings {
     static var fullScreenModeTitle: String { "Full Screen" }
     static var optionClickPrefix: String { "⌥ Option-click" }
     static var maximizeModeHelp: String {
-        "Click again to restore the pre-\(terms.maximizedAdjective) size.\n\(optionClickPrefix) does \(fullScreenModeTitle) instead."
+        "Option-click enters \(fullScreenModeTitle)."
     }
     static var fullScreenModeHelp: String {
-        "Native macOS behavior.\n\(optionClickPrefix) does \(maximizeModeTitle) instead."
+        "Option-click \(maximizeModeTitle)s."
     }
 
     static var updateFrequencyNever: String { "Never" }

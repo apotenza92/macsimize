@@ -80,7 +80,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func showSettingsWindow() {
         RuntimeLogger.log("Opening settings window")
-        settingsWindowController.show(request: .settings(explicit: true))
+        settingsWindowController.show(request: LaunchBehavior.reopenWindowRequest(
+            onboardingCompleted: appState.settings.isOnboardingCompleted
+        ))
     }
 
     func maximizeAllCurrentSpaceWindows() {
