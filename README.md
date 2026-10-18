@@ -1,5 +1,10 @@
 # Macsimize
 
+> [!IMPORTANT]
+> **Macsimize is now part of [Simple Mac Fixes](https://github.com/apotenza92/simple-mac-fixes).** Simple Mac Fixes is one free app that combines Macsimize, Dockmint and Simple Mac Keyboard Control. It includes Macsimize’s green button maximize, title-bar double-click and drag to restore. Macsimize is no longer updated and this repository is archived.
+>
+> [Download Simple Mac Fixes](https://apotenza92.github.io/simple-mac-fixes/) or run `brew install --cask apotenza92/tap/simple-mac-fixes`. Simple Mac Fixes closes Macsimize automatically, so you can uninstall it.
+
 <img src="Macsimize/Assets.xcassets/AppIcon.appiconset/icon_256x256.png" alt="Macsimize icon" width="96" />
 
 <a href="https://apotenza92.github.io/macsimize/">
