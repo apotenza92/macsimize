@@ -659,7 +659,7 @@
               </div>
               <div class="format-command">
                 <code id="mac-homebrew-code"
-                  >brew tap apotenza92/tap &amp;&amp; brew install --cask apotenza92/tap/macsimize</code
+                  >brew trust apotenza92/tap 2&gt;/dev/null; brew install --cask apotenza92/tap/macsimize</code
                 >
                 <button class="copy-btn" id="mac-homebrew-copy" title="Copy command">
                   <svg viewBox="0 0 24 24" fill="currentColor">
@@ -752,9 +752,9 @@
       };
       const BREW_COMMANDS = {
         stable:
-          "brew tap apotenza92/tap && brew install --cask apotenza92/tap/macsimize",
+          "brew trust apotenza92/tap 2>/dev/null; brew install --cask apotenza92/tap/macsimize",
         beta:
-          "brew tap apotenza92/tap && brew install --cask apotenza92/tap/macsimize@beta",
+          "brew trust apotenza92/tap 2>/dev/null; brew install --cask apotenza92/tap/macsimize@beta",
       };
       const APP_NAMES = {
         stable: "Macsimize.app",
