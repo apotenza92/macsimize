@@ -393,6 +393,7 @@ class ReleaseContractTests(unittest.TestCase):
         publication = workflow.split("  prepare-homebrew-publication:", 1)[1]
         self.assertIn("name: reviewed-homebrew-casks", validation)
         self.assertIn("brew tap apotenza92/tap", validation)
+        self.assertIn("brew trust --tap apotenza92/tap", validation)
         self.assertIn("apotenza92/tap/macsimize@beta", validation)
         self.assertIn("brew uninstall --cask \"$installed_cask\"", validation)
         self.assertIn('test ! -e "$app"', validation)
